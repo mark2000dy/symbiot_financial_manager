@@ -11,7 +11,12 @@
     "start": "node server/app.js",
     "dev": "nodemon server/app.js",
     "build": "echo Building for production...",
-    "test": "node test.js"
+    "test": "node test.js",
+    "test:db": "node test-db.js",
+    "test:api": "node test-api-simple.js",
+    "diagnose": "node diagnose-appserv.js",
+    "setup-appserv": "node setup-appserv.js",
+    "setup-db": "node setup-appserv.js && node database/seed.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -35,7 +40,8 @@
     "ingresos",
     "pwa",
     "symbiot",
-    "node.js"
+    "node.js",
+    "appserv"
   ],
   "author": "Symbiot Technologies",
   "license": "MIT"

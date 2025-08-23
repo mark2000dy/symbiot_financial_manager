@@ -1,5 +1,5 @@
 ﻿// ====================================================
-// CONFIGURACIÓN DE BASE DE DATOS MYSQL
+// CONFIGURACIÓN DE BASE DE DATOS MYSQL (CORREGIDA)
 // Archivo: server/config/database.js
 // ====================================================
 
@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Configuración de conexión a MySQL
+// Configuración de conexión a MySQL (Parámetros corregidos)
 export const config = {
     host: process.env.DB_HOST || 'localhost',
     database: process.env.DB_DATABASE || 'gastos_app_db',
@@ -16,8 +16,9 @@ export const config = {
     password: process.env.DB_PASSWORD || 'Gastos2025!',
     port: 3306,
     connectionLimit: 10,
-    acquireTimeout: 60000,
-    timeout: 60000,
+    // Removemos parámetros deprecados que causaban warnings
+    waitForConnections: true,
+    queueLimit: 0,
     charset: 'utf8mb4'
 };
 
@@ -41,7 +42,7 @@ export const getConnection = async () => {
         console.log('🔗 Conexión MySQL establecida');
         return connection;
     } catch (error) {
-        console.error('❌ Error conectando a MySQL:', error);
+        console.error('❌ Error conectando a MySQL:', error.message);
         throw error;
     }
 };
@@ -53,7 +54,7 @@ export const executeQuery = async (query, params = []) => {
         const [results] = await connection.execute(query, params);
         return results;
     } catch (error) {
-        console.error('❌ Error ejecutando query:', error);
+        console.error('❌ Error ejecutando query:', error.message);
         throw error;
     } finally {
         if (connection) {
@@ -71,7 +72,7 @@ export const testConnection = async () => {
         console.log('✅ Conexión a MySQL exitosa');
         return true;
     } catch (error) {
-        console.error('❌ Error en test de conexión MySQL:', error);
+        console.error('❌ Error en test de conexión MySQL:', error.message);
         return false;
     }
 };
