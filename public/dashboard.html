@@ -46,6 +46,10 @@
         .main-content {
             padding: 2rem 0;
         }
+
+        .text-muted, .small, .stat-label {
+            color: #E4E6EA !important; /* Gris mucho más claro */
+        }
         
         .stat-card {
             background: rgba(25, 28, 36, 0.8);
@@ -239,6 +243,143 @@
         .btn-close-white {
             background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath d='m.235.227 7.618 7.554L15.47.226a.75.75 0 1 1 1.06 1.06L8.912 8.84l7.618 7.618a.75.75 0 1 1-1.061 1.06L7.85 9.901.232 17.52a.75.75 0 0 1-1.061-1.06L6.789 8.84.17 1.286A.75.75 0 1 1 1.231.227z'/%3e%3c/svg%3e") center/1em auto no-repeat;
         }
+        .company-stats .stat-item {
+            padding: 0.5rem;
+        }
+
+        .company-stats .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .company-stats .stat-label {
+            font-size: 0.85rem;
+            color: #E4E6EA;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .student-stat h4 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .alert-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-color: rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+        }
+
+        .alert-danger {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-color: rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+
+        .alert-heading {
+            color: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        #rockstarSkullWidgets .card {
+            transition: all 0.3s ease;
+        }
+
+        #rockstarSkullWidgets .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .company-stats .stat-label {
+            color: #E4E6EA !important;
+        }
+
+        #teachersOverview .text-muted {
+            color: #B8B9BA !important;
+        }
+
+        #rockstarSkullWidgets .card-body small {
+            color: #E4E6EA !important;
+        }
+
+        /* 🎯 Interactividad para números de alumnos */
+        .student-stat:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .instrument-card {
+            transition: all 0.3s ease;
+        }
+
+        .instrument-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Mejorar indicadores del selector */
+        .stat-item {
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .student-row {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .student-row:hover {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .table-sm td {
+            padding: 0.4rem;
+            font-size: 0.85rem;
+        }
+
+        .table-sm th {
+            padding: 0.5rem 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-select-sm {
+            font-size: 0.85rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .alert-info {
+            background-color: rgba(13, 202, 240, 0.1);
+            border-color: rgba(13, 202, 240, 0.3);
+            color: #0dcaf0;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+        }
+
+        .modal-lg {
+            max-width: 800px;
+        }
+
+        #studentDetailModal .table-sm td:first-child {
+            width: 140px;
+            font-weight: 500;
+            color: #B0B3B8;
+        }
+
+        .pagination-sm .page-link {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+        }
+
     </style>
 </head>
 <body>
@@ -375,6 +516,354 @@
                                 </div>
                             </h4>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================= -->
+        <!-- WIDGET SELECTOR DE EMPRESAS -->  
+        <!-- Insertar DESPUÉS del Welcome Banner en dashboard.html -->
+        <!-- ========================================= -->
+
+        <!-- Company Selector Widget -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="text-white mb-0">
+                            <i class="fas fa-building me-2"></i>Selector de Empresa
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <label for="companyFilter" class="form-label">
+                                    <i class="fas fa-filter me-1"></i>Filtrar por Empresa
+                                </label>
+                                <select class="form-select" id="companyFilter" onchange="handleCompanyChange()">
+                                    <option value="">🏢 Todas las Empresas</option>
+                                    <option value="2">🔬 Symbiot Technologies</option>
+                                    <option value="1">🎸 RockstarSkull Academia</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="company-stats d-flex justify-content-around">
+                                    <div class="stat-item text-center">
+                                        <div class="stat-number text-info" id="companyTransactions">-</div>
+                                        <div class="stat-label">Transacciones</div>
+                                    </div>
+                                    <div class="stat-item text-center" id="groupClassesIndicator" style="display: none;">
+                                        <div class="stat-number text-primary" id="groupClasses">-</div>
+                                        <div class="stat-label">Clases Grupales</div>
+                                    </div>
+                                    <div class="stat-item text-center" id="individualClassesIndicator" style="display: none;">
+                                        <div class="stat-number text-success" id="individualClasses">-</div>
+                                        <div class="stat-label">Clases Individuales</div>
+                                    </div>
+                                    <div class="stat-item text-center" id="currentStudentsIndicator" style="display: none;">
+                                        <div class="stat-number text-warning" id="currentStudents">-</div>
+                                        <div class="stat-label">Al Corriente</div>
+                                    </div>
+                                    <div class="stat-item text-center" id="pendingStudentsIndicator" style="display: none;">
+                                        <div class="stat-number text-danger" id="pendingStudents">-</div>
+                                        <div class="stat-label">Pendientes</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RockstarSkull Specific Widgets (Hidden by default) -->
+        <div id="rockstarSkullWidgets" style="display: none;">
+            <!-- Students Overview Widget -->
+            <div class="row mb-4">
+                <div class="col-xl-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-users me-2"></i>Alumnos Inscritos
+                            </h6>
+                            <span class="badge bg-primary" id="totalStudents">0</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="student-stat" style="cursor: pointer;" onclick="filterStudentsByStatus('active')">
+                                        <h4 class="text-success mb-1" id="activeStudents">0</h4>
+                                        <small style="color: #E4E6EA !important;">Activos</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="student-stat" style="cursor: pointer;" onclick="filterStudentsByStatus('inactive')">
+                                        <h4 class="text-danger mb-1" id="inactiveStudents">0</h4>
+                                        <small style="color: #E4E6EA !important;">Bajas</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Classes Distribution -->
+                            <div class="mt-3">
+                                <small style="color: #E4E6EA !important;">Distribución por Clase:</small>
+                                <div id="classDistribution" class="mt-2">
+                                    <!-- Se llena dinámicamente con mejor diseño -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Teachers Overview Widget -->
+                <div class="col-xl-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-chalkboard-teacher me-2"></i>Maestros Activos
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="teachersOverview">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Alerts Widget -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Alertas de Pagos
+                            </h6>
+                            <button class="btn btn-sm btn-outline-warning" onclick="refreshPaymentAlerts()">
+                                <i class="fas fa-sync-alt me-1"></i>Actualizar
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="alert alert-warning" role="alert">
+                                        <h6 class="alert-heading">
+                                            <i class="fas fa-clock me-2"></i>Próximos a Vencer
+                                        </h6>
+                                        <div id="upcomingPayments">
+                                            <small class="text-muted">Cargando...</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="alert alert-danger" role="alert">
+                                        <h6 class="alert-heading">
+                                            <i class="fas fa-exclamation-circle me-2"></i>Pagos Vencidos (+5 días)
+                                        </h6>
+                                        <div id="overduePayments">
+                                            <small class="text-muted">Cargando...</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================= -->
+        <!-- WIDGET SISTEMA DE GESTIÓN DE ALUMNOS -->
+        <!-- Insertar DENTRO del div "rockstarSkullWidgets" -->
+        <!-- DESPUÉS de las alertas de pagos -->
+        <!-- ========================================= -->
+
+        <!-- Students Management System -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="text-white mb-0">
+                            <i class="fas fa-graduation-cap me-2"></i>Gestión de Alumnos - RockstarSkull
+                        </h6>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-info" onclick="exportStudentsList()">
+                                <i class="fas fa-download me-1"></i>Exportar
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="refreshStudentsList()">
+                                <i class="fas fa-sync-alt me-1"></i>Actualizar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filtros -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    <i class="fas fa-filter me-1"></i>Filtrar por Maestro
+                                </label>
+                                <select class="form-select form-select-sm" id="teacherFilter" onchange="filterStudents()">
+                                    <option value="">👨‍🏫 Todos los Maestros</option>
+                                    <option value="Hugo Vázquez">🎸 Hugo Vázquez</option>
+                                    <option value="Manuel Reyes">🎹 Manuel Reyes</option>
+                                    <option value="Julio Olvera">🥁 Julio Olvera</option>
+                                    <option value="Irwin">🎵 Irwin</option>
+                                    <option value="Luis Blanquet">🎸 Luis Blanquet</option>
+                                    <option value="Nahomy Perez">🎤 Nahomy Perez</option>
+                                    <option value="Demian Andrade">🎸 Demian Andrade</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    <i class="fas fa-toggle-on me-1"></i>Estatus
+                                </label>
+                                <select class="form-select form-select-sm" id="statusFilter" onchange="filterStudents()">
+                                    <option value="">📊 Todos los Estatus</option>
+                                    <option value="Activo">✅ Activos</option>
+                                    <option value="Baja">❌ Bajas</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    <i class="fas fa-music me-1"></i>Instrumento
+                                </label>
+                                <select class="form-select form-select-sm" id="instrumentFilter" onchange="filterStudents()">
+                                    <option value="">🎼 Todos los Instrumentos</option>
+                                    <option value="Guitarra">🎸 Guitarra</option>
+                                    <option value="Teclado">🎹 Teclado</option>
+                                    <option value="Batería">🥁 Batería</option>
+                                    <option value="Bajo">🎸 Bajo</option>
+                                    <option value="Canto">🎤 Canto</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-exclamation me-1"></i>Pagos
+                                </label>
+                                <select class="form-select form-select-sm" id="paymentFilter" onchange="filterStudents()">
+                                    <option value="">💰 Todos los Pagos</option>
+                                    <option value="current">✅ Al Corriente</option>
+                                    <option value="upcoming">⚠️ Próximos (3 días)</option>
+                                    <option value="overdue">🚨 Vencidos (+5 días)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Summary Stats -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="alert alert-info d-flex justify-content-between align-items-center py-2">
+                                    <div>
+                                        <strong>Filtros Aplicados:</strong>
+                                        <span id="filterSummary">Mostrando todos los alumnos</span>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-primary" id="filteredCount">100</span> de 
+                                        <span id="totalCount">100</span> alumnos
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Students Table -->
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th><i class="fas fa-hashtag me-1"></i>#</th>
+                                        <th><i class="fas fa-user me-1"></i>Alumno</th>
+                                        <th><i class="fas fa-birthday-cake me-1"></i>Edad</th>
+                                        <th><i class="fas fa-music me-1"></i>Clase</th>
+                                        <th><i class="fas fa-chalkboard-teacher me-1"></i>Maestro</th>
+                                        <th><i class="fas fa-toggle-on me-1"></i>Estatus</th>
+                                        <th><i class="fas fa-dollar-sign me-1"></i>Mensualidad</th>
+                                        <th><i class="fas fa-calendar-day me-1"></i>Próximo Pago</th>
+                                        <th><i class="fas fa-exclamation-triangle me-1"></i>Alerta</th>
+                                        <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentsTableBody">
+                                    <tr>
+                                        <td colspan="10" class="text-center py-4">
+                                            <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                                            <p class="mt-2 mb-0">Cargando lista de alumnos...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <nav aria-label="Paginación de alumnos" class="mt-3">
+                            <ul class="pagination pagination-sm justify-content-center" id="studentsPagination">
+                                <!-- Se genera dinámicamente -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================= -->
+        <!-- MODAL DETALLE DE ALUMNO -->
+        <!-- ========================================= -->
+        <div class="modal fade" id="studentDetailModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-user-graduate me-2"></i>
+                            <span id="studentModalName">Detalle del Alumno</span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">📋 Información General</h6>
+                                <table class="table table-dark table-sm">
+                                    <tr><td><strong>Nombre:</strong></td><td id="modalStudentName">-</td></tr>
+                                    <tr><td><strong>Edad:</strong></td><td id="modalStudentAge">-</td></tr>
+                                    <tr><td><strong>Clase:</strong></td><td id="modalStudentClass">-</td></tr>
+                                    <tr><td><strong>Maestro:</strong></td><td id="modalStudentTeacher">-</td></tr>
+                                    <tr><td><strong>Horario:</strong></td><td id="modalStudentSchedule">-</td></tr>
+                                    <tr><td><strong>Estatus:</strong></td><td id="modalStudentStatus">-</td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-success">💰 Información de Pagos</h6>
+                                <table class="table table-dark table-sm">
+                                    <tr><td><strong>Fecha Inscripción:</strong></td><td id="modalStudentEnrollment">-</td></tr>
+                                    <tr><td><strong>Último Pago:</strong></td><td id="modalStudentLastPayment">-</td></tr>
+                                    <tr><td><strong>Próximo Vence:</strong></td><td id="modalStudentNextDue">-</td></tr>
+                                    <tr><td><strong>Mensualidad:</strong></td><td id="modalStudentMonthlyFee">-</td></tr>
+                                    <tr><td><strong>Forma de Pago:</strong></td><td id="modalStudentPaymentMethod">-</td></tr>
+                                    <tr><td><strong>Total Pagado:</strong></td><td id="modalStudentTotalPaid">-</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment History Chart Placeholder -->
+                        <div class="mt-3">
+                            <h6 class="text-warning">📊 Historial de Pagos (Últimos 12 meses)</h6>
+                            <div class="alert alert-secondary">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Gráfico de historial de pagos - <em>Próximamente implementado</em>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" onclick="markPaymentReceived()">
+                            <i class="fas fa-money-bill me-1"></i>Registrar Pago
+                        </button>
+                        <button type="button" class="btn btn-info" onclick="sendPaymentReminder()">
+                            <i class="fas fa-bell me-1"></i>Enviar Recordatorio
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cerrar
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1119,6 +1608,923 @@
 
         // 🔧 Log para debugging
         console.log('✅ Script dashboard cargado correctamente');
+                
+        // 🏢 Variables para filtro de empresa
+        let currentCompanyFilter = '';
+        let rockstarStudentsData = [];
+
+        // 🔄 Manejar cambio de empresa
+        async function handleCompanyChange() {
+            const companySelect = document.getElementById('companyFilter');
+            const selectedCompany = companySelect.value;
+            currentCompanyFilter = selectedCompany;
+            
+            console.log(`🏢 Filtro de empresa cambiado a: ${selectedCompany || 'Todas'}`);
+            
+            try {
+                // Recargar datos con filtro
+                await loadDashboardData();
+                await loadRecentTransactions(1);
+                await loadCompanyStats(selectedCompany);
+                
+                // Mostrar/ocultar widgets específicos de RockstarSkull
+                const rockstarWidgets = document.getElementById('rockstarSkullWidgets');
+                if (selectedCompany === '1') { // RockstarSkull
+                    rockstarWidgets.style.display = 'block';
+                    await loadRockstarSkullData();
+                } else {
+                    rockstarWidgets.style.display = 'none';
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cambiando filtro de empresa:', error);
+                showAlert('danger', 'Error aplicando filtro de empresa');
+            }
+        }
+
+        // 📊 Cargar estadísticas específicas de empresa
+        async function loadCompanyStats(companyId) {
+            try {
+                let queryParam = companyId ? `?empresa_id=${companyId}` : '';
+                const response = await fetch(`/gastos/api/transacciones/resumen${queryParam}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const resumen = data.data;
+                    
+                    // Actualizar stats del selector
+                    document.getElementById('companyTransactions').textContent = resumen.total_transacciones || 0;
+                    document.getElementById('companyIncome').textContent = formatCurrency(resumen.ingresos || 0);
+                    document.getElementById('companyExpenses').textContent = formatCurrency(resumen.gastos || 0);
+                    document.getElementById('companyBalance').textContent = formatCurrency(resumen.balance || 0);
+                    
+                    // Cambiar color del balance
+                    const balanceElement = document.getElementById('companyBalance');
+                    if ((resumen.balance || 0) >= 0) {
+                        balanceElement.className = 'stat-number text-success';
+                    } else {
+                        balanceElement.className = 'stat-number text-danger';
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error cargando stats de empresa:', error);
+            }
+        }
+
+        // 🎸 Cargar datos específicos de RockstarSkull
+        async function loadRockstarSkullData() {
+            try {
+                console.log('🎸 Cargando datos específicos de RockstarSkull...');
+                
+                // Aquí cargaríamos los datos de alumnos desde una nueva API
+                // Por ahora simulamos los datos basados en el análisis del Excel
+                
+                // Estadísticas de alumnos (simuladas basadas en el análisis)
+                const studentStats = {
+                    total: 100,
+                    activos: 35, // Aproximación basada en el análisis
+                    bajas: 65
+                };
+                
+                // Actualizar widgets
+                document.getElementById('totalStudents').textContent = studentStats.total;
+                document.getElementById('activeStudents').textContent = studentStats.activos;
+                document.getElementById('inactiveStudents').textContent = studentStats.bajas;
+                
+                // Distribución por clases (simulada)
+                const classDistribution = [
+                    { clase: 'Guitarra', alumnos: 45, color: 'primary', icon: 'fa-guitar' },
+                    { clase: 'Teclado', alumnos: 20, color: 'success', icon: 'fa-piano' },
+                    { clase: 'Batería', alumnos: 15, color: 'warning', icon: 'fa-drum' },
+                    { clase: 'Bajo', alumnos: 12, color: 'info', icon: 'fa-guitar' },
+                    { clase: 'Canto', alumnos: 8, color: 'secondary', icon: 'fa-microphone' }
+                ];
+
+                const classDistributionHTML = `
+                    <div class="row g-2">
+                        ${classDistribution.map(item => `
+                            <div class="col">
+                                <div class="instrument-card text-center p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                                    <i class="fas ${item.icon} fa-2x text-${item.color} mb-2"></i>
+                                    <div class="fw-bold" style="color: #E4E6EA;">${item.alumnos}</div>
+                                    <small style="color: #B8B9BA;">${item.clase}</small>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                document.getElementById('classDistribution').innerHTML = classDistributionHTML;
+                
+                // Overview de maestros (simulado)
+                const teachersData = [
+                    { nombre: 'Hugo Vázquez', alumnos: 35, ingresos: 52500 },
+                    { nombre: 'Manuel Reyes', alumnos: 20, ingresos: 30000 },
+                    { nombre: 'Julio Olvera', alumnos: 18, ingresos: 27000 },
+                    { nombre: 'Irwin', alumnos: 15, ingresos: 22500 },
+                    { nombre: 'Luis Blanquet', alumnos: 8, ingresos: 12000 },
+                    { nombre: 'Nahomy Perez', alumnos: 4, ingresos: 6000 }
+                ];
+                
+                const teachersHTML = teachersData.map(teacher => `
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                        <div>
+                            <strong style="color: #E4E6EA;">${teacher.nombre}</strong><br>
+                            <small style="color: #B8B9BA;">${teacher.alumnos} alumnos</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-success">${formatCurrency(teacher.ingresos)}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('teachersOverview').innerHTML = teachersHTML;
+                
+                // Alertas de pagos (placeholder por ahora)
+                document.getElementById('upcomingPayments').innerHTML = `
+                    <small class="text-muted">📅 Próximamente: Sistema de alertas de pagos basado en fechas de inscripción</small>
+                `;
+                
+                document.getElementById('overduePayments').innerHTML = `
+                    <small class="text-muted">⚠️ Próximamente: Detección automática de pagos vencidos (+5 días)</small>
+                `;
+                
+                console.log('✅ Datos de RockstarSkull cargados');
+                
+            } catch (error) {
+                console.error('❌ Error cargando datos de RockstarSkull:', error);
+            }
+        }
+
+        // 🔄 Actualizar alertas de pagos
+        function refreshPaymentAlerts() {
+            console.log('🔄 Actualizando alertas de pagos...');
+            showAlert('info', 'Sistema de alertas de pagos - Próximamente implementado');
+        }
+
+        // ✅ ACTUALIZACIÓN: Modificar funciones existentes para usar filtro
+
+        // Modificar loadDashboardData para incluir filtro de empresa
+        async function loadDashboardDataWithFilter() {
+            try {
+                console.log('📊 Cargando estadísticas con filtro de empresa...');
+                
+                // Construir query con filtro si existe
+                let queryParam = '';
+                if (currentCompanyFilter) {
+                    queryParam = `?empresa_id=${currentCompanyFilter}`;
+                }
+                
+                // Obtener resumen de transacciones
+                const response = await fetch(`/gastos/api/transacciones/resumen${queryParam}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const resumen = data.data;
+                    
+                    // Calcular totales
+                    const totalIngresos = resumen.ingresos || 0;
+                    const totalGastos = resumen.gastos || 0;
+                    const balance = totalIngresos - totalGastos;
+                    
+                    // Actualizar interfaz principal
+                    document.getElementById('totalIngresos').textContent = formatCurrency(totalIngresos);
+                    document.getElementById('totalGastos').textContent = formatCurrency(totalGastos);
+                    document.getElementById('balanceTotal').textContent = formatCurrency(balance);
+                    
+                    // Cambiar color del balance según si es positivo o negativo
+                    const balanceElement = document.getElementById('balanceTotal');
+                    if (balance >= 0) {
+                        balanceElement.className = 'text-success mb-0';
+                    } else {
+                        balanceElement.className = 'text-danger mb-0';
+                    }
+                    
+                    console.log('✅ Estadísticas cargadas con filtro - Balance:', formatCurrency(balance));
+                } else {
+                    console.warn('⚠️ No se pudieron cargar las estadísticas');
+                    showNoDataStats();
+                }
+                
+                // Cargar datos del mes actual con filtro
+                await loadCurrentMonthDataWithFilter();
+                
+            } catch (error) {
+                console.error('❌ Error cargando estadísticas:', error);
+                showNoDataStats();
+            }
+        }
+
+        // Modificar loadCurrentMonthData para incluir filtro
+        async function loadCurrentMonthDataWithFilter() {
+            try {
+                const currentDate = new Date();
+                const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                
+                const fechaInicio = firstDay.toISOString().split('T')[0];
+                const fechaFin = lastDay.toISOString().split('T')[0];
+                
+                let queryParam = `?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+                if (currentCompanyFilter) {
+                    queryParam += `&empresa_id=${currentCompanyFilter}`;
+                }
+                
+                const response = await fetch(`/gastos/api/transacciones/resumen${queryParam}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const resumen = data.data;
+                    const balanceMes = (resumen.ingresos || 0) - (resumen.gastos || 0);
+                    
+                    document.getElementById('esteMes').textContent = formatCurrency(balanceMes);
+                    
+                    // Cambiar color según el balance del mes
+                    const element = document.getElementById('esteMes');
+                    if (balanceMes >= 0) {
+                        element.className = 'text-success mb-0';
+                    } else {
+                        element.className = 'text-danger mb-0';
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error cargando datos del mes:', error);
+                document.getElementById('esteMes').textContent = '$0.00';
+            }
+        }
+
+        // Modificar loadRecentTransactions para incluir filtro
+        async function loadRecentTransactionsWithFilter(page = 1) {
+            try {
+                console.log(`📋 Cargando transacciones con filtro - Página ${page}...`);
+                
+                // Construir query con filtro
+                let queryParam = `?page=${page}&limit=${transactionsPerPage}`;
+                if (currentCompanyFilter) {
+                    queryParam += `&empresa_id=${currentCompanyFilter}`;
+                }
+                
+                // Mostrar loading
+                document.getElementById('transactionsLoading').style.display = 'block';
+                document.getElementById('transactionsTable').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'none';
+                
+                const response = await fetch(`/gastos/api/transacciones${queryParam}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const transactions = data.data;
+                    
+                    if (transactions && transactions.length > 0) {
+                        renderTransactions(transactions);
+                        renderPagination(data.pagination || {});
+                        
+                        document.getElementById('transactionsTable').style.display = 'block';
+                        document.getElementById('emptyState').style.display = 'none';
+                        
+                        console.log(`✅ ${transactions.length} transacciones cargadas con filtro`);
+                    } else {
+                        document.getElementById('emptyState').style.display = 'block';
+                        document.getElementById('transactionsTable').style.display = 'none';
+                    }
+                } else {
+                    throw new Error(data.message || 'Error cargando transacciones');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando transacciones:', error);
+                showAlert('danger', 'Error cargando las transacciones');
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('transactionsTable').style.display = 'none';
+            } finally {
+                document.getElementById('transactionsLoading').style.display = 'none';
+            }
+        }
+
+        // ✅ ACTUALIZAR: Reemplazar las funciones originales
+        window.loadDashboardData = loadDashboardDataWithFilter;
+        window.loadCurrentMonthData = loadCurrentMonthDataWithFilter;
+        window.loadRecentTransactions = loadRecentTransactionsWithFilter;
+
+        console.log('✅ Selector de empresas configurado');
+
+        // 🎯 CAMBIO 6: Variables para filtros interactivos
+        let currentStudentFilter = 'all'; // 'all', 'active', 'inactive'
+        /*let studentsData = {
+            all: [],
+            active: [],
+            inactive: []
+        };*/
+
+        // 🎯 CAMBIO 7: Función para filtrar alumnos por estatus
+        // ✅ VERSIÓN ACTUALIZADA
+        function filterStudentsByStatus(status) {
+            console.log(`👥 Filtrando alumnos por: ${status}`);
+            
+            // Contar alumnos según estatus desde studentsData real
+            const activeCount = studentsData.filter(s => s.estatus === 'Activo').length;
+            const inactiveCount = studentsData.filter(s => s.estatus === 'Baja').length;
+            const totalCount = studentsData.length;
+            
+            const counts = {
+                'active': { total: activeCount, title: 'Alumnos Activos' },
+                'inactive': { total: inactiveCount, title: 'Alumnos con Baja' },  
+                'all': { total: totalCount, title: 'Todos los Alumnos' }
+            };
+            
+            const info = counts[status] || counts['all'];
+            showAlert('info', `📊 Mostrando: ${info.title} (${info.total} estudiantes)`);
+            
+            // Actualizar distribución
+            updateClassDistribution(status);
+        }
+
+        // 🎯 CAMBIO 8: Actualizar distribución de clases según filtro
+        function updateClassDistribution(filterStatus) {
+            const classData = {
+                'all': [
+                    { clase: 'Guitarra', alumnos: 45, activos: 18, inactivos: 27 },
+                    { clase: 'Teclado', alumnos: 20, activos: 8, inactivos: 12 },
+                    { clase: 'Batería', alumnos: 15, activos: 5, inactivos: 10 },
+                    { clase: 'Bajo', alumnos: 12, activos: 3, inactivos: 9 },
+                    { clase: 'Canto', alumnos: 8, activos: 1, inactivos: 7 }
+                ]
+            };
+            
+            const classDistribution = classData.all.map(item => ({
+                ...item,
+                color: getClassColor(item.clase),
+                icon: getClassIcon(item.clase),
+                displayCount: filterStatus === 'active' ? item.activos : 
+                            filterStatus === 'inactive' ? item.inactivos : item.alumnos
+            }));
+            
+            const classDistributionHTML = `
+                <div class="row g-2">
+                    ${classDistribution.map(item => `
+                        <div class="col">
+                            <div class="instrument-card text-center p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                                <i class="fas ${item.icon} fa-2x text-${item.color} mb-2"></i>
+                                <div class="fw-bold" style="color: #E4E6EA;">${item.displayCount}</div>
+                                <small style="color: #B8B9BA;">${item.clase}</small>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            document.getElementById('classDistribution').innerHTML = classDistributionHTML;
+        }
+
+        // 🎯 CAMBIO 9: Actualizar indicadores del selector para RockstarSkull
+        function updateRockstarSkullIndicators() {
+            // Mostrar indicadores específicos de academia
+            document.getElementById('groupClassesIndicator').style.display = 'block';
+            document.getElementById('individualClassesIndicator').style.display = 'block'; 
+            document.getElementById('currentStudentsIndicator').style.display = 'block';
+            document.getElementById('pendingStudentsIndicator').style.display = 'block';
+            
+            // Datos simulados basados en análisis
+            document.getElementById('groupClasses').textContent = '15';
+            document.getElementById('individualClasses').textContent = '85';
+            document.getElementById('currentStudents').textContent = '35';
+            document.getElementById('pendingStudents').textContent = '12';
+        }
+
+        // 🎯 CAMBIO 10: Ocultar indicadores específicos para otras empresas  
+        function hideRockstarSkullIndicators() {
+            document.getElementById('groupClassesIndicator').style.display = 'none';
+            document.getElementById('individualClassesIndicator').style.display = 'none';
+            document.getElementById('currentStudentsIndicator').style.display = 'none'; 
+            document.getElementById('pendingStudentsIndicator').style.display = 'none';
+        }
+
+        // 🎯 CAMBIO 11: Funciones utilitarias
+        function getStudentCountByStatus(status) {
+            const counts = { active: 35, inactive: 65, all: 100 };
+            return counts[status] || 0;
+        }
+
+        function getClassColor(clase) {
+            const colors = {
+                'Guitarra': 'primary',
+                'Teclado': 'success', 
+                'Batería': 'warning',
+                'Bajo': 'info',
+                'Canto': 'secondary'
+            };
+            return colors[clase] || 'primary';
+        }
+
+        function getClassIcon(clase) {
+            const icons = {
+                'Guitarra': 'fa-guitar',
+                'Teclado': 'fa-piano',
+                'Batería': 'fa-drum', 
+                'Bajo': 'fa-guitar',
+                'Canto': 'fa-microphone'
+            };
+            return icons[clase] || 'fa-music';
+        }
+
+        // ✅ CORRECCIÓN: Agregar async a la función
+        async function handleCompanyChange() {
+            const companySelect = document.getElementById('companyFilter');
+            const selectedCompany = companySelect.value;
+            currentCompanyFilter = selectedCompany;
+            
+            console.log(`🏢 Filtro de empresa cambiado a: ${selectedCompany || 'Todas'}`);
+            
+            try {
+                // Recargar datos con filtro
+                await loadDashboardData();
+                await loadRecentTransactions(1);
+                await loadCompanyStats(selectedCompany);
+                
+                // Mostrar/ocultar widgets específicos de RockstarSkull
+                const rockstarWidgets = document.getElementById('rockstarSkullWidgets');
+                if (selectedCompany === '1') { // RockstarSkull
+                    rockstarWidgets.style.display = 'block';
+                    await loadRockstarSkullData();
+                    updateRockstarSkullIndicators(); // ← ESTA LÍNEA
+                } else {
+                    rockstarWidgets.style.display = 'none';
+                    hideRockstarSkullIndicators(); // ← ESTA LÍNEA
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cambiando filtro de empresa:', error);
+                showAlert('danger', 'Error aplicando filtro de empresa');
+            }
+            if (selectedCompany === '1') { // RockstarSkull
+                rockstarWidgets.style.display = 'block';
+                await loadRockstarSkullData();
+                updateRockstarSkullIndicators();
+                loadStudentsList(); // ← AGREGAR ESTA LÍNEA
+            } else {
+                rockstarWidgets.style.display = 'none';
+                hideRockstarSkullIndicators();
+            }
+        }
+        // 📊 Cargar estadísticas específicas de empresa
+        async function loadCompanyStats(companyId) {
+            try {
+                let queryParam = companyId ? `?empresa_id=${companyId}` : '';
+                const response = await fetch(`/gastos/api/transacciones/resumen${queryParam}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const resumen = data.data;
+                    
+                    // Actualizar stats del selector
+                    document.getElementById('companyTransactions').textContent = resumen.total_transacciones || 0;
+                    
+                    // Solo mostrar ingresos/gastos/balance si NO es RockstarSkull
+                    if (companyId !== '1') {
+                        document.getElementById('companyIncome').textContent = formatCurrency(resumen.ingresos || 0);
+                        document.getElementById('companyExpenses').textContent = formatCurrency(resumen.gastos || 0);
+                        document.getElementById('companyBalance').textContent = formatCurrency(resumen.balance || 0);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error cargando stats de empresa:', error);
+            }
+        }
+        // 🎓 Variables para gestión de alumnos
+        let studentsData = [];
+        let filteredStudents = [];
+        let currentStudentPage = 1;
+        const studentsPerPage = 15;
+
+        // 🎓 Datos simulados basados en análisis del Excel (muestra representativa)
+        const sampleStudentsData = [
+            {
+                id: 1,
+                nombre: "Gwyneth Adriana Tagliabue Cruz",
+                edad: 15,
+                maestro: "Hugo Vázquez", 
+                fechaInscripcion: new Date("2023-08-01"),
+                fechaUltimoPago: new Date("2023-11-01"),
+                clase: "Guitarra",
+                tipo: "G",
+                horario: "19:00 a 20:00 V",
+                formaPago: "TPV",
+                precioMensual: 1500,
+                estatus: "Baja",
+                totalPagado: 5550
+            },
+            {
+                id: 2,
+                nombre: "Alejandro Navarro Baltazar",
+                edad: 36,
+                maestro: "Hugo Vázquez",
+                fechaInscripcion: new Date("2023-08-02"),
+                fechaUltimoPago: new Date("2023-09-01"),
+                clase: "Guitarra",
+                tipo: "G", 
+                horario: "17:00 a 18:00 Mi",
+                formaPago: "Efectivo",
+                precioMensual: 1500,
+                estatus: "Baja",
+                totalPagado: 3000
+            },
+            {
+                id: 3,
+                nombre: "Manuel Zacate Millan",
+                edad: 62,
+                maestro: "Hugo Vázquez",
+                fechaInscripcion: new Date("2023-08-03"),
+                fechaUltimoPago: new Date("2023-09-01"),
+                clase: "Guitarra", 
+                tipo: "G",
+                horario: "18:00 a 19:00 J",
+                formaPago: "Efectivo",
+                precioMensual: 1400,
+                estatus: "Baja",
+                totalPagado: 2900
+            },
+            {
+                id: 4,
+                nombre: "Luis Erik Arias Ayala",
+                edad: 11,
+                maestro: "Manuel Reyes",
+                fechaInscripcion: new Date("2023-09-01"),
+                fechaUltimoPago: new Date("2025-07-01"),
+                clase: "Teclado",
+                tipo: "T",
+                horario: "16:00 a 17:00 S",
+                formaPago: "Transferencia",
+                precioMensual: 1500,
+                estatus: "Activo",
+                totalPagado: 36600
+            },
+            {
+                id: 5,
+                nombre: "Jose Fernando Campos Esparza",
+                edad: 28,
+                maestro: "Hugo Vázquez",
+                fechaInscripcion: new Date("2023-09-01"),
+                fechaUltimoPago: new Date("2023-09-01"),
+                clase: "Guitarra",
+                tipo: "G",
+                horario: "20:00 a 21:00 V",
+                formaPago: "Efectivo",
+                precioMensual: 2000,
+                estatus: "Baja", 
+                totalPagado: 2000
+            },
+            // Agregar más alumnos activos para demostrar alertas
+            {
+                id: 6,
+                nombre: "María González López",
+                edad: 25,
+                maestro: "Julio Olvera",
+                fechaInscripcion: new Date("2024-01-15"),
+                fechaUltimoPago: new Date("2025-08-15"),
+                clase: "Batería",
+                tipo: "B",
+                horario: "18:00 a 19:00 L",
+                formaPago: "TPV",
+                precioMensual: 1800,
+                estatus: "Activo",
+                totalPagado: 14400
+            },
+            {
+                id: 7,
+                nombre: "Carlos Mendoza Ruiz",
+                edad: 17,
+                maestro: "Luis Blanquet", 
+                fechaInscripcion: new Date("2024-06-10"),
+                fechaUltimoPago: new Date("2025-08-10"),
+                clase: "Bajo",
+                tipo: "B",
+                horario: "17:00 a 18:00 Ma",
+                formaPago: "Transferencia",
+                precioMensual: 1600,
+                estatus: "Activo",
+                totalPagado: 8000
+            },
+            {
+                id: 8,
+                nombre: "Ana Sofía Hernández",
+                edad: 22,
+                maestro: "Nahomy Perez",
+                fechaInscripcion: new Date("2025-03-20"),
+                fechaUltimoPago: new Date("2025-08-14"), // Próximo a vencer
+                clase: "Canto",
+                tipo: "C",
+                horario: "19:00 a 20:00 Mi",
+                formaPago: "TPV",
+                precioMensual: 1700,
+                estatus: "Activo",
+                totalPagado: 8500
+            }
+        ];
+
+        // 🎓 Cargar lista de alumnos (actualizar cuando tengamos API real)
+        function loadStudentsList() {
+            console.log('🎓 Cargando lista de alumnos...');
+            
+            // Por ahora usar datos simulados, después conectar a API
+            studentsData = sampleStudentsData;
+            filteredStudents = [...studentsData];
+            
+            renderStudentsTable();
+            updateStudentsPagination();
+            updateFilterSummary();
+            
+            console.log(`✅ ${studentsData.length} alumnos cargados`);
+        }
+
+        // 🎓 Filtrar alumnos por criterios
+        function filterStudents() {
+            const teacherFilter = document.getElementById('teacherFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const instrumentFilter = document.getElementById('instrumentFilter').value;
+            const paymentFilter = document.getElementById('paymentFilter').value;
+            
+            console.log('🔍 Aplicando filtros:', { teacherFilter, statusFilter, instrumentFilter, paymentFilter });
+            
+            filteredStudents = studentsData.filter(student => {
+                // Filtro por maestro
+                if (teacherFilter && student.maestro !== teacherFilter) return false;
+                
+                // Filtro por estatus  
+                if (statusFilter && student.estatus !== statusFilter) return false;
+                
+                // Filtro por instrumento
+                if (instrumentFilter && student.clase !== instrumentFilter) return false;
+                
+                // Filtro por estado de pagos
+                if (paymentFilter) {
+                    const paymentStatus = getPaymentStatus(student);
+                    if (paymentFilter !== paymentStatus) return false;
+                }
+                
+                return true;
+            });
+            
+            currentStudentPage = 1;
+            renderStudentsTable();
+            updateStudentsPagination(); 
+            updateFilterSummary();
+        }
+
+        // 🎓 Determinar estado de pago del alumno
+        function getPaymentStatus(student) {
+            if (student.estatus === 'Baja') return 'inactive';
+            
+            const today = new Date();
+            const nextDueDate = getNextPaymentDate(student);
+            const daysDiff = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff < -5) return 'overdue';  // Vencido +5 días
+            if (daysDiff <= 3 && daysDiff >= 0) return 'upcoming'; // Próximo (3 días)
+            return 'current'; // Al corriente
+        }
+
+        // 🎓 Calcular próxima fecha de pago basada en fecha de inscripción
+        function getNextPaymentDate(student) {
+            const inscriptionDate = new Date(student.fechaInscripcion);
+            const dayOfMonth = inscriptionDate.getDate();
+            
+            const today = new Date();
+            let nextPayment = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
+            
+            // Si ya pasó este mes, calcular para el próximo
+            if (nextPayment < today) {
+                nextPayment.setMonth(nextPayment.getMonth() + 1);
+            }
+            
+            return nextPayment;
+        }
+
+        // 🎓 Renderizar tabla de alumnos
+        function renderStudentsTable() {
+            const tbody = document.getElementById('studentsTableBody');
+            
+            if (filteredStudents.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <i class="fas fa-search fa-2x text-muted"></i>
+                            <p class="mt-2 mb-0 text-muted">No se encontraron alumnos con los filtros aplicados</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            const startIndex = (currentStudentPage - 1) * studentsPerPage;
+            const endIndex = Math.min(startIndex + studentsPerPage, filteredStudents.length);
+            const pageStudents = filteredStudents.slice(startIndex, endIndex);
+            
+            tbody.innerHTML = pageStudents.map((student, index) => {
+                const paymentStatus = getPaymentStatus(student);
+                const nextPaymentDate = getNextPaymentDate(student);
+                
+                const alertBadge = getPaymentAlertBadge(paymentStatus);
+                const statusBadge = student.estatus === 'Activo' 
+                    ? '<span class="badge bg-success">✅ Activo</span>'
+                    : '<span class="badge bg-danger">❌ Baja</span>';
+                    
+                return `
+                    <tr class="student-row" onclick="showStudentDetail(${student.id})">
+                        <td>${startIndex + index + 1}</td>
+                        <td>
+                            <strong>${student.nombre}</strong><br>
+                            <small class="text-muted">#${student.id}</small>
+                        </td>
+                        <td>${student.edad}</td>
+                        <td>
+                            ${getInstrumentIcon(student.clase)} ${student.clase}
+                        </td>
+                        <td>${student.maestro}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-success">${formatCurrency(student.precioMensual)}</td>
+                        <td>${formatDate(nextPaymentDate)}</td>
+                        <td>${alertBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showStudentDetail(${student.id})" title="Ver Detalle">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 🎓 Obtener badge de alerta de pago
+        function getPaymentAlertBadge(status) {
+            switch (status) {
+                case 'overdue':
+                    return '<span class="badge bg-danger">🚨 Vencido</span>';
+                case 'upcoming':
+                    return '<span class="badge bg-warning">⚠️ Próximo</span>';
+                case 'current':
+                    return '<span class="badge bg-success">✅ Al día</span>';
+                default:
+                    return '<span class="badge bg-secondary">-</span>';
+            }
+        }
+
+        // 🎓 Obtener icono del instrumento
+        function getInstrumentIcon(instrument) {
+            const icons = {
+                'Guitarra': '🎸',
+                'Teclado': '🎹',
+                'Batería': '🥁',
+                'Bajo': '🎸',
+                'Canto': '🎤'
+            };
+            return icons[instrument] || '🎵';
+        }
+
+        // 🎓 Actualizar paginación
+        function updateStudentsPagination() {
+            const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+            const pagination = document.getElementById('studentsPagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let paginationHTML = '';
+            
+            // Página anterior
+            if (currentStudentPage > 1) {
+                paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentStudentPage - 1})">Anterior</a>
+                    </li>
+                `;
+            }
+            
+            // Páginas numeradas
+            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                const isActive = i === currentStudentPage ? 'active' : '';
+                paginationHTML += `
+                    <li class="page-item ${isActive}">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${i})">${i}</a>
+                    </li>
+                `;
+            }
+            
+            // Página siguiente
+            if (currentStudentPage < totalPages) {
+                paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentStudentPage + 1})">Siguiente</a>
+                    </li>
+                `;
+            }
+            
+            pagination.innerHTML = paginationHTML;
+        }
+
+        // 🎓 Cambiar página de alumnos
+        function changeStudentPage(page) {
+            currentStudentPage = page;
+            renderStudentsTable();
+            updateStudentsPagination();
+        }
+
+        // 🎓 Actualizar resumen de filtros
+        function updateFilterSummary() {
+            const total = studentsData.length;
+            const filtered = filteredStudents.length;
+            
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('filteredCount').textContent = filtered;
+            
+            // Construir descripción de filtros
+            const filters = [];
+            const teacherFilter = document.getElementById('teacherFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const instrumentFilter = document.getElementById('instrumentFilter').value;
+            const paymentFilter = document.getElementById('paymentFilter').value;
+            
+            if (teacherFilter) filters.push(`Maestro: ${teacherFilter}`);
+            if (statusFilter) filters.push(`Estatus: ${statusFilter}`);
+            if (instrumentFilter) filters.push(`Instrumento: ${instrumentFilter}`);
+            if (paymentFilter) filters.push(`Pagos: ${getPaymentFilterLabel(paymentFilter)}`);
+            
+            const summary = filters.length > 0 
+                ? `Filtros activos: ${filters.join(', ')}`
+                : 'Mostrando todos los alumnos';
+                
+            document.getElementById('filterSummary').textContent = summary;
+        }
+
+        // 🎓 Obtener etiqueta del filtro de pagos
+        function getPaymentFilterLabel(filter) {
+            const labels = {
+                'current': 'Al Corriente',
+                'upcoming': 'Próximos a Vencer',
+                'overdue': 'Vencidos'
+            };
+            return labels[filter] || filter;
+        }
+
+        // 🎓 Mostrar detalle del alumno
+        function showStudentDetail(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            if (!student) return;
+            
+            console.log('👁️ Mostrando detalle del alumno:', student.nombre);
+            
+            // Llenar modal con datos
+            document.getElementById('studentModalName').textContent = student.nombre;
+            document.getElementById('modalStudentName').textContent = student.nombre;
+            document.getElementById('modalStudentAge').textContent = student.edad;
+            document.getElementById('modalStudentClass').textContent = student.clase;
+            document.getElementById('modalStudentTeacher').textContent = student.maestro;
+            document.getElementById('modalStudentSchedule').textContent = student.horario;
+            document.getElementById('modalStudentStatus').innerHTML = student.estatus === 'Activo' 
+                ? '<span class="badge bg-success">✅ Activo</span>'
+                : '<span class="badge bg-danger">❌ Baja</span>';
+            
+            document.getElementById('modalStudentEnrollment').textContent = formatDate(student.fechaInscripcion);
+            document.getElementById('modalStudentLastPayment').textContent = formatDate(student.fechaUltimoPago);
+            document.getElementById('modalStudentNextDue').textContent = formatDate(getNextPaymentDate(student));
+            document.getElementById('modalStudentMonthlyFee').textContent = formatCurrency(student.precioMensual);
+            document.getElementById('modalStudentPaymentMethod').textContent = student.formaPago;
+            document.getElementById('modalStudentTotalPaid').textContent = formatCurrency(student.totalPagado);
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('studentDetailModal'));
+            modal.show();
+        }
+
+        // 🎓 Funciones de acciones
+        function refreshStudentsList() {
+            console.log('🔄 Actualizando lista de alumnos...');
+            showAlert('info', 'Lista de alumnos actualizada');
+            loadStudentsList();
+        }
+
+        function exportStudentsList() {
+            console.log('💾 Exportando lista de alumnos...');
+            showAlert('info', 'Funcionalidad de exportación - Próximamente implementada');
+        }
+
+        function markPaymentReceived() {
+            showAlert('info', 'Registro de pago recibido - Próximamente implementado');
+        }
+
+        function sendPaymentReminder() {
+            showAlert('info', 'Envío de recordatorio de pago - Próximamente implementado');
+        }
+
+        // 🎓 Auto-inicializar cuando se muestre RockstarSkull
+        const originalLoadRockstarSkullData = window.loadRockstarSkullData;
+        window.loadRockstarSkullData = async function() {
+            await originalLoadRockstarSkullData();
+            loadStudentsList();
+        };
+
+        console.log('✅ Sistema de gestión de alumnos configurado');
     </script>
 </body>
 </html>
