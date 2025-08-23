@@ -2518,11 +2518,22 @@
         }
 
         // 🎓 Auto-inicializar cuando se muestre RockstarSkull
-        const originalLoadRockstarSkullData = window.loadRockstarSkullData;
+        /*const originalLoadRockstarSkullData = window.loadRockstarSkullData;
         window.loadRockstarSkullData = async function() {
             await originalLoadRockstarSkullData();
             loadStudentsList();
-        };
+        };*/
+
+        // Auto-cargar cuando se inicialice
+        document.addEventListener('DOMContentLoaded', function() {
+            // Si RockstarSkull ya está seleccionado, cargar alumnos
+            setTimeout(() => {
+                const companySelect = document.getElementById('companyFilter');
+                if (companySelect && companySelect.value === '1') {
+                    loadStudentsList();
+                }
+            }, 2000);
+        });
 
         console.log('✅ Sistema de gestión de alumnos configurado');
     </script>
