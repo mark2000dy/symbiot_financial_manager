@@ -284,73 +284,87 @@ export const transaccionesController = {
                 params.push(fechaFin);
             }
 
-            // Resumen general por tipo
-            const resumenGeneral = await executeQuery(`
+            // Consulta principal para obtener totales por tipo
+            const resumenQuery = `
                 SELECT 
-                    tipo,
-                    COUNT(*) as cantidad,
+                    CASE 
+                        WHEN tipo = 'I' THEN 'ingresos'
+                        WHEN tipo = 'G' THEN 'gastos'
+                    END as categoria,
                     SUM(total) as total_monto,
-                    AVG(total) as promedio
+                    COUNT(*) as cantidad
                 FROM transacciones ${whereClause}
                 GROUP BY tipo
-                ORDER BY tipo
-            `, params);
+            `;
 
-            // Resumen por empresa
-            const resumenPorEmpresa = await executeQuery(`
-                SELECT 
-                    e.nombre as empresa,
-                    t.tipo,
-                    COUNT(*) as cantidad,
-                    SUM(t.total) as total_monto
-                FROM transacciones t
-                LEFT JOIN empresas e ON t.empresa_id = e.id
-                ${whereClause}
-                GROUP BY t.empresa_id, e.nombre, t.tipo
-                ORDER BY e.nombre, t.tipo
-            `, params);
+            const resultados = await executeQuery(resumenQuery, params);
+            
+            // Procesar resultados para formato esperado por el frontend
+            const resumen = {
+                ingresos: 0,
+                gastos: 0,
+                balance: 0,
+                total_transacciones: 0
+            };
 
-            // Resumen por mes (últimos 12 meses)
-            const resumenPorMes = await executeQuery(`
+            resultados.forEach(row => {
+                if (row.categoria === 'ingresos') {
+                    resumen.ingresos = parseFloat(row.total_monto) || 0;
+                    resumen.total_transacciones += row.cantidad || 0;
+                } else if (row.categoria === 'gastos') {
+                    resumen.gastos = parseFloat(row.total_monto) || 0;
+                    resumen.total_transacciones += row.cantidad || 0;
+                }
+            });
+
+            // Calcular balance
+            resumen.balance = resumen.ingresos - resumen.gastos;
+
+            // Obtener detalles adicionales
+            const detallesQuery = `
                 SELECT 
-                    DATE_FORMAT(fecha, '%Y-%m') as mes,
-                    tipo,
-                    COUNT(*) as cantidad,
-                    SUM(total) as total_monto
+                    COUNT(*) as total_transacciones_detalle,
+                    MIN(fecha) as fecha_primera,
+                    MAX(fecha) as fecha_ultima,
+                    COUNT(DISTINCT socio) as total_socios,
+                    COUNT(DISTINCT empresa_id) as total_empresas
                 FROM transacciones ${whereClause}
-                GROUP BY DATE_FORMAT(fecha, '%Y-%m'), tipo
-                ORDER BY mes DESC, tipo
-                LIMIT 24
-            `, params);
+            `;
 
-            // Top transacciones por socio
-            const topSocios = await executeQuery(`
-                SELECT 
-                    socio,
-                    tipo,
-                    COUNT(*) as cantidad,
-                    SUM(total) as total_monto
-                FROM transacciones ${whereClause}
-                GROUP BY socio, tipo
-                ORDER BY total_monto DESC
-                LIMIT 10
-            `, params);
+            const detalles = await executeQuery(detallesQuery, params);
+            
+            if (detalles && detalles.length > 0) {
+                resumen.fecha_primera = detalles[0].fecha_primera;
+                resumen.fecha_ultima = detalles[0].fecha_ultima;
+                resumen.total_socios = detalles[0].total_socios || 0;
+                resumen.total_empresas = detalles[0].total_empresas || 0;
+                // Usar el conteo detallado si es diferente
+                resumen.total_transacciones = detalles[0].total_transacciones_detalle || resumen.total_transacciones;
+            }
+
+            console.log('📊 Resumen calculado:', {
+                ingresos: resumen.ingresos,
+                gastos: resumen.gastos,
+                balance: resumen.balance,
+                transacciones: resumen.total_transacciones
+            });
 
             res.json({
                 success: true,
-                data: {
-                    resumen_general: resumenGeneral,
-                    por_empresa: resumenPorEmpresa,
-                    por_mes: resumenPorMes,
-                    top_socios: topSocios
+                data: resumen,
+                filtros_aplicados: {
+                    empresa_id: empresa_id || null,
+                    fecha_inicio: fechaInicio || null,
+                    fecha_fin: fechaFin || null
                 }
             });
 
         } catch (error) {
-            console.error('Error al obtener resumen:', error);
+            console.error('❌ Error al obtener resumen:', error);
             res.status(500).json({ 
                 success: false, 
-                message: 'Error interno del servidor' 
+                message: 'Error interno del servidor',
+                error: error.message
             });
         }
     },

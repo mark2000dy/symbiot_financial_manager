@@ -67,7 +67,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/gastos', express.static(path.join(__dirname, '../public')));
 
 // ============================================================
-// MIDDLEWARE DE AUTENTICACIÓN (PARA PÁGINAS)
+// MIDDLEWARE DE AUTENTICACIÓN (PARA PÁGINAS)  
 // ============================================================
 function requireAuth(req, res, next) {
     if (req.session && req.session.user) {
@@ -79,51 +79,6 @@ function requireAuth(req, res, next) {
         });
     }
 }
-
-// ============================================================
-// HEALTH CHECK (PÚBLICO - ANTES DE AUTENTICACIÓN)
-// ============================================================
-app.get('/gastos/api/health', async (req, res) => {
-    try {
-        const dbStatus = await testConnection();
-        
-        // Test básico de tabla transacciones
-        let tablesStatus = false;
-        if (dbStatus) {
-            try {
-                const { executeQuery } = await import('./config/database.js');
-                await executeQuery('SELECT COUNT(*) FROM transacciones LIMIT 1');
-                tablesStatus = true;
-            } catch (error) {
-                console.log('⚠️ Tabla transacciones no accesible:', error.message);
-            }
-        }
-        
-        res.json({
-            status: 'OK',
-            timestamp: new Date().toISOString(),
-            environment: process.env.NODE_ENV || 'development',
-            version: '1.0.0',
-            services: {
-                database: dbStatus ? 'connected' : 'disconnected',
-                tables: tablesStatus ? 'ready' : 'not_ready'
-            },
-            endpoints: {
-                login: '/gastos/api/login',
-                gastos: '/gastos/api/gastos',
-                ingresos: '/gastos/api/ingresos',
-                transacciones: '/gastos/api/transacciones',
-                dashboard: '/gastos/api/dashboard'
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: 'ERROR',
-            message: 'Health check failed',
-            error: error.message
-        });
-    }
-});
 
 // ============================================================
 // RUTAS DE AUTENTICACIÓN
@@ -153,7 +108,7 @@ app.get('/gastos/', (req, res) => {
 });
 
 // ============================================================
-// HEALTH CHECK MEJORADO
+// HEALTH CHECK - SOLO UNA DEFINICIÓN
 // ============================================================
 app.get('/gastos/api/health', async (req, res) => {
     try {
@@ -164,8 +119,9 @@ app.get('/gastos/api/health', async (req, res) => {
         if (dbStatus) {
             try {
                 const { executeQuery } = await import('./config/database.js');
-                await executeQuery('SELECT COUNT(*) FROM transacciones LIMIT 1');
+                const result = await executeQuery('SELECT COUNT(*) as total FROM transacciones LIMIT 1');
                 tablesStatus = true;
+                console.log(`💾 Transacciones en BD: ${result[0].total}`);
             } catch (error) {
                 console.log('⚠️ Tabla transacciones no accesible:', error.message);
             }
@@ -185,6 +141,7 @@ app.get('/gastos/api/health', async (req, res) => {
                 gastos: '/gastos/api/gastos',
                 ingresos: '/gastos/api/ingresos',
                 transacciones: '/gastos/api/transacciones',
+                resumen: '/gastos/api/transacciones/resumen',
                 dashboard: '/gastos/api/dashboard'
             }
         });

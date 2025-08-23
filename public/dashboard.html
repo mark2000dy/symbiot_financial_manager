@@ -2,8 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Dashboard - Sistema de Gastos Symbiot</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard - Sistema de Gastos Symbiot</title>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#191C24">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -12,155 +16,333 @@
     
     <style>
         body {
-            background: linear-gradient(135deg, #000 0%, #1a1a1a 50%, #000 100%);
-            color: #6C7293;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .sidebar {
-            background: linear-gradient(135deg, #191C24 0%, #0d1117 100%);
+            background: linear-gradient(135deg, #000 0%, #191C24 50%, #000 100%);
             min-height: 100vh;
-            padding: 2rem 1rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
         }
-        .navbar-brand h3 {
-            background: linear-gradient(45deg, #EB1616, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        
+        .navbar {
+            background: rgba(25, 28, 36, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .nav-link {
-            color: #6C7293 !important;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            margin: 0.25rem 0;
-            transition: all 0.3s ease;
+        
+        .navbar-brand {
+            color: #EB1616 !important;
+            font-weight: bold;
+            font-size: 1.5rem;
         }
-        .nav-link:hover, .nav-link.active {
-            background: rgba(235, 22, 22, 0.1);
-            color: white !important;
+        
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            transition: color 0.3s ease;
         }
+        
+        .navbar-nav .nav-link:hover {
+            color: #EB1616 !important;
+        }
+        
+        .main-content {
+            padding: 2rem 0;
+        }
+        
+        .stat-card {
+            background: rgba(25, 28, 36, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+        }
+        
         .card {
             background: rgba(25, 28, 36, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
         }
-        .card:hover {
+        
+        .card-header {
+            background: rgba(235, 22, 22, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .table-dark {
+            background: transparent;
+        }
+        
+        .table-dark tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #EB1616, #FF4444);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #FF4444, #EB1616);
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 25px rgba(235, 22, 22, 0.4);
         }
-        .stat-icon {
-            font-size: 3rem;
-            opacity: 0.8;
+        
+        .btn-outline-primary {
+            border-color: #EB1616;
+            color: #EB1616;
         }
-        .text-primary { color: #EB1616 !important; }
-        .bg-primary { background-color: #EB1616 !important; }
+        
+        .btn-outline-primary:hover {
+            background-color: #EB1616;
+            border-color: #EB1616;
+        }
+        
+        .badge-success {
+            background-color: #28a745 !important;
+        }
+        
+        .badge-danger {
+            background-color: #dc3545 !important;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .welcome-banner {
+            background: linear-gradient(135deg, rgba(235, 22, 22, 0.2), rgba(255, 68, 68, 0.1));
+            border: 1px solid rgba(235, 22, 22, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .transaction-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .transaction-row:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar">
-                <div class="navbar-brand text-center mb-4">
-                    <h3><i class="fas fa-chart-line me-2"></i>Symbiot</h3>
-                    <small class="text-muted">Sistema de Gastos</small>
-                </div>
-                
-                <nav class="nav flex-column">
-                    <a class="nav-link active" href="dashboard.html">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                    </a>
-                    <a class="nav-link" href="gastos.html">
-                        <i class="fas fa-minus-circle me-2"></i>Gastos
-                    </a>
-                    <a class="nav-link" href="ingresos.html">
-                        <i class="fas fa-plus-circle me-2"></i>Ingresos
-                    </a>
-                    <a class="nav-link" href="reportes.html">
-                        <i class="fas fa-chart-bar me-2"></i>Reportes
-                    </a>
-                    <a class="nav-link" href="#" onclick="logout()">
-                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                    </a>
-                </nav>
-            </div>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/gastos">
+                <i class="fas fa-chart-line me-2"></i>SYMBIOT
+            </a>
             
-            <!-- Content -->
-            <div class="col-md-9 col-lg-10 p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h1 class="h3 text-white">Dashboard de Control</h1>
-                    <div class="text-muted">
-                        <i class="fas fa-user me-2"></i>Usuario Demo
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="dashboard.html">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="gastos.html">
+                            <i class="fas fa-money-bill-wave me-1"></i>Gastos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="ingresos.html">
+                            <i class="fas fa-coins me-1"></i>Ingresos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="reportes.html">
+                            <i class="fas fa-chart-bar me-1"></i>Reportes
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <span id="userName">Usuario</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid main-content">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner" id="welcomeBanner">
+            <h4 class="mb-1">¡Bienvenido, <span id="userNameDisplay">Usuario</span>!</h4>
+            <p class="mb-0 text-muted">
+                <i class="fas fa-building me-1"></i>
+                <span id="userCompany">Cargando...</span> • 
+                <span id="currentDate"></span>
+            </p>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <!-- Balance Total -->
+            <div class="col-sm-6 col-xl-3 mb-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <i class="fas fa-wallet stat-icon text-info me-3"></i>
+                        <div>
+                            <h6 class="card-title text-muted">Balance Total</h6>
+                            <h4 class="text-info mb-0" id="balanceTotal">
+                                <div class="loading-spinner">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            </h4>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- Stats Cards -->
-                <div class="row mb-4">
-                    <div class="col-sm-6 col-xl-3 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body d-flex align-items-center">
-                                <i class="fas fa-arrow-up stat-icon text-success me-3"></i>
-                                <div>
-                                    <h6 class="card-title text-muted">Total Ingresos</h6>
-                                    <h4 class="text-success mb-0">$0.00</h4>
+            </div>
+
+            <!-- Total Ingresos -->
+            <div class="col-sm-6 col-xl-3 mb-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <i class="fas fa-arrow-up stat-icon text-success me-3"></i>
+                        <div>
+                            <h6 class="card-title text-muted">Total Ingresos</h6>
+                            <h4 class="text-success mb-0" id="totalIngresos">
+                                <div class="loading-spinner">
+                                    <i class="fas fa-spinner fa-spin"></i>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-sm-6 col-xl-3 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body d-flex align-items-center">
-                                <i class="fas fa-arrow-down stat-icon text-danger me-3"></i>
-                                <div>
-                                    <h6 class="card-title text-muted">Total Gastos</h6>
-                                    <h4 class="text-danger mb-0">$0.00</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-sm-6 col-xl-3 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body d-flex align-items-center">
-                                <i class="fas fa-balance-scale stat-icon text-primary me-3"></i>
-                                <div>
-                                    <h6 class="card-title text-muted">Balance</h6>
-                                    <h4 class="text-primary mb-0">$0.00</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-sm-6 col-xl-3 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body d-flex align-items-center">
-                                <i class="fas fa-calendar stat-icon text-warning me-3"></i>
-                                <div>
-                                    <h6 class="card-title text-muted">Este Mes</h6>
-                                    <h4 class="text-warning mb-0">$0.00</h4>
-                                </div>
-                            </div>
+                            </h4>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Recent Transactions -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="text-white mb-0">Transacciones Recientes</h5>
-                        <button class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i>Nuevo
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-inbox fa-3x mb-3"></i>
-                            <p>No hay transacciones registradas</p>
-                            <button class="btn btn-outline-primary">
-                                <i class="fas fa-plus me-2"></i>Agregar Primera Transacción
-                            </button>
+            </div>
+
+            <!-- Total Gastos -->
+            <div class="col-sm-6 col-xl-3 mb-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <i class="fas fa-arrow-down stat-icon text-danger me-3"></i>
+                        <div>
+                            <h6 class="card-title text-muted">Total Gastos</h6>
+                            <h4 class="text-danger mb-0" id="totalGastos">
+                                <div class="loading-spinner">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            </h4>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Este Mes -->
+            <div class="col-sm-6 col-xl-3 mb-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <i class="fas fa-calendar stat-icon text-warning me-3"></i>
+                        <div>
+                            <h6 class="card-title text-muted">Este Mes</h6>
+                            <h4 class="text-warning mb-0" id="esteMes">
+                                <div class="loading-spinner">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Transactions -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="text-white mb-0">
+                    <i class="fas fa-history me-2"></i>Transacciones Recientes
+                </h5>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshTransactions()">
+                        <i class="fas fa-sync-alt me-1"></i>Actualizar
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="showAddTransactionModal()">
+                        <i class="fas fa-plus me-1"></i>Nueva
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Loading State -->
+                <div class="loading-spinner" id="transactionsLoading">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2">Cargando transacciones...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>No hay transacciones registradas</p>
+                    <button class="btn btn-outline-primary" onclick="showAddTransactionModal()">
+                        <i class="fas fa-plus me-2"></i>Agregar Primera Transacción
+                    </button>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="table-responsive" id="transactionsTable" style="display: none;">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-calendar-alt me-1"></i>Fecha</th>
+                                <th><i class="fas fa-receipt me-1"></i>Concepto</th>
+                                <th><i class="fas fa-user me-1"></i>Socio</th>
+                                <th><i class="fas fa-building me-1"></i>Empresa</th>
+                                <th><i class="fas fa-tags me-1"></i>Tipo</th>
+                                <th><i class="fas fa-dollar-sign me-1"></i>Total</th>
+                                <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsBody">
+                            <!-- Se llenarán dinámicamente -->
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Paginación de transacciones" class="mt-3">
+                        <ul class="pagination justify-content-center" id="pagination">
+                            <!-- Se generará dinámicamente -->
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
@@ -169,14 +351,345 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function logout() {
-            if (confirm('¿Está seguro que desea cerrar sesión?')) {
-                localStorage.removeItem('rememberedEmail');
-                window.location.href = 'login.html';
+        // 🌐 Variables globales
+        let currentUser = null;
+        let currentPage = 1;
+        const transactionsPerPage = 10;
+
+        // 🚀 Inicialización al cargar la página
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Inicializando dashboard...');
+            
+            try {
+                // Verificar sesión y obtener usuario
+                await loadCurrentUser();
+                
+                // Cargar datos del dashboard
+                await loadDashboardData();
+                
+                // Cargar transacciones recientes
+                await loadRecentTransactions();
+                
+                // Establecer fecha actual
+                updateCurrentDate();
+                
+                console.log('✅ Dashboard cargado exitosamente');
+                
+            } catch (error) {
+                console.error('❌ Error cargando dashboard:', error);
+                showAlert('danger', 'Error cargando el dashboard. Redirigiendo al login...');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
+        });
+
+        // 👤 Cargar usuario actual
+        async function loadCurrentUser() {
+            try {
+                console.log('👤 Cargando usuario actual...');
+                
+                const response = await fetch('/gastos/api/user');
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    document.getElementById('userName').textContent = currentUser.nombre;
+                    document.getElementById('userNameDisplay').textContent = currentUser.nombre;
+                    document.getElementById('userCompany').textContent = currentUser.empresa;
+                    
+                    console.log('✅ Usuario cargado:', currentUser.nombre);
+                } else {
+                    throw new Error('No hay sesión activa');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando usuario:', error);
+                throw error;
             }
         }
-        
-        console.log('✅ Dashboard cargado correctamente');
+
+        // 📊 Cargar datos del dashboard
+        async function loadDashboardData() {
+            try {
+                console.log('📊 Cargando estadísticas del dashboard...');
+                
+                // Obtener resumen de transacciones
+                const response = await fetch('/gastos/api/transacciones/resumen');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const resumen = data.data;
+                    
+                    // Calcular totales
+                    const totalIngresos = resumen.ingresos || 0;
+                    const totalGastos = resumen.gastos || 0;
+                    const balance = totalIngresos - totalGastos;
+                    
+                    // Actualizar interfaz
+                    document.getElementById('totalIngresos').textContent = formatCurrency(totalIngresos);
+                    document.getElementById('totalGastos').textContent = formatCurrency(totalGastos);
+                    document.getElementById('balanceTotal').textContent = formatCurrency(balance);
+                    
+                    // Cambiar color del balance según si es positivo o negativo
+                    const balanceElement = document.getElementById('balanceTotal');
+                    if (balance >= 0) {
+                        balanceElement.className = 'text-success mb-0';
+                    } else {
+                        balanceElement.className = 'text-danger mb-0';
+                    }
+                    
+                    console.log('✅ Estadísticas cargadas - Balance:', formatCurrency(balance));
+                } else {
+                    console.warn('⚠️ No se pudieron cargar las estadísticas');
+                    showNoDataStats();
+                }
+                
+                // Cargar datos del mes actual
+                await loadCurrentMonthData();
+                
+            } catch (error) {
+                console.error('❌ Error cargando estadísticas:', error);
+                showNoDataStats();
+            }
+        }
+
+        // 📅 Cargar datos del mes actual
+        async function loadCurrentMonthData() {
+            try {
+                const currentDate = new Date();
+                const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                
+                const fechaInicio = firstDay.toISOString().split('T')[0];
+                const fechaFin = lastDay.toISOString().split('T')[0];
+                
+                const response = await fetch(`/gastos/api/transacciones/resumen?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const resumen = data.data;
+                    const balanceMes = (resumen.ingresos || 0) - (resumen.gastos || 0);
+                    
+                    document.getElementById('esteMes').textContent = formatCurrency(balanceMes);
+                    
+                    // Cambiar color según el balance del mes
+                    const element = document.getElementById('esteMes');
+                    if (balanceMes >= 0) {
+                        element.className = 'text-success mb-0';
+                    } else {
+                        element.className = 'text-danger mb-0';
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error cargando datos del mes:', error);
+                document.getElementById('esteMes').textContent = '$0.00';
+            }
+        }
+
+        // 📋 Cargar transacciones recientes
+        async function loadRecentTransactions(page = 1) {
+            try {
+                console.log(`📋 Cargando transacciones - Página ${page}...`);
+                
+                // Mostrar loading
+                document.getElementById('transactionsLoading').style.display = 'block';
+                document.getElementById('transactionsTable').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'none';
+                
+                const response = await fetch(`/gastos/api/transacciones?page=${page}&limit=${transactionsPerPage}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const transactions = data.data;
+                    
+                    if (transactions && transactions.length > 0) {
+                        renderTransactions(transactions);
+                        renderPagination(data.pagination || {});
+                        
+                        document.getElementById('transactionsTable').style.display = 'block';
+                        document.getElementById('emptyState').style.display = 'none';
+                        
+                        console.log(`✅ ${transactions.length} transacciones cargadas`);
+                    } else {
+                        document.getElementById('emptyState').style.display = 'block';
+                        document.getElementById('transactionsTable').style.display = 'none';
+                    }
+                } else {
+                    throw new Error(data.message || 'Error cargando transacciones');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando transacciones:', error);
+                showAlert('danger', 'Error cargando las transacciones');
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('transactionsTable').style.display = 'none';
+            } finally {
+                document.getElementById('transactionsLoading').style.display = 'none';
+            }
+        }
+
+        // 🎨 Renderizar transacciones en la tabla
+        function renderTransactions(transactions) {
+            const tbody = document.getElementById('transactionsBody');
+            tbody.innerHTML = '';
+            
+            transactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.className = 'transaction-row';
+                
+                const tipoLabel = transaction.tipo === 'I' ? 'Ingreso' : 'Gasto';
+                const tipoBadge = transaction.tipo === 'I' ? 'badge-success' : 'badge-danger';
+                const tipoIcon = transaction.tipo === 'I' ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
+                
+                row.innerHTML = `
+                    <td>${formatDate(transaction.fecha)}</td>
+                    <td>${transaction.concepto}</td>
+                    <td>${transaction.socio}</td>
+                    <td>${transaction.nombre_empresa || 'N/A'}</td>
+                    <td><span class="badge ${tipoBadge}"><i class="${tipoIcon} me-1"></i>${tipoLabel}</span></td>
+                    <td class="${transaction.tipo === 'I' ? 'text-success' : 'text-danger'}">${formatCurrency(transaction.total)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editTransaction(${transaction.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTransaction(${transaction.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // 📄 Renderizar paginación
+        function renderPagination(pagination) {
+            const paginationElement = document.getElementById('pagination');
+            paginationElement.innerHTML = '';
+            
+            if (!pagination.totalPages || pagination.totalPages <= 1) return;
+            
+            // Botón anterior
+            if (pagination.currentPage > 1) {
+                paginationElement.innerHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="loadRecentTransactions(${pagination.currentPage - 1})">Anterior</a>
+                    </li>
+                `;
+            }
+            
+            // Páginas
+            for (let i = 1; i <= pagination.totalPages; i++) {
+                const isActive = i === pagination.currentPage ? 'active' : '';
+                paginationElement.innerHTML += `
+                    <li class="page-item ${isActive}">
+                        <a class="page-link" href="#" onclick="loadRecentTransactions(${i})">${i}</a>
+                    </li>
+                `;
+            }
+            
+            // Botón siguiente
+            if (pagination.currentPage < pagination.totalPages) {
+                paginationElement.innerHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="loadRecentTransactions(${pagination.currentPage + 1})">Siguiente</a>
+                    </li>
+                `;
+            }
+        }
+
+        // 🔄 Actualizar transacciones
+        function refreshTransactions() {
+            loadRecentTransactions(currentPage);
+        }
+
+        // 🚪 Cerrar sesión
+        async function logout() {
+            if (confirm('¿Está seguro que desea cerrar sesión?')) {
+                try {
+                    const response = await fetch('/gastos/api/logout', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        localStorage.removeItem('rememberedEmail');
+                        window.location.href = 'login.html';
+                    }
+                } catch (error) {
+                    console.error('Error en logout:', error);
+                    window.location.href = 'login.html';
+                }
+            }
+        }
+
+        // 🛠️ Funciones de utilidad
+        function formatCurrency(amount) {
+            if (amount == null) return '$0.00';
+            return new Intl.NumberFormat('es-MX', {
+                style: 'currency',
+                currency: 'MXN'
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function updateCurrentDate() {
+            const now = new Date();
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('es-MX', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function showAlert(type, message) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertContainer.appendChild(alert);
+            
+            // Auto-dismiss después de 5 segundos
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        function showNoDataStats() {
+            document.getElementById('totalIngresos').textContent = '$0.00';
+            document.getElementById('totalGastos').textContent = '$0.00';
+            document.getElementById('balanceTotal').textContent = '$0.00';
+            document.getElementById('esteMes').textContent = '$0.00';
+        }
+
+        // 🔧 Funciones para futuras implementaciones
+        function showAddTransactionModal() {
+            showAlert('info', 'Modal de nueva transacción - Próximamente implementado');
+        }
+
+        function editTransaction(id) {
+            showAlert('info', `Editar transacción ${id} - Próximamente implementado`);
+        }
+
+        function deleteTransaction(id) {
+            if (confirm('¿Está seguro de eliminar esta transacción?')) {
+                showAlert('info', `Eliminar transacción ${id} - Próximamente implementado`);
+            }
+        }
     </script>
 </body>
 </html>
