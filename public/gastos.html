@@ -161,7 +161,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="/gastos">
-                <i class="fas fa-chart-line me-2"></i>SYMBIOT
+                <img src="assets/images/Symbiot_logo_dark_horizon.png" alt="SYMBIOT Logo" style="height: 30px; margin-right: 8px;">
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -218,6 +218,16 @@
                 ¡Bienvenido, <span id="userNameDisplay">Usuario</span>! • 
                 Gestiona y analiza todos los gastos de tus empresas con filtros avanzados y reportes detallados
             </p>
+        </div>
+
+        <!-- Widget de Gráfica de Gastos -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="text-white mb-0">📊 Análisis de Gastos por Período</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="gastosChart" height="100"></canvas>
+            </div>
         </div>
 
         <!-- Filtros Básicos -->
