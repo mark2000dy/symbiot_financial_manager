@@ -140,6 +140,351 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
+// ============================================================
+// RUTAS ESPECÍFICAS DE GASTOS
+// ============================================================
+
+// GET /api/gastos/grafica - Datos para gráfica principal de gastos
+router.get('/gastos/grafica', async (req, res) => {
+    try {
+        const { empresa_id, año, periodo = 12 } = req.query;
+        
+        let whereClause = 'WHERE tipo = "G"'; // Solo gastos
+        let params = [];
+        
+        if (empresa_id) {
+            whereClause += ' AND empresa_id = ?';
+            params.push(empresa_id);
+        }
+        
+        if (año) {
+            whereClause += ' AND YEAR(fecha) = ?';
+            params.push(año);
+        } else {
+            // Por defecto últimos 12 meses
+            whereClause += ' AND fecha >= DATE_SUB(NOW(), INTERVAL ? MONTH)';
+            params.push(parseInt(periodo));
+        }
+        
+        // Datos por mes para la gráfica
+        const gastosPorMes = await executeQuery(`
+            SELECT 
+                DATE_FORMAT(fecha, '%Y-%m') as periodo,
+                DATE_FORMAT(fecha, '%M %Y') as periodo_label,
+                YEAR(fecha) as año,
+                MONTH(fecha) as mes,
+                COUNT(*) as total_transacciones,
+                SUM(total) as total_gastos,
+                AVG(total) as promedio_gasto
+            FROM transacciones 
+            ${whereClause}
+            GROUP BY DATE_FORMAT(fecha, '%Y-%m')
+            ORDER BY fecha DESC
+            LIMIT 12
+        `, params);
+        
+        // Totales generales
+        const totales = await executeQuery(`
+            SELECT 
+                COUNT(*) as total_transacciones,
+                SUM(total) as total_gastos,
+                AVG(total) as promedio_gasto,
+                MIN(total) as gasto_minimo,
+                MAX(total) as gasto_maximo
+            FROM transacciones 
+            ${whereClause}
+        `, params);
+        
+        // Top 5 categorías de gastos
+        const topCategorias = await executeQuery(`
+            SELECT 
+                socio,
+                COUNT(*) as cantidad,
+                SUM(total) as total_gastos,
+                ROUND(AVG(total), 2) as promedio
+            FROM transacciones 
+            ${whereClause}
+            GROUP BY socio
+            ORDER BY total_gastos DESC
+            LIMIT 5
+        `, params);
+        
+        res.json({
+            success: true,
+            data: {
+                gastos_por_mes: gastosPorMes.reverse(), // Orden cronológico
+                totales: totales[0] || {},
+                top_categorias: topCategorias,
+                periodo_consultado: año || `Últimos ${periodo} meses`
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error obteniendo datos de gráfica:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Error interno del servidor' 
+        });
+    }
+});
+
+// GET /api/gastos/drill-down - Drill-down por año/mes
+router.get('/gastos/drill-down', async (req, res) => {
+    try {
+        const { empresa_id, año, mes, socio } = req.query;
+        
+        let whereClause = 'WHERE tipo = "G"';
+        let params = [];
+        
+        if (empresa_id) {
+            whereClause += ' AND empresa_id = ?';
+            params.push(empresa_id);
+        }
+        
+        if (año) {
+            whereClause += ' AND YEAR(fecha) = ?';
+            params.push(año);
+            
+            if (mes) {
+                whereClause += ' AND MONTH(fecha) = ?';
+                params.push(mes);
+            }
+        }
+        
+        if (socio) {
+            whereClause += ' AND socio = ?';
+            params.push(socio);
+        }
+        
+        // Si tenemos año y mes, mostrar gastos detallados
+        if (año && mes) {
+            const gastosDetalle = await executeQuery(`
+                SELECT 
+                    id,
+                    fecha,
+                    concepto,
+                    socio,
+                    empresa_id,
+                    forma_pago,
+                    cantidad,
+                    precio_unitario,
+                    total,
+                    created_at
+                FROM transacciones 
+                ${whereClause}
+                ORDER BY fecha DESC, total DESC
+            `, params);
+            
+            const resumenMes = await executeQuery(`
+                SELECT 
+                    COUNT(*) as total_transacciones,
+                    SUM(total) as total_gastos,
+                    AVG(total) as promedio_gasto
+                FROM transacciones 
+                ${whereClause}
+            `, params);
+            
+            return res.json({
+                success: true,
+                data: {
+                    tipo: 'detalle',
+                    gastos: gastosDetalle,
+                    resumen: resumenMes[0] || {},
+                    periodo: `${mes}/${año}`
+                }
+            });
+        }
+        
+        // Si solo tenemos año, mostrar por meses
+        if (año) {
+            const gastosPorMes = await executeQuery(`
+                SELECT 
+                    MONTH(fecha) as mes,
+                    MONTHNAME(fecha) as mes_nombre,
+                    COUNT(*) as total_transacciones,
+                    SUM(total) as total_gastos
+                FROM transacciones 
+                ${whereClause}
+                GROUP BY MONTH(fecha), MONTHNAME(fecha)
+                ORDER BY MONTH(fecha)
+            `, params);
+            
+            return res.json({
+                success: true,
+                data: {
+                    tipo: 'mensual',
+                    gastos_por_mes: gastosPorMes,
+                    año: año
+                }
+            });
+        }
+        
+        // Por defecto, mostrar por años
+        const gastosPorAño = await executeQuery(`
+            SELECT 
+                YEAR(fecha) as año,
+                COUNT(*) as total_transacciones,
+                SUM(total) as total_gastos
+            FROM transacciones 
+            ${whereClause}
+            GROUP BY YEAR(fecha)
+            ORDER BY YEAR(fecha) DESC
+        `, params);
+        
+        res.json({
+            success: true,
+            data: {
+                tipo: 'anual',
+                gastos_por_año: gastosPorAño
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error en drill-down:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Error interno del servidor' 
+        });
+    }
+});
+
+// GET /api/gastos/filtros - Datos para filtros dinámicos
+router.get('/gastos/filtros', async (req, res) => {
+    try {
+        // Obtener todas las opciones disponibles para filtros
+        
+        // Socios únicos
+        const socios = await executeQuery(`
+            SELECT DISTINCT socio 
+            FROM transacciones 
+            WHERE tipo = "G" AND socio IS NOT NULL AND socio != ""
+            ORDER BY socio
+        `);
+        
+        // Formas de pago únicas
+        const formasPago = await executeQuery(`
+            SELECT DISTINCT forma_pago 
+            FROM transacciones 
+            WHERE tipo = "G" AND forma_pago IS NOT NULL AND forma_pago != ""
+            ORDER BY forma_pago
+        `);
+        
+        // Años disponibles
+        const años = await executeQuery(`
+            SELECT DISTINCT YEAR(fecha) as año
+            FROM transacciones 
+            WHERE tipo = "G"
+            ORDER BY YEAR(fecha) DESC
+        `);
+        
+        // Empresas con gastos
+        const empresas = await executeQuery(`
+            SELECT DISTINCT e.id, e.nombre
+            FROM empresas e
+            INNER JOIN transacciones t ON e.id = t.empresa_id
+            WHERE t.tipo = "G"
+            ORDER BY e.nombre
+        `);
+        
+        // Rangos de montos (para filtros avanzados)
+        const rangosMontos = await executeQuery(`
+            SELECT 
+                MIN(total) as monto_minimo,
+                MAX(total) as monto_maximo,
+                AVG(total) as monto_promedio,
+                COUNT(*) as total_gastos
+            FROM transacciones 
+            WHERE tipo = "G"
+        `);
+        
+        res.json({
+            success: true,
+            data: {
+                socios: socios.map(s => s.socio),
+                formas_pago: formasPago.map(f => f.forma_pago),
+                años: años.map(a => a.año),
+                empresas: empresas,
+                rangos_montos: rangosMontos[0] || {},
+                total_opciones: {
+                    socios: socios.length,
+                    formas_pago: formasPago.length,
+                    años: años.length,
+                    empresas: empresas.length
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error obteniendo filtros:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Error interno del servidor' 
+        });
+    }
+});
+
+// POST /api/gastos/bulk-delete - Eliminación masiva (solo admins)
+router.post('/gastos/bulk-delete', requireAuth, async (req, res) => {
+    try {
+        const { transaction_ids } = req.body;
+        const user = req.session.user;
+        
+        // Verificar permisos de admin
+        if (user.rol !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Acceso denegado. Solo administradores pueden eliminar masivamente.'
+            });
+        }
+        
+        if (!transaction_ids || !Array.isArray(transaction_ids) || transaction_ids.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Se requiere un array de IDs de transacciones'
+            });
+        }
+        
+        // Verificar que todas las transacciones sean gastos
+        const placeholders = transaction_ids.map(() => '?').join(',');
+        const transactionsToDelete = await executeQuery(`
+            SELECT id, concepto, total, tipo, socio
+            FROM transacciones 
+            WHERE id IN (${placeholders}) AND tipo = 'G'
+        `, transaction_ids);
+        
+        if (transactionsToDelete.length !== transaction_ids.length) {
+            return res.status(400).json({
+                success: false,
+                error: 'Algunas transacciones no existen o no son gastos'
+            });
+        }
+        
+        // Eliminar transacciones
+        const result = await executeQuery(`
+            DELETE FROM transacciones 
+            WHERE id IN (${placeholders}) AND tipo = 'G'
+        `, transaction_ids);
+        
+        console.log(`🗑️ ${user.nombre} eliminó ${result.affectedRows} gastos masivamente`);
+        
+        res.json({
+            success: true,
+            message: `${result.affectedRows} gastos eliminados exitosamente`,
+            data: {
+                eliminados: result.affectedRows,
+                transacciones: transactionsToDelete
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error en eliminación masiva:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Error interno del servidor' 
+        });
+    }
+});
+
 // GET /api/balance - Balance general por empresa y período
 router.get('/balance', async (req, res) => {
     try {
