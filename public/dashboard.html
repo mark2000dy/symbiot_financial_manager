@@ -12,7 +12,7 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     
     <style>
         body {
@@ -587,7 +587,7 @@
                             <h6 class="text-white mb-0">
                                 <i class="fas fa-users me-2"></i>Alumnos Inscritos
                             </h6>
-                            <span class="badge bg-primary" id="totalStudents">0</span>
+                            <span class="badge bg-primary" id="totalStudents" style="cursor: pointer;" onclick="filterStudentsByStatus('all')">0</span>
                         </div>
                         <div class="card-body">
                             <div class="row text-center">
@@ -1632,8 +1632,8 @@
                 if (selectedCompany === '1') { // RockstarSkull
                     rockstarWidgets.style.display = 'block';
                     await loadRockstarSkullData();
-                } else {
-                    rockstarWidgets.style.display = 'none';
+                    updateRockstarSkullIndicators();
+                    loadStudentsList(); // ← ESTA LÍNEA DEBE EXISTIR
                 }
                 
             } catch (error) {
@@ -1693,11 +1693,11 @@
                 
                 // Distribución por clases (simulada)
                 const classDistribution = [
-                    { clase: 'Guitarra', alumnos: 45, color: 'primary', icon: 'fa-guitar' },
-                    { clase: 'Teclado', alumnos: 20, color: 'success', icon: 'fa-piano' },
-                    { clase: 'Batería', alumnos: 15, color: 'warning', icon: 'fa-drum' },
-                    { clase: 'Bajo', alumnos: 12, color: 'info', icon: 'fa-guitar' },
-                    { clase: 'Canto', alumnos: 8, color: 'secondary', icon: 'fa-microphone' }
+                    { clase: 'Guitarra', alumnos: 45, color: 'primary', icon: 'fa-solid fa-electric-guitar' },
+                    { clase: 'Teclado', alumnos: 20, color: 'success', icon: 'fa-solid fa-piano' },
+                    { clase: 'Batería', alumnos: 15, color: 'warning', icon: 'fa-solid fa-drum' },
+                    { clase: 'Bajo', alumnos: 12, color: 'info', icon: 'fa-solid fa-electric-guitar' },
+                    { clase: 'Canto', alumnos: 8, color: 'secondary', icon: 'fa-solid fa-microphone' }
                 ];
 
                 const classDistributionHTML = `
@@ -1951,12 +1951,27 @@
                 ]
             };
             
+            // Ejemplo de cómo podrían ser tus funciones getClassColor y getClassIcon
+            const getClassColor = (clase) => {
+                const colors = {
+                    'Guitarra': 'primary', 'Teclado': 'success', 'Batería': 'warning', 'Bajo': 'info', 'Canto': 'secondary'
+                };
+                return colors[clase];
+            };
+            
+            const getClassIcon = (clase) => {
+                const icons = {
+                    'Guitarra': 'fa-solid fa-electric-guitar', 'Teclado': 'fa-solid fa-piano', 'Batería': 'fa-solid fa-drum', 'Bajo': 'fa-solid fa-electric-guitar', 'Canto': 'fa-solid fa-microphone'
+                };
+                return icons[clase];
+            };
+            
             const classDistribution = classData.all.map(item => ({
                 ...item,
                 color: getClassColor(item.clase),
                 icon: getClassIcon(item.clase),
                 displayCount: filterStatus === 'active' ? item.activos : 
-                            filterStatus === 'inactive' ? item.inactivos : item.alumnos
+                    filterStatus === 'inactive' ? item.inactivos : item.alumnos
             }));
             
             const classDistributionHTML = `
@@ -1964,7 +1979,7 @@
                     ${classDistribution.map(item => `
                         <div class="col">
                             <div class="instrument-card text-center p-2 rounded" style="background: rgba(255,255,255,0.05);">
-                                <i class="fas ${item.icon} fa-2x text-${item.color} mb-2"></i>
+                                <i class="${item.icon} fa-2x text-${item.color} mb-2"></i>
                                 <div class="fw-bold" style="color: #E4E6EA;">${item.displayCount}</div>
                                 <small style="color: #B8B9BA;">${item.clase}</small>
                             </div>

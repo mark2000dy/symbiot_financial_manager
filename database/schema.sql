@@ -53,6 +53,40 @@ CREATE TABLE transacciones (
     INDEX idx_tipo (tipo)
 );
 
+-- Tabla de maestros
+CREATE TABLE maestros (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    telefono VARCHAR(20),
+    especialidad VARCHAR(100),
+    empresa_id INT NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empresa_id) REFERENCES empresas(id)
+);
+
+-- Tabla de alumnos  
+CREATE TABLE alumnos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    edad INT,
+    telefono VARCHAR(20),
+    email VARCHAR(100),
+    clase VARCHAR(50) NOT NULL,
+    maestro_id INT,
+    horario VARCHAR(100),
+    fecha_inscripcion DATE NOT NULL,
+    fecha_ultimo_pago DATE,
+    precio_mensual DECIMAL(8,2) NOT NULL,
+    forma_pago VARCHAR(50),
+    estatus ENUM('Activo', 'Baja') DEFAULT 'Activo',
+    empresa_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (maestro_id) REFERENCES maestros(id),
+    FOREIGN KEY (empresa_id) REFERENCES empresas(id)
+);
+
 -- Insertar datos iniciales de empresas
 INSERT INTO empresas (nombre, tipo_negocio) VALUES 
 ('Rockstar Skull', 'Academia de Música'),
