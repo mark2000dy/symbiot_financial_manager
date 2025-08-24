@@ -2052,34 +2052,24 @@
             console.log(`🏢 Filtro de empresa cambiado a: ${selectedCompany || 'Todas'}`);
             
             try {
-                // Recargar datos con filtro
                 await loadDashboardData();
                 await loadRecentTransactions(1);
                 await loadCompanyStats(selectedCompany);
                 
-                // Mostrar/ocultar widgets específicos de RockstarSkull
                 const rockstarWidgets = document.getElementById('rockstarSkullWidgets');
-                if (selectedCompany === '1') { // RockstarSkull
+                if (selectedCompany === '1') { 
                     rockstarWidgets.style.display = 'block';
                     await loadRockstarSkullData();
-                    updateRockstarSkullIndicators(); // ← ESTA LÍNEA
+                    updateRockstarSkullIndicators();
+                    loadStudentsList(); // ← AGREGAR ESTA LÍNEA
                 } else {
                     rockstarWidgets.style.display = 'none';
-                    hideRockstarSkullIndicators(); // ← ESTA LÍNEA
+                    hideRockstarSkullIndicators();
                 }
                 
             } catch (error) {
                 console.error('❌ Error cambiando filtro de empresa:', error);
                 showAlert('danger', 'Error aplicando filtro de empresa');
-            }
-            if (selectedCompany === '1') { // RockstarSkull
-                rockstarWidgets.style.display = 'block';
-                await loadRockstarSkullData();
-                updateRockstarSkullIndicators();
-                loadStudentsList(); // ← AGREGAR ESTA LÍNEA
-            } else {
-                rockstarWidgets.style.display = 'none';
-                hideRockstarSkullIndicators();
             }
         }
         // 📊 Cargar estadísticas específicas de empresa
