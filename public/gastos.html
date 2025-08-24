@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gastos - Sistema de Gastos Symbiot</title>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#191C24">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #000 0%, #191C24 50%, #000 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+        
+        .navbar {
+            background: rgba(25, 28, 36, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .navbar-brand {
+            color: #EB1616 !important;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            transition: color 0.3s ease;
+        }
+        
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link.active {
+            color: #EB1616 !important;
+        }
+        
+        .main-content {
+            padding: 2rem 0;
+        }
+        
+        .card {
+            background: rgba(25, 28, 36, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+        }
+        
+        .card-header {
+            background: rgba(235, 22, 22, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #EB1616;
+            box-shadow: 0 0 0 0.2rem rgba(235, 22, 22, 0.25);
+            color: white;
+        }
+        
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .form-select option {
+            background: #191C24;
+            color: white;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #EB1616, #ff4757);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #d10000, #EB1616);
+            transform: translateY(-2px);
+        }
+        
+        .table-dark {
+            background: rgba(25, 28, 36, 0.6);
+        }
+        
+        .table-dark th {
+            border-color: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+            color: #E4E6EA;
+        }
+        
+        .table-dark td {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .badge-ingreso {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+        
+        .badge-gasto {
+            background: linear-gradient(45deg, #dc3545, #fd7e14);
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .welcome-banner {
+            background: rgba(235, 22, 22, 0.1);
+            border: 1px solid rgba(235, 22, 22, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/gastos">
+                <i class="fas fa-chart-line me-2"></i>SYMBIOT
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="gastos.html">
+                            <i class="fas fa-money-bill-wave me-1"></i>Gastos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); showComingSoon('Ingresos');">
+                            <i class="fas fa-coins me-1"></i>Ingresos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); showComingSoon('Reportes');">
+                            <i class="fas fa-chart-bar me-1"></i>Reportes
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <span id="userName">Usuario</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); logout();"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid main-content">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+            <h4 class="mb-1"><i class="fas fa-money-bill-wave me-2"></i>Análisis de Gastos</h4>
+            <p class="mb-0 text-muted">
+                ¡Bienvenido, <span id="userNameDisplay">Usuario</span>! • 
+                Gestiona y analiza todos los gastos de tus empresas con filtros avanzados y reportes detallados
+            </p>
+        </div>
+
+        <!-- Filtros Básicos -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="text-white mb-0">
+                    <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Filtro de Empresa -->
+                    <div class="col-md-3">
+                        <label for="filterEmpresa" class="form-label">
+                            <i class="fas fa-building me-1"></i>Empresa
+                        </label>
+                        <select class="form-select" id="filterEmpresa" onchange="applyFilters()">
+                            <option value="">🏢 Todas las Empresas</option>
+                            <option value="1">🎸 RockstarSkull Academia</option>
+                            <option value="2">🔬 Symbiot Technologies</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filtro de Año -->
+                    <div class="col-md-2">
+                        <label for="filterAno" class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i>Año
+                        </label>
+                        <select class="form-select" id="filterAno" onchange="applyFilters()">
+                            <option value="">Todos</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filtro de Mes -->
+                    <div class="col-md-2">
+                        <label for="filterMes" class="form-label">
+                            <i class="fas fa-calendar-day me-1"></i>Mes
+                        </label>
+                        <select class="form-select" id="filterMes" onchange="applyFilters()">
+                            <option value="">Todos</option>
+                            <option value="01">Enero</option>
+                            <option value="02">Febrero</option>
+                            <option value="03">Marzo</option>
+                            <option value="04">Abril</option>
+                            <option value="05">Mayo</option>
+                            <option value="06">Junio</option>
+                            <option value="07">Julio</option>
+                            <option value="08">Agosto</option>
+                            <option value="09">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filtro de Tipo -->
+                    <div class="col-md-2">
+                        <label for="filterTipo" class="form-label">
+                            <i class="fas fa-tag me-1"></i>Tipo
+                        </label>
+                        <select class="form-select" id="filterTipo" onchange="applyFilters()">
+                            <option value="">Todos</option>
+                            <option value="G">💸 Gastos</option>
+                            <option value="I">💰 Ingresos</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Botones de Acción -->
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="fas fa-eraser me-1"></i>Limpiar
+                            </button>
+                            <button class="btn btn-primary" onclick="exportData()">
+                                <i class="fas fa-download me-1"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Resumen de Filtros -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="alert alert-info d-flex justify-content-between align-items-center py-2 mb-0">
+                            <div>
+                                <strong>Filtros aplicados:</strong>
+                                <span id="filterSummary">Mostrando todas las transacciones</span>
+                            </div>
+                            <div>
+                                <span class="badge bg-primary fs-6" id="totalRegistros">0</span> registros
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Gastos -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="text-white mb-0">
+                    <i class="fas fa-table me-2"></i>Lista de Transacciones
+                </h5>
+                <button class="btn btn-primary btn-sm" onclick="showAddModal()">
+                    <i class="fas fa-plus me-1"></i>Nuevo Gasto
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Loading State -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2">Cargando transacciones...</p>
+                </div>
+
+                <!-- Tabla -->
+                <div class="table-responsive" id="tableContainer" style="display: none;">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-calendar-alt me-1"></i>Fecha</th>
+                                <th><i class="fas fa-receipt me-1"></i>Concepto</th>
+                                <th><i class="fas fa-user me-1"></i>Socio</th>
+                                <th><i class="fas fa-building me-1"></i>Empresa</th>
+                                <th><i class="fas fa-credit-card me-1"></i>Forma de Pago</th>
+                                <th><i class="fas fa-tag me-1"></i>Tipo</th>
+                                <th class="text-end"><i class="fas fa-dollar-sign me-1"></i>Total</th>
+                                <th class="text-center"><i class="fas fa-cogs me-1"></i>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Se llenará dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div class="text-center py-5" id="emptyState" style="display: none;">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>No se encontraron transacciones</h5>
+                    <p class="text-muted">Intenta ajustar los filtros o agregar nuevas transacciones.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Variables globales
+        let currentUser = null;
+        let transactionsData = [];
+        let currentPage = 1;
+        const recordsPerPage = 20;
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Iniciando módulo de gastos...');
+            
+            try {
+                await loadCurrentUser();
+                clearFilters(); // Esto establecerá filtros limpios y cargará datos
+            } catch (error) {
+                console.error('❌ Error de autenticación:', error);
+                console.log('🔓 Redirigiendo al login...');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
+        });
+
+        // Cargar usuario actual
+        async function loadCurrentUser() {
+            try {
+                const response = await fetch('/gastos/api/user');
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    document.getElementById('userName').textContent = currentUser.nombre;
+                    console.log('👤 Usuario cargado:', currentUser.nombre);
+                    
+                    // También actualizar el display name en el banner si existe
+                    const userDisplay = document.getElementById('userNameDisplay');
+                    if (userDisplay) {
+                        userDisplay.textContent = currentUser.nombre;
+                    }
+                } else {
+                    throw new Error('No hay sesión activa');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando usuario:', error);
+                throw error; // Re-throw para que lo capture el DOMContentLoaded
+            }
+        }
+
+        // Cargar transacciones
+        async function loadTransactions() {
+            try {
+                console.log('📊 Cargando transacciones...');
+                showLoading(true);
+                
+                // Construir parámetros de filtro
+                const params = new URLSearchParams();
+                
+                const empresa = document.getElementById('filterEmpresa').value;
+                const ano = document.getElementById('filterAno').value;
+                const mes = document.getElementById('filterMes').value;
+                const tipo = document.getElementById('filterTipo').value;
+                
+                if (empresa) params.append('empresa_id', empresa);
+                if (tipo) params.append('tipo', tipo);
+                
+                // Construir rango de fechas
+                if (ano) {
+                    const fechaInicio = mes ? `${ano}-${mes}-01` : `${ano}-01-01`;
+                    const fechaFin = mes ? `${ano}-${mes}-31` : `${ano}-12-31`;
+                    params.append('fechaInicio', fechaInicio);
+                    params.append('fechaFin', fechaFin);
+                }
+                
+                const response = await fetch(`/gastos/api/transacciones?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    transactionsData = data.data || [];
+                    renderTable();
+                    updateFilterSummary();
+                    console.log(`✅ ${transactionsData.length} transacciones cargadas`);
+                } else {
+                    console.warn('⚠️ No se pudieron cargar las transacciones');
+                    showEmptyState();
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando transacciones:', error);
+                showEmptyState();
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Renderizar tabla
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            
+            if (transactionsData.length === 0) {
+                showEmptyState();
+                return;
+            }
+            
+            const html = transactionsData.map(transaction => `
+                <tr>
+                    <td>${formatDate(transaction.fecha)}</td>
+                    <td class="text-truncate" style="max-width: 200px;" title="${transaction.concepto}">
+                        ${transaction.concepto}
+                    </td>
+                    <td>${transaction.socio}</td>
+                    <td>
+                        <span class="badge ${transaction.empresa_id == 1 ? 'bg-warning' : 'bg-info'}">
+                            ${transaction.empresa_id == 1 ? '🎸 RockstarSkull' : '🔬 Symbiot'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">${transaction.forma_pago}</span>
+                    </td>
+                    <td>
+                        <span class="badge ${transaction.tipo === 'G' ? 'badge-gasto' : 'badge-ingreso'}">
+                            ${transaction.tipo === 'G' ? '💸 Gasto' : '💰 Ingreso'}
+                        </span>
+                    </td>
+                    <td class="text-end fw-bold">
+                        ${formatCurrency(transaction.total)}
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="editTransaction(${transaction.id})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteTransaction(${transaction.id})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            tableBody.innerHTML = html;
+            
+            document.getElementById('tableContainer').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+
+        // Mostrar/ocultar loading
+        function showLoading(show) {
+            document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
+            document.getElementById('tableContainer').style.display = show ? 'none' : 'block';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+
+        // Mostrar estado vacío
+        function showEmptyState() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('tableContainer').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+        }
+
+        // Aplicar filtros
+        function applyFilters() {
+            console.log('🔍 Aplicando filtros...');
+            loadTransactions();
+        }
+
+        // Limpiar filtros
+        function clearFilters() {
+            document.getElementById('filterEmpresa').value = '';
+            document.getElementById('filterAno').value = '';
+            document.getElementById('filterMes').value = '';
+            document.getElementById('filterTipo').value = '';
+            applyFilters();
+        }
+
+        // Actualizar resumen de filtros
+        function updateFilterSummary() {
+            const empresa = document.getElementById('filterEmpresa').value;
+            const ano = document.getElementById('filterAno').value;
+            const mes = document.getElementById('filterMes').value;
+            const tipo = document.getElementById('filterTipo').value;
+            
+            let summary = 'Mostrando ';
+            
+            if (tipo === 'G') summary += 'gastos';
+            else if (tipo === 'I') summary += 'ingresos';
+            else summary += 'transacciones';
+            
+            if (empresa === '1') summary += ' de RockstarSkull';
+            else if (empresa === '2') summary += ' de Symbiot Technologies';
+            
+            if (ano) {
+                summary += ` del año ${ano}`;
+                if (mes) {
+                    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                    summary += ` - ${meses[parseInt(mes) - 1]}`;
+                }
+            }
+            
+            document.getElementById('filterSummary').textContent = summary;
+            document.getElementById('totalRegistros').textContent = transactionsData.length;
+        }
+
+        // Funciones de utilidad
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit', 
+                year: 'numeric'
+            });
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-MX', {
+                style: 'currency',
+                currency: 'MXN',
+                minimumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Funciones placeholder (para implementar después)
+        function showAddModal() {
+            alert('Funcionalidad de agregar - Próximamente implementada');
+        }
+
+        function editTransaction(id) {
+            alert(`Funcionalidad de editar transacción ${id} - Próximamente implementada`);
+        }
+
+        function deleteTransaction(id) {
+            alert(`Funcionalidad de eliminar transacción ${id} - Próximamente implementada`);
+        }
+
+        function exportData() {
+            alert('Funcionalidad de exportar - Próximamente implementada');
+        }
+
+        function showComingSoon(feature) {
+            alert(`${feature} - Próximamente disponible`);
+        }
+
+        function logout() {
+            window.location.href = '/gastos/login.html';
+        }
+    </script>
+</body>
+</html>
