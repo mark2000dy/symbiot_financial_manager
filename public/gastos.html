@@ -156,6 +156,34 @@
         .alert-info strong {
             color: #FFFFFF !important;
         }
+
+        /* Mejorar visibilidad de textos */
+        .text-muted, .small {
+            color: #E4E6EA !important; /* Cambio de gris a casi blanco */
+        }
+
+        .card-body small {
+            color: #E4E6EA !important;
+        }
+
+        /* Estilos específicos para gráfica */
+        #chartLoading {
+            color: #FFFFFF !important;
+        }
+
+        #chartLoading p {
+            color: #E4E6EA !important;
+        }
+
+        .chart-summary h6 {
+            font-weight: bold;
+        }
+
+        .chart-summary small {
+            color: #E4E6EA !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -222,63 +250,84 @@
             </p>
         </div>
 
-        <!-- Widget de Gráfica de Gastos -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="text-white mb-0">📊 Análisis de Gastos por Período</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="gastosChart" height="100"></canvas>
-            </div>
-        </div>
-
-        <!-- Widget Gráfica de Gastos -->
+        <!-- Widget Gráfica de Gastos Interactivo -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="text-white mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>Análisis de Gastos por Período
+                    <i class="fas fa-chart-bar me-2"></i>📊 Análisis de Gastos por Período
                 </h5>
                 <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="btn btn-outline-info" id="chartViewYear" onclick="setChartView('year')">Anual</button>
-                    <button type="button" class="btn btn-outline-info active" id="chartViewMonth" onclick="setChartView('month')">Mensual</button>
+                    <button type="button" class="btn btn-outline-light" id="chartViewYear" onclick="setChartView('year')">📅 Anual</button>
+                    <button type="button" class="btn btn-outline-light active" id="chartViewMonth" onclick="setChartView('month')">📆 Mensual</button>
                 </div>
             </div>
             <div class="card-body">
                 <!-- Loading de gráfica -->
                 <div class="text-center py-4" id="chartLoading">
                     <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
-                    <p class="mt-2">Cargando datos de gráfica...</p>
+                    <p class="mt-2 text-white">Cargando datos de gráfica...</p>
                 </div>
                 
                 <!-- Canvas para Chart.js -->
-                <div id="chartContainer" style="display: none; position: relative;">
-                    <canvas id="gastosChart" height="100"></canvas>
+                <div id="chartContainer" style="display: none; position: relative; height: 400px;">
+                    <canvas id="gastosChart"></canvas>
+                </div>
+                
+                <!-- Error state -->
+                <div class="text-center py-4" id="chartError" style="display: none;">
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                    <p class="mt-2 text-white">Error cargando gráfica</p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="loadGastosChart()">🔄 Reintentar</button>
                 </div>
                 
                 <!-- Resumen de datos -->
-                <div class="row mt-3" id="chartSummary" style="display: none;">
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h6 class="text-primary mb-1" id="totalGastosChart">$0</h6>
-                            <small class="text-muted">Total Gastos</small>
+                <div class="row mt-3 chart-summary" id="chartSummary" style="display: none;">
+                    <div class="col-6 col-md-3 text-center">
+                        <h6 class="text-primary mb-1" id="totalGastosChart">$0</h6>
+                        <small class="text-white">💸 Total Gastos</small>
+                    </div>
+                    <div class="col-6 col-md-3 text-center">
+                        <h6 class="text-info mb-1" id="promedioGastosChart">$0</h6>
+                        <small class="text-white">📊 Promedio</small>
+                    </div>
+                    <div class="col-6 col-md-3 text-center">
+                        <h6 class="text-success mb-1" id="transaccionesChart">0</h6>
+                        <small class="text-white">📋 Transacciones</small>
+                    </div>
+                    <div class="col-6 col-md-3 text-center">
+                        <h6 class="text-warning mb-1" id="periodoChart">-</h6>
+                        <small class="text-white">📅 Período</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Widget Estadísticas por Empresa -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-guitar fa-3x text-warning me-3"></i>
+                            <div>
+                                <h3 class="text-warning mb-1" id="gastosRockstar">$0</h3>
+                                <h6 class="text-white mb-0">🎸 Gastos RockstarSkull</h6>
+                                <small class="text-white">(<span id="countRockstar">0</span> transacciones)</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h6 class="text-info mb-1" id="promedioGastosChart">$0</h6>
-                            <small class="text-muted">Promedio Mensual</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h6 class="text-success mb-1" id="transaccionesChart">0</h6>
-                            <small class="text-muted">Transacciones</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h6 class="text-warning mb-1" id="periodoChart">-</h6>
-                            <small class="text-muted">Período</small>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-microscope fa-3x text-info me-3"></i>
+                            <div>
+                                <h3 class="text-info mb-1" id="gastosSymbiot">$0</h3>
+                                <h6 class="text-white mb-0">🔬 Gastos Symbiot</h6>
+                                <small class="text-white">(<span id="countSymbiot">0</span> transacciones)</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -349,7 +398,7 @@
                         <select class="form-select" id="filterTipo" onchange="applyFilters()">
                             <option value="">Todos</option>
                             <option value="G">💸 Gastos</option>
-                            <option value="I">💰 Ingresos</option>
+                            <option value="I" disabled>💰 Ingresos (Solo en sección Ingresos)</option>
                         </select>
                     </div>
                     
@@ -390,9 +439,14 @@
                 <h5 class="text-white mb-0">
                     <i class="fas fa-table me-2"></i>Lista de Transacciones
                 </h5>
-                <button class="btn btn-primary btn-sm" onclick="showAddModal()">
-                    <i class="fas fa-plus me-1"></i>Nuevo Gasto
-                </button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="refreshTransactions()">
+                        <i class="fas fa-sync-alt me-1"></i>Actualizar
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="showAddModal()">
+                        <i class="fas fa-plus me-1"></i>Nuevo Gasto
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <!-- Loading State -->
@@ -421,6 +475,33 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Paginación -->
+                <nav aria-label="Paginación de gastos" class="mt-3" id="paginationNav" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-white">
+                                Mostrando <span id="showingFrom">1</span> - <span id="showingTo">30</span> 
+                                de <span id="totalRecords">0</span> registros
+                            </small>
+                        </div>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item" id="prevPage">
+                                <a class="page-link" href="#" onclick="changePage('prev')" style="background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.2);">
+                                    <i class="fas fa-chevron-left"></i> Anterior
+                                </a>
+                            </li>
+                            <li class="page-item active">
+                                <span class="page-link" id="currentPageSpan" style="background: #EB1616; border-color: #EB1616;">1</span>
+                            </li>
+                            <li class="page-item" id="nextPage">
+                                <a class="page-link" href="#" onclick="changePage('next')" style="background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.2);">
+                                    Siguiente <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
 
                 <!-- Empty State -->
                 <div class="text-center py-5" id="emptyState" style="display: none;">
@@ -557,6 +638,7 @@
         let transactionsData = [];
         let currentPage = 1;
         const recordsPerPage = 20;
+        let totalTransactions = 0;
 
         // Variables de gráfica
         let gastosChart = null;
@@ -653,8 +735,23 @@
             }
         }
 
-        // Renderizar tabla
+        // Renderizar tabla con paginación
         function renderTable() {
+            totalTransactions = transactionsData.length;
+            
+            if (totalTransactions === 0) {
+                showEmptyState();
+                return;
+            }
+            
+            // Actualizar stats por empresa
+            updateCompanyStats();
+            
+            // Renderizar página actual
+            renderCurrentPage();
+            updatePaginationControls();
+        }
+            /*
             const tableBody = document.getElementById('tableBody');
             
             if (transactionsData.length === 0) {
@@ -702,7 +799,7 @@
             
             document.getElementById('tableContainer').style.display = 'block';
             document.getElementById('emptyState').style.display = 'none';
-        }
+        }*/
 
         // Mostrar/ocultar loading
         function showLoading(show) {
@@ -770,6 +867,143 @@
             
             document.getElementById('filterSummary').textContent = summary;
             document.getElementById('totalRegistros').textContent = transactionsData.length;
+        }
+
+        // Actualizar estadísticas por empresa
+        function updateCompanyStats() {
+            const rockstarGastos = transactionsData
+                .filter(t => t.empresa_id == 1)
+                .reduce((sum, t) => sum + parseFloat(t.total), 0);
+            
+            const symbiotGastos = transactionsData
+                .filter(t => t.empresa_id == 2)  
+                .reduce((sum, t) => sum + parseFloat(t.total), 0);
+                
+            const rockstarCount = transactionsData.filter(t => t.empresa_id == 1).length;
+            const symbiotCount = transactionsData.filter(t => t.empresa_id == 2).length;
+            
+            document.getElementById('gastosRockstar').textContent = formatCurrency(rockstarGastos);
+            document.getElementById('gastosSymbiot').textContent = formatCurrency(symbiotGastos);
+            document.getElementById('countRockstar').textContent = rockstarCount;
+            document.getElementById('countSymbiot').textContent = symbiotCount;
+        }
+
+        // Función de refrescar transacciones
+        function refreshTransactions() {
+            console.log('🔄 Actualizando lista de transacciones...');
+            loadTransactions();
+        }
+
+        // Funciones de paginación
+        function changePage(direction) {
+            if (direction === 'next' && currentPage * recordsPerPage < totalTransactions) {
+                currentPage++;
+            } else if (direction === 'prev' && currentPage > 1) {
+                currentPage--;
+            }
+            renderCurrentPage();
+            updatePaginationControls();
+        }
+
+        function renderCurrentPage() {
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = startIndex + recordsPerPage;
+            const pageData = transactionsData.slice(startIndex, endIndex);
+            
+            // Usar la función existente renderTable pero con datos paginados
+            const tableBody = document.getElementById('tableBody');
+            
+            if (pageData.length === 0) {
+                showEmptyState();
+                return;
+            }
+            
+            const html = pageData.map(transaction => `
+                <tr>
+                    <td>${formatDate(transaction.fecha)}</td>
+                    <td class="text-truncate" style="max-width: 200px;" title="${transaction.concepto}">
+                        ${transaction.concepto}
+                    </td>
+                    <td>${transaction.socio}</td>
+                    <td>
+                        <span class="badge ${transaction.empresa_id == 1 ? 'bg-warning' : 'bg-info'}">
+                            ${transaction.empresa_id == 1 ? '🎸 RockstarSkull' : '🔬 Symbiot'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">${transaction.forma_pago}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-gasto">💸 Gasto</span>
+                    </td>
+                    <td class="text-end fw-bold">
+                        ${formatCurrency(transaction.total)}
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="editTransaction(${transaction.id})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteTransaction(${transaction.id})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            tableBody.innerHTML = html;
+            document.getElementById('tableContainer').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(totalTransactions / recordsPerPage);
+            const showingFrom = (currentPage - 1) * recordsPerPage + 1;
+            const showingTo = Math.min(currentPage * recordsPerPage, totalTransactions);
+            
+            document.getElementById('showingFrom').textContent = showingFrom;
+            document.getElementById('showingTo').textContent = showingTo;
+            document.getElementById('totalRecords').textContent = totalTransactions;
+            document.getElementById('currentPageSpan').textContent = currentPage;
+            
+            // Habilitar/deshabilitar botones
+            document.getElementById('prevPage').classList.toggle('disabled', currentPage === 1);
+            document.getElementById('nextPage').classList.toggle('disabled', currentPage === totalPages);
+            
+            // Mostrar paginación si hay más de 30 registros
+            document.getElementById('paginationNav').style.display = totalTransactions > recordsPerPage ? 'block' : 'none';
+        }
+
+        // Función básica de exportar (mejoraremos después)
+        function exportData() {
+            console.log('📥 Iniciando exportación de datos...');
+            
+            // Por ahora, crear CSV simple
+            const headers = ['Fecha', 'Concepto', 'Socio', 'Empresa', 'Forma de Pago', 'Total'];
+            const csvData = transactionsData.map(t => [
+                formatDate(t.fecha),
+                `"${t.concepto}"`, // Comillas para manejar comas en conceptos
+                t.socio,
+                t.empresa_id == 1 ? 'RockstarSkull' : 'Symbiot',
+                t.forma_pago,
+                t.total
+            ]);
+            
+            const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
+            
+            // Crear archivo y descarga
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `gastos_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('✅ Archivo exportado exitosamente');
         }
 
         // ============================================================
