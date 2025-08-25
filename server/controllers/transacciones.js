@@ -629,6 +629,473 @@ export const transaccionesController = {
                 error: error.message 
             });
         }
+    },
+    // ====================================================
+    // FUNCIONES PARA GESTIÓN DE ALUMNOS
+    // ====================================================
+
+    // Obtener todos los alumnos con filtros
+    getAlumnos: async (req, res) => {
+        try {
+            const { 
+                empresa_id, 
+                estatus, 
+                clase,
+                maestro_id,
+                page = 1, 
+                limit = 50 
+            } = req.query;
+
+            let query = `
+                SELECT a.*, 
+                       m.nombre as maestro_nombre,
+                       e.nombre as empresa_nombre
+                FROM alumnos a 
+                LEFT JOIN maestros m ON a.maestro_id = m.id
+                LEFT JOIN empresas e ON a.empresa_id = e.id
+                WHERE 1=1
+            `;
+            const params = [];
+
+            if (empresa_id) {
+                query += ' AND a.empresa_id = ?';
+                params.push(empresa_id);
+            }
+
+            if (estatus) {
+                query += ' AND a.estatus = ?';
+                params.push(estatus);
+            }
+
+            if (clase) {
+                query += ' AND a.clase LIKE ?';
+                params.push(`%${clase}%`);
+            }
+
+            if (maestro_id) {
+                query += ' AND a.maestro_id = ?';
+                params.push(maestro_id);
+            }
+
+            query += ' ORDER BY a.nombre ASC';
+
+            // Paginación
+            const offset = (page - 1) * limit;
+            query += ' LIMIT ? OFFSET ?';
+            params.push(parseInt(limit), parseInt(offset));
+
+            const alumnos = await executeQuery(query, params);
+
+            // Contar total
+            let countQuery = `SELECT COUNT(*) as total FROM alumnos a WHERE 1=1`;
+            const countParams = params.slice(0, -2);
+
+            if (empresa_id) countQuery += ' AND a.empresa_id = ?';
+            if (estatus) countQuery += ' AND a.estatus = ?';
+            if (clase) countQuery += ' AND a.clase LIKE ?';
+            if (maestro_id) countQuery += ' AND a.maestro_id = ?';
+
+            const [{ total }] = await executeQuery(countQuery, countParams);
+
+            res.json({
+                success: true,
+                data: alumnos,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total: parseInt(total),
+                    pages: Math.ceil(total / limit)
+                }
+            });
+
+        } catch (error) {
+            console.error('Error al obtener alumnos:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error interno del servidor' 
+            });
+        }
+    },
+
+    // Crear nuevo alumno
+    createAlumno: async (req, res) => {
+        try {
+            const {
+                nombre,
+                edad,
+                telefono,
+                email,
+                clase,
+                maestro_id,
+                horario,
+                fecha_inscripcion,
+                precio_mensual,
+                forma_pago,
+                empresa_id,
+                promocion,
+                tipo_clase,
+                domiciliado
+            } = req.body;
+
+            // Validaciones
+            if (!nombre || !clase || !fecha_inscripcion || !precio_mensual || !empresa_id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan campos requeridos: nombre, clase, fecha_inscripcion, precio_mensual, empresa_id'
+                });
+            }
+
+            const query = `
+                INSERT INTO alumnos (
+                    nombre, edad, telefono, email, clase, maestro_id,
+                    horario, fecha_inscripcion, precio_mensual, forma_pago,
+                    empresa_id, promocion, tipo_clase, domiciliado
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+
+            const result = await executeQuery(query, [
+                nombre, edad, telefono, email, clase, maestro_id,
+                horario, fecha_inscripcion, precio_mensual, forma_pago,
+                empresa_id, promocion, tipo_clase, domiciliado || false
+            ]);
+
+            // Obtener el alumno recién creado
+            const nuevoAlumno = await executeQuery(`
+                SELECT a.*, m.nombre as maestro_nombre, e.nombre as empresa_nombre
+                FROM alumnos a 
+                LEFT JOIN maestros m ON a.maestro_id = m.id
+                LEFT JOIN empresas e ON a.empresa_id = e.id
+                WHERE a.id = ?
+            `, [result.insertId]);
+
+            console.log(`✅ Nuevo alumno creado: ${nombre} - ${clase}`);
+
+            res.status(201).json({ 
+                success: true, 
+                message: 'Alumno creado exitosamente',
+                data: nuevoAlumno[0]
+            });
+
+        } catch (error) {
+            console.error('Error al crear alumno:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error interno del servidor' 
+            });
+        }
+    },
+
+    // Actualizar alumno
+    updateAlumno: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const {
+                nombre, edad, telefono, email, clase, maestro_id,
+                horario, precio_mensual, forma_pago, estatus,
+                promocion, tipo_clase, domiciliado
+            } = req.body;
+
+            // Verificar que existe
+            const existe = await executeQuery('SELECT id FROM alumnos WHERE id = ?', [id]);
+            if (existe.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Alumno no encontrado'
+                });
+            }
+
+            const query = `
+                UPDATE alumnos SET 
+                    nombre = ?, edad = ?, telefono = ?, email = ?, clase = ?,
+                    maestro_id = ?, horario = ?, precio_mensual = ?, forma_pago = ?,
+                    estatus = ?, promocion = ?, tipo_clase = ?, domiciliado = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `;
+
+            await executeQuery(query, [
+                nombre, edad, telefono, email, clase, maestro_id,
+                horario, precio_mensual, forma_pago, estatus,
+                promocion, tipo_clase, domiciliado, id
+            ]);
+
+            console.log(`✅ Alumno ${id} actualizado: ${nombre}`);
+
+            res.json({ 
+                success: true, 
+                message: 'Alumno actualizado exitosamente' 
+            });
+
+        } catch (error) {
+            console.error('Error al actualizar alumno:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error interno del servidor' 
+            });
+        }
+    },
+
+    // Eliminar alumno (soft delete)
+    deleteAlumno: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            // Verificar que existe
+            const alumno = await executeQuery('SELECT nombre FROM alumnos WHERE id = ?', [id]);
+            if (alumno.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Alumno no encontrado'
+                });
+            }
+
+            // Soft delete - marcar como baja
+            await executeQuery(`
+                UPDATE alumnos 
+                SET estatus = 'Baja', updated_at = CURRENT_TIMESTAMP 
+                WHERE id = ?
+            `, [id]);
+
+            console.log(`✅ Alumno dado de baja: ${alumno[0].nombre}`);
+
+            res.json({ 
+                success: true, 
+                message: 'Alumno dado de baja exitosamente' 
+            });
+
+        } catch (error) {
+            console.error('Error al dar de baja alumno:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error interno del servidor' 
+            });
+        }
+    },
+
+    // ====================================================
+    // FUNCIONES PARA PAGOS MENSUALES
+    // ====================================================
+
+    // Obtener pagos mensuales con filtros
+    getPagosMensuales: async (req, res) => {
+        try {
+            const { 
+                alumno_id, 
+                año, 
+                mes,
+                empresa_id,
+                page = 1, 
+                limit = 50 
+            } = req.query;
+
+            let query = `
+                SELECT pm.*, 
+                       a.nombre as alumno_nombre,
+                       a.clase as alumno_clase,
+                       e.nombre as empresa_nombre
+                FROM pagos_mensuales pm
+                JOIN alumnos a ON pm.alumno_id = a.id
+                JOIN empresas e ON a.empresa_id = e.id
+                WHERE 1=1
+            `;
+            const params = [];
+
+            if (alumno_id) {
+                query += ' AND pm.alumno_id = ?';
+                params.push(alumno_id);
+            }
+
+            if (año) {
+                query += ' AND pm.año = ?';
+                params.push(año);
+            }
+
+            if (mes) {
+                query += ' AND pm.mes = ?';
+                params.push(mes);
+            }
+
+            if (empresa_id) {
+                query += ' AND a.empresa_id = ?';
+                params.push(empresa_id);
+            }
+
+            query += ' ORDER BY pm.año DESC, pm.mes DESC, a.nombre ASC';
+
+            // Paginación
+            const offset = (page - 1) * limit;
+            query += ' LIMIT ? OFFSET ?';
+            params.push(parseInt(limit), parseInt(offset));
+
+            const pagos = await executeQuery(query, params);
+
+            // Contar total
+            let countQuery = `
+                SELECT COUNT(*) as total 
+                FROM pagos_mensuales pm
+                JOIN alumnos a ON pm.alumno_id = a.id
+                WHERE 1=1
+            `;
+            const countParams = params.slice(0, -2);
+
+            if (alumno_id) countQuery += ' AND pm.alumno_id = ?';
+            if (año) countQuery += ' AND pm.año = ?';
+            if (mes) countQuery += ' AND pm.mes = ?';
+            if (empresa_id) countQuery += ' AND a.empresa_id = ?';
+
+            const [{ total }] = await executeQuery(countQuery, countParams);
+
+            res.json({
+                success: true,
+                data: pagos,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total: parseInt(total),
+                    pages: Math.ceil(total / limit)
+                }
+            });
+
+        } catch (error) {
+            console.error('Error al obtener pagos mensuales:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error interno del servidor' 
+            });
+        }
+    },
+
+    // Registrar pago mensual
+    createPagoMensual: async (req, res) => {
+        try {
+            const {
+                alumno_id,
+                año,
+                mes,
+                monto_pagado,
+                fecha_pago,
+                metodo_pago,
+                notas
+            } = req.body;
+
+            // Validaciones
+            if (!alumno_id || !año || !mes || !monto_pagado) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan campos requeridos: alumno_id, año, mes, monto_pagado'
+                });
+            }
+
+            // Verificar que el alumno existe
+            const alumno = await executeQuery('SELECT nombre FROM alumnos WHERE id = ?', [alumno_id]);
+            if (alumno.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Alumno no encontrado'
+                });
+            }
+
+            const query = `
+                INSERT INTO pagos_mensuales (
+                    alumno_id, año, mes, monto_pagado, fecha_pago, metodo_pago, notas
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    monto_pagado = VALUES(monto_pagado),
+                    fecha_pago = VALUES(fecha_pago),
+                    metodo_pago = VALUES(metodo_pago),
+                    notas = VALUES(notas)
+            `;
+
+            await executeQuery(query, [
+                alumno_id, año, mes, monto_pagado, fecha_pago, metodo_pago, notas
+            ]);
+
+            // Actualizar fecha_ultimo_pago en tabla alumnos
+            await executeQuery(`
+                UPDATE alumnos 
+                SET fecha_ultimo_pago = ?
+                WHERE id = ?
+            `, [fecha_pago, alumno_id]);
+
+            console.log(`✅ Pago registrado: ${alumno[0].nombre} - ${año}/${mes}`);
+
+            res.status(201).json({ 
+                success: true, 
+                message: 'Pago mensual registrado exitosamente'
+            });
+
+        } catch (error) {
+            console.error('Error al registrar pago mensual:', error);
+            
+            if (error.code === 'ER_DUP_ENTRY') {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Ya existe un pago registrado para este alumno en este período'
+                });
+            }
+            
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error interno del servidor' 
+            });
+        }
+    },
+
+    // Obtener histórico de pagos por alumno
+    getHistoricoPagos: async (req, res) => {
+        try {
+            const { alumno_id } = req.params;
+            const { año_inicio, año_fin } = req.query;
+
+            let query = `
+                SELECT pm.*, a.nombre as alumno_nombre, a.precio_mensual
+                FROM pagos_mensuales pm
+                JOIN alumnos a ON pm.alumno_id = a.id
+                WHERE pm.alumno_id = ?
+            `;
+            const params = [alumno_id];
+
+            if (año_inicio) {
+                query += ' AND pm.año >= ?';
+                params.push(año_inicio);
+            }
+
+            if (año_fin) {
+                query += ' AND pm.año <= ?';
+                params.push(año_fin);
+            }
+
+            query += ' ORDER BY pm.año ASC, pm.mes ASC';
+
+            const pagos = await executeQuery(query, params);
+
+            // Estadísticas del alumno
+            const estadisticas = await executeQuery(`
+                SELECT 
+                    COUNT(*) as total_pagos,
+                    SUM(monto_pagado) as total_pagado,
+                    AVG(monto_pagado) as promedio_pago,
+                    MIN(fecha_pago) as primer_pago,
+                    MAX(fecha_pago) as ultimo_pago
+                FROM pagos_mensuales 
+                WHERE alumno_id = ?
+            `, [alumno_id]);
+
+            res.json({
+                success: true,
+                data: {
+                    pagos: pagos,
+                    estadisticas: estadisticas[0] || {}
+                }
+            });
+
+        } catch (error) {
+            console.error('Error al obtener histórico de pagos:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error interno del servidor' 
+            });
+        }
     }
 };
 

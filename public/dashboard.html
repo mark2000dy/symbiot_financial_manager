@@ -2696,5 +2696,18 @@
 
         console.log('✅ Sistema de gestión de alumnos configurado');
     </script>
+    <!-- Ejemplo en cualquier página -->
+    <span data-user-name>Cargando...</span>
+    <small data-user-email></small>
+    <button data-logout class="btn btn-outline-danger">
+        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+    </button>
+
+    <!-- Solo visible para admins -->
+    <div data-admin-only>
+        <button class="btn btn-danger">Solo Admins</button>
+    </div>
+    <!-- Script de verificación de autenticación -->
+    <script src="assets/auth-check.js"></script>
 </body>
 </html>

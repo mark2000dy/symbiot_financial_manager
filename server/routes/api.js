@@ -59,6 +59,7 @@ router.get('/empresas', transaccionesController.getEmpresas);
 
 // ==================== RUTAS DE REPORTES DASHBOARD ====================
 // GET /api/dashboard - Datos para dashboard principal
+// GET /api/dashboard - Datos para dashboard principal COMPLETO
 router.get('/dashboard', async (req, res) => {
     try {
         const { empresa_id, periodo = '12' } = req.query;
@@ -75,64 +76,79 @@ router.get('/dashboard', async (req, res) => {
         whereClause += ' AND fecha >= DATE_SUB(NOW(), INTERVAL ? MONTH)';
         params.push(parseInt(periodo));
         
-        // Gastos por mes
-        const gastosPorMes = await executeQuery(`
+        // Obtener resumen de transacciones
+        const resumenQuery = `
+            SELECT 
+                COUNT(*) as total_transacciones,
+                SUM(CASE WHEN tipo = 'I' THEN total ELSE 0 END) as total_ingresos,
+                SUM(CASE WHEN tipo = 'G' THEN total ELSE 0 END) as total_gastos,
+                COUNT(CASE WHEN tipo = 'I' THEN 1 END) as count_ingresos,
+                COUNT(CASE WHEN tipo = 'G' THEN 1 END) as count_gastos
+            FROM transacciones ${whereClause}
+        `;
+        
+        const [resumen] = await executeQuery(resumenQuery, params);
+        
+        // Datos mensuales para gráficas
+        const tendenciaQuery = `
             SELECT 
                 DATE_FORMAT(fecha, '%Y-%m') as mes,
-                SUM(total) as total
-            FROM transacciones 
-            ${whereClause} AND tipo = 'G'
+                DATE_FORMAT(fecha, '%M %Y') as mes_label,
+                SUM(CASE WHEN tipo = 'I' THEN total ELSE 0 END) as ingresos,
+                SUM(CASE WHEN tipo = 'G' THEN total ELSE 0 END) as gastos,
+                COUNT(*) as transacciones
+            FROM transacciones ${whereClause}
             GROUP BY DATE_FORMAT(fecha, '%Y-%m')
-            ORDER BY mes
-        `, params);
+            ORDER BY DATE_FORMAT(fecha, '%Y-%m') ASC
+        `;
         
-        // Ingresos por mes
-        const ingresosPorMes = await executeQuery(`
-            SELECT 
-                DATE_FORMAT(fecha, '%Y-%m') as mes,
-                SUM(total) as total
-            FROM transacciones 
-            ${whereClause} AND tipo = 'I'
-            GROUP BY DATE_FORMAT(fecha, '%Y-%m')
-            ORDER BY mes
-        `, params);
+        const tendenciaMensual = await executeQuery(tendenciaQuery, params);
         
-        // Totales del mes actual
-        const whereClauseMesActual = whereClause + ' AND MONTH(fecha) = MONTH(NOW()) AND YEAR(fecha) = YEAR(NOW())';
-        
-        const totalesMes = await executeQuery(`
-            SELECT 
-                tipo,
-                COALESCE(SUM(total), 0) as total
-            FROM transacciones ${whereClauseMesActual}
-            GROUP BY tipo
-        `, [...params, ...params]);
-        
-        // Top 5 conceptos de gastos
-        const topGastos = await executeQuery(`
+        // Top categorías de gastos
+        const topGastosQuery = `
             SELECT 
                 concepto,
                 COUNT(*) as cantidad,
-                SUM(total) as total
+                SUM(total) as total_gastado,
+                AVG(total) as promedio
             FROM transacciones 
             ${whereClause} AND tipo = 'G'
             GROUP BY concepto
-            ORDER BY total DESC
+            ORDER BY total_gastado DESC
             LIMIT 5
-        `, params);
+        `;
+        
+        const topGastos = await executeQuery(topGastosQuery, params);
+        
+        // Calcular balance y métricas
+        const totalIngresos = parseFloat(resumen.total_ingresos || 0);
+        const totalGastos = parseFloat(resumen.total_gastos || 0);
+        const balance = totalIngresos - totalGastos;
+        const margenPorcentaje = totalIngresos > 0 ? 
+            Math.round((balance / totalIngresos) * 100) : 0;
         
         res.json({
             success: true,
             data: {
-                gastos_por_mes: gastosPorMes,
-                ingresos_por_mes: ingresosPorMes,
-                totales_mes_actual: totalesMes,
-                top_gastos: topGastos
+                resumen: {
+                    total_transacciones: parseInt(resumen.total_transacciones || 0),
+                    total_ingresos: totalIngresos,
+                    total_gastos: totalGastos,
+                    balance: balance,
+                    margen_porcentaje: margenPorcentaje,
+                    count_ingresos: parseInt(resumen.count_ingresos || 0),
+                    count_gastos: parseInt(resumen.count_gastos || 0)
+                },
+                tendencia_mensual: tendenciaMensual,
+                top_gastos: topGastos,
+                periodo_consultado: `Últimos ${periodo} meses`
             }
         });
         
+        console.log(`✅ Dashboard consultado - Empresa: ${empresa_id || 'Todas'}, Período: ${periodo} meses`);
+        
     } catch (error) {
-        console.error('Error al generar dashboard:', error);
+        console.error('Error obteniendo datos de dashboard:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Error interno del servidor' 
@@ -150,7 +166,7 @@ router.get('/gastos/grafica', transaccionesController.getGastosGrafica);
 // RUTAS ESPECÍFICAS DE GASTOS
 // ============================================================
 
-// GET /api/gastos/grafica - Datos para gráfica principal de gastos
+/* GET /api/gastos/grafica - Datos para gráfica principal de gastos
 router.get('/gastos/grafica', async (req, res) => {
     try {
         const { empresa_id, año, periodo = 12 } = req.query;
@@ -232,7 +248,7 @@ router.get('/gastos/grafica', async (req, res) => {
             error: 'Error interno del servidor' 
         });
     }
-});
+});*/
 
 // GET /api/gastos/drill-down - Drill-down por año/mes
 router.get('/gastos/drill-down', async (req, res) => {
@@ -813,5 +829,28 @@ router.post('/alertas-pagos/marcar-notificado/:alumno_id', async (req, res) => {
         });
     }
 });
+
+// ==================== RUTAS DE ALUMNOS ====================
+// GET /api/alumnos - Obtener alumnos con filtros
+router.get('/alumnos', transaccionesController.getAlumnos);
+
+// POST /api/alumnos - Crear nuevo alumno
+router.post('/alumnos', transaccionesController.createAlumno);
+
+// PUT /api/alumnos/:id - Actualizar alumno
+router.put('/alumnos/:id', transaccionesController.updateAlumno);
+
+// DELETE /api/alumnos/:id - Dar de baja alumno
+router.delete('/alumnos/:id', transaccionesController.deleteAlumno);
+
+// ==================== RUTAS DE PAGOS MENSUALES ====================
+// GET /api/pagos-mensuales - Obtener pagos mensuales con filtros
+router.get('/pagos-mensuales', transaccionesController.getPagosMensuales);
+
+// POST /api/pagos-mensuales - Registrar pago mensual
+router.post('/pagos-mensuales', transaccionesController.createPagoMensual);
+
+// GET /api/pagos-mensuales/alumno/:alumno_id - Histórico de pagos por alumno
+router.get('/pagos-mensuales/alumno/:alumno_id', transaccionesController.getHistoricoPagos);
 
 export default router;
