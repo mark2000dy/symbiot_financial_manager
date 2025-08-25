@@ -654,6 +654,21 @@
                 setDefaultGastosFilter(); // Establecer filtro por defecto para gastos
                 // Cargar gráfica después de aplicar filtros
                 setTimeout(() => loadGastosChart(), 1000);
+                
+                // ✅ NUEVO: Configurar botón eliminar del modal
+                const deleteBtn = document.getElementById('deleteTransactionBtn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', function() {
+                        if (editingTransactionId) {
+                            // Cerrar modal primero
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('transactionModal'));
+                            modal.hide();
+                            // Llamar función eliminar después de cerrar modal
+                            setTimeout(() => deleteTransaction(editingTransactionId), 300);
+                        }
+                    });
+                }
+                
             } catch (error) {
                 console.error('❌ Error de autenticación:', error);
                 console.log('🔓 Redirigiendo al login...');
@@ -1262,6 +1277,47 @@
             }).format(amount);
         }
 
+        // Mostrar alertas al usuario
+        function showAlert(type, message) {
+            // Crear el contenedor de alerta si no existe
+            let alertContainer = document.getElementById('alertContainer');
+            if (!alertContainer) {
+                alertContainer = document.createElement('div');
+                alertContainer.id = 'alertContainer';
+                alertContainer.className = 'position-fixed top-0 end-0 p-3';
+                alertContainer.style.zIndex = '9999';
+                document.body.appendChild(alertContainer);
+            }
+            
+            // Tipos de alerta
+            const alertTypes = {
+                'success': { class: 'alert-success', icon: 'fa-check-circle' },
+                'error': { class: 'alert-danger', icon: 'fa-exclamation-circle' },
+                'warning': { class: 'alert-warning', icon: 'fa-exclamation-triangle' },
+                'info': { class: 'alert-info', icon: 'fa-info-circle' }
+            };
+            
+            const alertType = alertTypes[type] || alertTypes['info'];
+            
+            // Crear alerta
+            const alertElement = document.createElement('div');
+            alertElement.className = `alert ${alertType.class} alert-dismissible fade show`;
+            alertElement.innerHTML = `
+                <i class="fas ${alertType.icon} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertContainer.appendChild(alertElement);
+            
+            // Auto-eliminar después de 5 segundos
+            setTimeout(() => {
+                if (alertElement.parentNode) {
+                    alertElement.remove();
+                }
+            }, 5000);
+        }
+
         // Funciones placeholder (para implementar después)
         function showAddModal() {
             alert('Funcionalidad de agregar - Próximamente implementada');
@@ -1271,8 +1327,32 @@
             alert(`Funcionalidad de editar transacción ${id} - Próximamente implementada`);
         }
 
-        function deleteTransaction(id) {
-            alert(`Funcionalidad de eliminar transacción ${id} - Próximamente implementada`);
+        async function deleteTransaction(id) {
+            const transaction = transactionsData.find(t => t.id === id);
+            if (!transaction) return;
+            
+            if (confirm(`¿Estás seguro de que deseas eliminar esta transacción?\n\n"${transaction.concepto}" - ${formatCurrency(transaction.total)}\n\nEsta acción no se puede deshacer.`)) {
+                
+                try {
+                    const response = await fetch(`/gastos/api/transacciones/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showAlert('success', `✅ Transacción eliminada exitosamente`);
+                        loadTransactions(); // Recargar lista
+                        loadGastosChart(); // Actualizar gráfica
+                    } else {
+                        throw new Error(result.error || 'Error desconocido');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Error eliminando transacción:', error);
+                    showAlert('error', `❌ Error: ${error.message}`);
+                }
+            }
         }
 
         function exportData() {
@@ -1365,18 +1445,41 @@
             console.log('💾 Guardando transacción:', transactionData);
             
             try {
-                // Por ahora solo mostrar los datos
-                alert(`Datos preparados para ${editingTransactionId ? 'actualizar' : 'crear'} transacción:\n\n${JSON.stringify(transactionData, null, 2)}\n\nAPI se implementará en el siguiente paso.`);
+                const url = editingTransactionId 
+                    ? `/gastos/api/transacciones/${editingTransactionId}`
+                    : '/gastos/api/transacciones';
+                    
+                const method = editingTransactionId ? 'PUT' : 'POST';
                 
-                // Cerrar modal
-                bootstrap.Modal.getInstance(document.getElementById('transactionModal')).hide();
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(transactionData)
+                });
                 
-                // Recargar datos
-                loadTransactions();
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Mostrar mensaje de éxito
+                    const action = editingTransactionId ? 'actualizada' : 'creada';
+                    showAlert('success', `✅ Transacción ${action} exitosamente`);
+                    
+                    // Cerrar modal
+                    bootstrap.Modal.getInstance(document.getElementById('transactionModal')).hide();
+                    
+                    // Recargar datos
+                    loadTransactions();
+                    loadGastosChart(); // Actualizar gráfica también
+                    
+                } else {
+                    throw new Error(result.error || 'Error desconocido');
+                }
                 
             } catch (error) {
                 console.error('❌ Error guardando transacción:', error);
-                alert('Error al guardar la transacción');
+                showAlert('error', `❌ Error: ${error.message}`);
             }
         }
 
@@ -1400,7 +1503,17 @@
                 quantity.addEventListener('input', updateTotal);
                 price.addEventListener('input', updateTotal);
             }
-}
+        }
+
+        /* Configurar botón eliminar del modal al cargar página
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('deleteTransactionBtn').addEventListener('click', function() {
+                if (editingTransactionId) {
+                    bootstrap.Modal.getInstance(document.getElementById('transactionModal')).hide();
+                    setTimeout(() => deleteTransaction(editingTransactionId), 300);
+                }
+            });
+        });*/
     </script>
 </body>
 </html>

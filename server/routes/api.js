@@ -485,6 +485,166 @@ router.post('/gastos/bulk-delete', requireAuth, async (req, res) => {
     }
 });
 
+// POST /api/transacciones - Crear nueva transacción
+router.post('/transacciones', requireAuth, async (req, res) => {
+    try {
+        const {
+            fecha,
+            concepto,
+            socio,
+            empresa_id,
+            forma_pago,
+            cantidad,
+            precio_unitario,
+            tipo = 'G' // Por defecto gasto
+        } = req.body;
+        
+        const user = req.session.user;
+        
+        // Validaciones básicas
+        if (!fecha || !concepto || !socio || !empresa_id || !forma_pago || !cantidad || !precio_unitario) {
+            return res.status(400).json({
+                success: false,
+                error: 'Todos los campos son requeridos'
+            });
+        }
+        
+        // Insertar transacción
+        const result = await executeQuery(`
+            INSERT INTO transacciones (
+                fecha, concepto, socio, empresa_id, forma_pago,
+                cantidad, precio_unitario, tipo, created_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [fecha, concepto, socio, empresa_id, forma_pago, cantidad, precio_unitario, tipo, user.id]);
+        
+        console.log(`✅ ${user.nombre} creó nueva transacción: ${concepto} - $${cantidad * precio_unitario}`);
+        
+        res.json({
+            success: true,
+            message: 'Transacción creada exitosamente',
+            data: {
+                id: result.insertId,
+                total: cantidad * precio_unitario
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error creando transacción:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// PUT /api/transacciones/:id - Actualizar transacción
+router.put('/transacciones/:id', requireAuth, async (req, res) => {
+    try {
+        const transactionId = req.params.id;
+        const {
+            fecha,
+            concepto,
+            socio,
+            empresa_id,
+            forma_pago,
+            cantidad,
+            precio_unitario,
+            tipo
+        } = req.body;
+        
+        const user = req.session.user;
+        
+        // Verificar que la transacción existe
+        const existingTransaction = await executeQuery(
+            'SELECT * FROM transacciones WHERE id = ?',
+            [transactionId]
+        );
+        
+        if (existingTransaction.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Transacción no encontrada'
+            });
+        }
+        
+        // Actualizar transacción
+        await executeQuery(`
+            UPDATE transacciones SET
+                fecha = ?, concepto = ?, socio = ?, empresa_id = ?,
+                forma_pago = ?, cantidad = ?, precio_unitario = ?, tipo = ?
+            WHERE id = ?
+        `, [fecha, concepto, socio, empresa_id, forma_pago, cantidad, precio_unitario, tipo, transactionId]);
+        
+        console.log(`✅ ${user.nombre} actualizó transacción ${transactionId}: ${concepto}`);
+        
+        res.json({
+            success: true,
+            message: 'Transacción actualizada exitosamente',
+            data: {
+                id: transactionId,
+                total: cantidad * precio_unitario
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error actualizando transacción:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// DELETE /api/transacciones/:id - Eliminar transacción
+router.delete('/transacciones/:id', requireAuth, async (req, res) => {
+    try {
+        const transactionId = req.params.id;
+        const user = req.session.user;
+        
+        // Verificar permisos (solo admins pueden eliminar)
+        if (user.rol !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Solo administradores pueden eliminar transacciones'
+            });
+        }
+        
+        // Verificar que la transacción existe
+        const transaction = await executeQuery(
+            'SELECT concepto, total FROM transacciones WHERE id = ?',
+            [transactionId]
+        );
+        
+        if (transaction.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Transacción no encontrada'
+            });
+        }
+        
+        // Eliminar transacción
+        await executeQuery('DELETE FROM transacciones WHERE id = ?', [transactionId]);
+        
+        console.log(`🗑️ ${user.nombre} eliminó transacción ${transactionId}: ${transaction[0].concepto}`);
+        
+        res.json({
+            success: true,
+            message: 'Transacción eliminada exitosamente',
+            data: {
+                id: transactionId,
+                concepto: transaction[0].concepto
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error eliminando transacción:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
 // GET /api/balance - Balance general por empresa y período
 router.get('/balance', async (req, res) => {
     try {
