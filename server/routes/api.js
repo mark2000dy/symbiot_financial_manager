@@ -706,4 +706,106 @@ router.get('/balance', async (req, res) => {
 // Importar executeQuery para las rutas de reportes
 import { executeQuery } from '../config/database.js';
 
+// ==================== RUTAS DE ALERTAS DE PAGOS (ROCKSTARSKULL) ====================
+
+// GET /api/alertas-pagos - Obtener alertas de pagos próximos y vencidos
+router.get('/alertas-pagos', async (req, res) => {
+    try {
+        console.log('📅 Calculando alertas de pagos...');
+        
+        // Obtener todos los alumnos activos (esto sería de una tabla de alumnos)
+        // Por ahora simulamos con datos de ejemplo basados en el patrón de fechas
+        const alertas = {
+            proximos_vencer: [],
+            vencidos: []
+        };
+        
+        // Simulación de datos de alumnos para demostración
+        // En implementación real, estos vendrían de una tabla `alumnos`
+        const alumnosEjemplo = [
+            {
+                id: 1, nombre: 'Juan Pérez', clase: 'Guitarra', 
+                fecha_ultimo_pago: '2025-01-15', precio_mensual: 1500
+            },
+            {
+                id: 2, nombre: 'María García', clase: 'Piano', 
+                fecha_ultimo_pago: '2025-01-10', precio_mensual: 1200
+            },
+            {
+                id: 3, nombre: 'Carlos López', clase: 'Batería', 
+                fecha_ultimo_pago: '2025-01-05', precio_mensual: 1800
+            }
+        ];
+        
+        const hoy = new Date();
+        
+        alumnosEjemplo.forEach(alumno => {
+            const ultimoPago = new Date(alumno.fecha_ultimo_pago);
+            const proximoPago = new Date(ultimoPago);
+            proximoPago.setMonth(proximoPago.getMonth() + 1);
+            
+            const diasDiferencia = Math.ceil((proximoPago - hoy) / (1000 * 60 * 60 * 24));
+            
+            if (diasDiferencia < 0) {
+                // Pago vencido
+                alertas.vencidos.push({
+                    ...alumno,
+                    dias_vencido: Math.abs(diasDiferencia),
+                    fecha_proximo_pago: proximoPago.toISOString().split('T')[0]
+                });
+            } else if (diasDiferencia <= 5) {
+                // Pago próximo a vencer (5 días o menos)
+                alertas.proximos_vencer.push({
+                    ...alumno,
+                    dias_restantes: diasDiferencia,
+                    fecha_proximo_pago: proximoPago.toISOString().split('T')[0]
+                });
+            }
+        });
+        
+        res.json({
+            success: true,
+            data: {
+                proximos_vencer: alertas.proximos_vencer,
+                vencidos: alertas.vencidos,
+                total_alertas: alertas.proximos_vencer.length + alertas.vencidos.length,
+                fecha_calculo: hoy.toISOString()
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error obteniendo alertas de pagos:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// POST /api/alertas-pagos/marcar-notificado/:alumno_id - Marcar alerta como notificada
+router.post('/alertas-pagos/marcar-notificado/:alumno_id', async (req, res) => {
+    try {
+        const alumnoId = req.params.alumno_id;
+        
+        // Aquí registrarías en base de datos que se notificó al alumno
+        // Por ahora solo simulamos
+        
+        res.json({
+            success: true,
+            message: `Alerta marcada como notificada para alumno ${alumnoId}`,
+            data: {
+                alumno_id: alumnoId,
+                fecha_notificacion: new Date().toISOString()
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error marcando alerta:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
 export default router;

@@ -884,23 +884,63 @@
             document.getElementById('totalRegistros').textContent = transactionsData.length;
         }
 
-        // Actualizar estadísticas por empresa
-        function updateCompanyStats() {
-            const rockstarGastos = transactionsData
-                .filter(t => t.empresa_id == 1)
-                .reduce((sum, t) => sum + parseFloat(t.total), 0);
-            
-            const symbiotGastos = transactionsData
-                .filter(t => t.empresa_id == 2)  
-                .reduce((sum, t) => sum + parseFloat(t.total), 0);
+        // Actualizar estadísticas por empresa con datos de toda la base
+        async function updateCompanyStats() {
+            try {
+                // Obtener totales de gastos de toda la base de datos (sin filtros)
+                const [rockstarResponse, symbiotResponse] = await Promise.all([
+                    fetch('/gastos/api/transacciones?empresa_id=1'),
+                    fetch('/gastos/api/transacciones?empresa_id=2')
+                ]);
                 
-            const rockstarCount = transactionsData.filter(t => t.empresa_id == 1).length;
-            const symbiotCount = transactionsData.filter(t => t.empresa_id == 2).length;
-            
-            document.getElementById('gastosRockstar').textContent = formatCurrency(rockstarGastos);
-            document.getElementById('gastosSymbiot').textContent = formatCurrency(symbiotGastos);
-            document.getElementById('countRockstar').textContent = rockstarCount;
-            document.getElementById('countSymbiot').textContent = symbiotCount;
+                const rockstarData = await rockstarResponse.json();
+                const symbiotData = await symbiotResponse.json();
+                
+                if (rockstarData.success && symbiotData.success) {
+                    const rockstarTransacciones = rockstarData.data || [];
+                    const symbiotTransacciones = symbiotData.data || [];
+                    
+                    // Calcular totales de gastos (solo tipo 'G')
+                    const rockstarGastos = rockstarTransacciones
+                        .filter(t => t.tipo === 'G')
+                        .reduce((sum, t) => sum + parseFloat(t.total), 0);
+                    
+                    const symbiotGastos = symbiotTransacciones
+                        .filter(t => t.tipo === 'G')
+                        .reduce((sum, t) => sum + parseFloat(t.total), 0);
+                    
+                    // Contar solo gastos
+                    const rockstarGastosCount = rockstarTransacciones.filter(t => t.tipo === 'G').length;
+                    const symbiotGastosCount = symbiotTransacciones.filter(t => t.tipo === 'G').length;
+                    
+                    // Actualizar elementos en la página
+                    document.getElementById('gastosRockstar').textContent = formatCurrency(rockstarGastos);
+                    document.getElementById('gastosSymbiot').textContent = formatCurrency(symbiotGastos);
+                    document.getElementById('countRockstar').textContent = rockstarGastosCount;
+                    document.getElementById('countSymbiot').textContent = symbiotGastosCount;
+                    
+                    console.log(`📊 Stats actualizadas: RockstarSkull ${rockstarGastosCount} gastos (${formatCurrency(rockstarGastos)}), Symbiot ${symbiotGastosCount} gastos (${formatCurrency(symbiotGastos)})`);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error actualizando stats por empresa:', error);
+                // Mantener el comportamiento anterior si falla la API
+                const rockstarGastos = transactionsData
+                    .filter(t => t.empresa_id == 1 && t.tipo === 'G')
+                    .reduce((sum, t) => sum + parseFloat(t.total), 0);
+                
+                const symbiotGastos = transactionsData
+                    .filter(t => t.empresa_id == 2 && t.tipo === 'G')
+                    .reduce((sum, t) => sum + parseFloat(t.total), 0);
+                    
+                const rockstarCount = transactionsData.filter(t => t.empresa_id == 1 && t.tipo === 'G').length;
+                const symbiotCount = transactionsData.filter(t => t.empresa_id == 2 && t.tipo === 'G').length;
+                
+                document.getElementById('gastosRockstar').textContent = formatCurrency(rockstarGastos);
+                document.getElementById('gastosSymbiot').textContent = formatCurrency(symbiotGastos);
+                document.getElementById('countRockstar').textContent = rockstarCount;
+                document.getElementById('countSymbiot').textContent = symbiotCount;
+            }
         }
 
         // Función de refrescar transacciones
@@ -991,34 +1031,93 @@
         }
 
         // Función básica de exportar (mejoraremos después)
-        function exportData() {
-            console.log('📥 Iniciando exportación de datos...');
+        // Función mejorada de exportar
+        async function exportData() {
+            console.log('📥 Iniciando exportación completa de datos...');
             
-            // Por ahora, crear CSV simple
-            const headers = ['Fecha', 'Concepto', 'Socio', 'Empresa', 'Forma de Pago', 'Total'];
-            const csvData = transactionsData.map(t => [
-                formatDate(t.fecha),
-                `"${t.concepto}"`, // Comillas para manejar comas en conceptos
-                t.socio,
-                t.empresa_id == 1 ? 'RockstarSkull' : 'Symbiot',
-                t.forma_pago,
-                t.total
-            ]);
-            
-            const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
-            
-            // Crear archivo y descarga
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `gastos_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            console.log('✅ Archivo exportado exitosamente');
+            try {
+                // Mostrar indicador de carga
+                const exportBtn = document.querySelector('[onclick="exportData()"]');
+                const originalText = exportBtn.innerHTML;
+                exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exportando...';
+                exportBtn.disabled = true;
+                
+                // Obtener todos los datos (sin filtros para exportación completa)
+                const response = await fetch('/gastos/api/transacciones');
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error('Error obteniendo datos para exportar');
+                }
+                
+                const allData = result.data || [];
+                
+                // Headers del CSV con más detalles
+                const headers = [
+                    'ID',
+                    'Fecha', 
+                    'Tipo',
+                    'Empresa', 
+                    'Socio/Usuario',
+                    'Concepto',
+                    'Cantidad',
+                    'Precio Unitario',
+                    'Forma de Pago',
+                    'Total',
+                    'Fecha Creación'
+                ];
+                
+                // Mapear datos para CSV
+                const csvData = allData.map(t => [
+                    t.id,
+                    formatDate(t.fecha),
+                    t.tipo === 'I' ? 'Ingreso' : 'Gasto',
+                    t.empresa_id == 1 ? 'RockstarSkull' : 'Symbiot Technologies',
+                    t.socio,
+                    `"${t.concepto.replace(/"/g, '""')}"`, // Escapar comillas dobles
+                    t.cantidad,
+                    t.precio_unitario,
+                    t.forma_pago,
+                    t.total,
+                    formatDate(t.created_at)
+                ]);
+                
+                // Crear contenido CSV con encoding UTF-8
+                const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
+                const BOM = '\uFEFF'; // BOM para UTF-8
+                
+                // Crear y descargar archivo
+                const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                const timestamp = new Date().toISOString().split('T')[0];
+                const filename = `symbiot_transacciones_${timestamp}.csv`;
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                // Mostrar mensaje de éxito
+                showAlert('success', `✅ Archivo ${filename} exportado exitosamente (${allData.length} registros)`);
+                
+                console.log(`✅ Exportación completada: ${allData.length} registros`);
+                
+            } catch (error) {
+                console.error('❌ Error en exportación:', error);
+                showAlert('error', `❌ Error exportando datos: ${error.message}`);
+            } finally {
+                // Restaurar botón
+                const exportBtn = document.querySelector('[onclick="exportData()"]');
+                if (exportBtn) {
+                    exportBtn.innerHTML = originalText;
+                    exportBtn.disabled = false;
+                }
+            }
         }
 
         // ============================================================
@@ -1126,8 +1225,15 @@
                             }
                         },
                         legend: {
+                            position: 'bottom', // ← Posición horizontal abajo
+                            align: 'center',
                             labels: {
-                                color: '#E4E6EA'
+                                usePointStyle: true,
+                                color: '#ffffff',
+                                padding: 15,
+                                font: {
+                                    size: 11
+                                }
                             }
                         },
                         tooltip: {
@@ -1318,43 +1424,6 @@
             }, 5000);
         }
 
-        // Funciones placeholder (para implementar después)
-        function showAddModal() {
-            alert('Funcionalidad de agregar - Próximamente implementada');
-        }
-
-        function editTransaction(id) {
-            alert(`Funcionalidad de editar transacción ${id} - Próximamente implementada`);
-        }
-
-        async function deleteTransaction(id) {
-            const transaction = transactionsData.find(t => t.id === id);
-            if (!transaction) return;
-            
-            if (confirm(`¿Estás seguro de que deseas eliminar esta transacción?\n\n"${transaction.concepto}" - ${formatCurrency(transaction.total)}\n\nEsta acción no se puede deshacer.`)) {
-                
-                try {
-                    const response = await fetch(`/gastos/api/transacciones/${id}`, {
-                        method: 'DELETE'
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        showAlert('success', `✅ Transacción eliminada exitosamente`);
-                        loadTransactions(); // Recargar lista
-                        loadGastosChart(); // Actualizar gráfica
-                    } else {
-                        throw new Error(result.error || 'Error desconocido');
-                    }
-                    
-                } catch (error) {
-                    console.error('❌ Error eliminando transacción:', error);
-                    showAlert('error', `❌ Error: ${error.message}`);
-                }
-            }
-        }
-
         function exportData() {
             alert('Funcionalidad de exportar - Próximamente implementada');
         }
@@ -1416,11 +1485,38 @@
             modal.show();
         }
 
-        function deleteTransaction(id) {
-            if (confirm('¿Estás seguro de que deseas eliminar esta transacción?')) {
-                // Por ahora solo simular
-                alert(`Funcionalidad de eliminar transacción ${id} - Se implementará con la API`);
-                // TODO: Implementar llamada a API DELETE
+        async function deleteTransaction(id) {
+            const transaction = transactionsData.find(t => t.id === id);
+            if (!transaction) return;
+            
+            if (confirm(`¿Estás seguro de que deseas eliminar esta transacción?\n\n"${transaction.concepto}" - ${formatCurrency(transaction.total)}\n\nEsta acción no se puede deshacer.`)) {
+                
+                try {
+                    console.log(`🔥 Enviando DELETE para transacción ${id}...`);
+                    
+                    const response = await fetch(`/gastos/api/transacciones/${id}`, {
+                        method: 'DELETE',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    console.log('📥 Respuesta DELETE:', result);
+                    
+                    if (result.success) {
+                        showAlert('success', `✅ Transacción eliminada exitosamente`);
+                        loadTransactions(); // Recargar lista
+                        loadGastosChart(); // Actualizar gráfica
+                    } else {
+                        throw new Error(result.error || 'Error desconocido');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Error eliminando transacción:', error);
+                    showAlert('error', `❌ Error: ${error.message}`);
+                }
             }
         }
 

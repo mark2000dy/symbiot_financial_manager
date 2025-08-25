@@ -397,7 +397,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="dashboard.html">
+                        <a class="nav-link active" href="dashboard.html" style="color: #dc3545 !important; font-weight: bold;">
                             <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                         </a>
                     </li>
@@ -1694,11 +1694,11 @@
                 
                 // Distribución por clases (simulada)
                 const classDistribution = [
-                    { clase: 'Guitarra', alumnos: 45, color: 'primary', icon: 'fa-solid fa-electric-guitar' },
-                    { clase: 'Teclado', alumnos: 20, color: 'success', icon: 'fa-solid fa-piano' },
-                    { clase: 'Batería', alumnos: 15, color: 'warning', icon: 'fa-solid fa-drum' },
-                    { clase: 'Bajo', alumnos: 12, color: 'info', icon: 'fa-solid fa-electric-guitar' },
-                    { clase: 'Canto', alumnos: 8, color: 'secondary', icon: 'fa-solid fa-microphone' }
+                    { clase: 'Guitarra Eléctrica', alumnos: 45, color: 'danger', icon: 'fas fa-guitar' },
+                    { clase: 'Teclado/Piano', alumnos: 20, color: 'success', icon: 'fas fa-piano-keyboard' },
+                    { clase: 'Batería', alumnos: 15, color: 'warning', icon: 'fas fa-drum-steelpan' },
+                    { clase: 'Bajo Eléctrico', alumnos: 12, color: 'info', icon: 'fas fa-guitar' },
+                    { clase: 'Canto/Vocal', alumnos: 8, color: 'secondary', icon: 'fas fa-microphone-alt' }
                 ];
 
                 const classDistributionHTML = `
@@ -1749,6 +1749,8 @@
                 document.getElementById('overduePayments').innerHTML = `
                     <small class="text-muted">⚠️ Próximamente: Detección automática de pagos vencidos (+5 días)</small>
                 `;
+
+                await refreshPaymentAlerts();
                 
                 console.log('✅ Datos de RockstarSkull cargados');
                 
@@ -1758,9 +1760,160 @@
         }
 
         // 🔄 Actualizar alertas de pagos
-        function refreshPaymentAlerts() {
-            console.log('🔄 Actualizando alertas de pagos...');
-            showAlert('info', 'Sistema de alertas de pagos - Próximamente implementado');
+        async function refreshPaymentAlerts() {
+            try {
+                console.log('🔄 Actualizando alertas de pagos...');
+                
+                const response = await fetch('/gastos/api/alertas-pagos');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const { proximos_vencer, vencidos } = data.data;
+                    
+                    // Actualizar próximos a vencer
+                    const proximosHTML = proximos_vencer.length > 0 
+                        ? proximos_vencer.map(alumno => `
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small><strong>${alumno.nombre}</strong> - ${alumno.clase}</small>
+                                <small class="text-warning">${alumno.dias_restantes} días</small>
+                            </div>
+                        `).join('')
+                        : '<small class="text-muted">✅ No hay pagos próximos a vencer</small>';
+                    
+                    // Actualizar vencidos
+                    const vencidosHTML = vencidos.length > 0 
+                        ? vencidos.map(alumno => `
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small><strong>${alumno.nombre}</strong> - ${alumno.clase}</small>
+                                <small class="text-danger">🚨 ${alumno.dias_vencido} días</small>
+                            </div>
+                        `).join('')
+                        : '<small class="text-muted">✅ No hay pagos vencidos</small>';
+                    
+                    // Actualizar elementos HTML existentes
+                    document.getElementById('upcomingPayments').innerHTML = proximosHTML;
+                    document.getElementById('overduePayments').innerHTML = vencidosHTML;
+                    
+                    showAlert('success', `✅ Alertas actualizadas: ${data.data.total_alertas} alertas activas`);
+                    
+                } else {
+                    throw new Error(data.error || 'Error obteniendo alertas');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error actualizando alertas:', error);
+                showAlert('error', 'Error actualizando alertas de pagos');
+                
+                // Fallback a mensajes estáticos
+                document.getElementById('upcomingPayments').innerHTML = 
+                    '<small class="text-muted">⚠️ Error cargando alertas próximas</small>';
+                document.getElementById('overduePayments').innerHTML = 
+                    '<small class="text-muted">⚠️ Error cargando alertas vencidas</small>';
+            }
+        }
+
+        // 🎓 Función loadStudentsList() - NUEVA IMPLEMENTACIÓN
+        async function loadStudentsList() {
+            try {
+                console.log('🎓 Cargando lista de alumnos...');
+                
+                // Por ahora simulamos datos basados en el análisis del Excel RockstarSkull
+                const studentsData = [
+                    { 
+                        id: 1, nombre: 'Juan Pérez', edad: 16, clase: 'Guitarra', maestro: 'Hugo Vázquez',
+                        estatus: 'Activo', precioMensual: 1500, fechaInscripcion: '2024-01-15',
+                        fechaUltimoPago: '2025-01-15', formaPago: 'Efectivo', totalPagado: 18000
+                    },
+                    { 
+                        id: 2, nombre: 'María García', edad: 22, clase: 'Piano', maestro: 'Manuel Reyes',
+                        estatus: 'Activo', precioMensual: 1200, fechaInscripcion: '2024-02-10',
+                        fechaUltimoPago: '2025-01-10', formaPago: 'Transferencia', totalPagado: 14400
+                    },
+                    { 
+                        id: 3, nombre: 'Carlos López', edad: 19, clase: 'Batería', maestro: 'Julio Olvera',
+                        estatus: 'Baja', precioMensual: 1800, fechaInscripcion: '2023-08-20',
+                        fechaUltimoPago: '2024-12-20', formaPago: 'TPV', totalPagado: 25200
+                    },
+                    { 
+                        id: 4, nombre: 'Ana Martínez', edad: 17, clase: 'Canto', maestro: 'Nahomy Perez',
+                        estatus: 'Activo', precioMensual: 1000, fechaInscripcion: '2024-03-05',
+                        fechaUltimoPago: '2024-12-05', formaPago: 'Efectivo', totalPagado: 10000
+                    },
+                    { 
+                        id: 5, nombre: 'Luis Rivera', edad: 25, clase: 'Bajo', maestro: 'Luis Blanquet',
+                        estatus: 'Baja', precioMensual: 1300, fechaInscripcion: '2023-11-12',
+                        fechaUltimoPago: '2024-11-12', formaPago: 'Transferencia', totalPagado: 15600
+                    }
+                ];
+                
+                // Almacenar datos globalmente para otras funciones
+                window.rockstarStudentsData = studentsData;
+                
+                // Actualizar contadores en los widgets
+                const activeStudents = studentsData.filter(s => s.estatus === 'Activo').length;
+                const inactiveStudents = studentsData.filter(s => s.estatus === 'Baja').length;
+                
+                document.getElementById('totalStudents').textContent = studentsData.length;
+                document.getElementById('activeStudents').textContent = activeStudents;
+                document.getElementById('inactiveStudents').textContent = inactiveStudents;
+                
+                // Renderizar tabla de alumnos (si existe el elemento)
+                const tableBody = document.getElementById('studentsTableBody');
+                if (tableBody) {
+                    renderStudentsTable(studentsData);
+                }
+                
+                console.log(`✅ Lista de alumnos cargada: ${studentsData.length} estudiantes`);
+                
+            } catch (error) {
+                console.error('❌ Error cargando lista de alumnos:', error);
+                showAlert('error', 'Error cargando lista de alumnos');
+            }
+        }
+
+        // 🎓 Función auxiliar para renderizar tabla de alumnos
+        function renderStudentsTable(students) {
+            const tableBody = document.getElementById('studentsTableBody');
+            if (!tableBody) return;
+            
+            const html = students.map((student, index) => {
+                const statusBadge = student.estatus === 'Activo' 
+                    ? '<span class="badge bg-success">✅ Activo</span>'
+                    : '<span class="badge bg-danger">❌ Baja</span>';
+                
+                return `
+                    <tr class="student-row" onclick="showStudentDetail(${student.id})">
+                        <td>${index + 1}</td>
+                        <td><strong>${student.nombre}</strong><br><small class="text-muted">#${student.id}</small></td>
+                        <td>${student.edad}</td>
+                        <td>${getInstrumentIcon(student.clase)} ${student.clase}</td>
+                        <td>${student.maestro}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-success">${formatCurrency(student.precioMensual)}</td>
+                        <td>${formatDate(student.fechaUltimoPago)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showStudentDetail(${student.id})" title="Ver Detalle">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            tableBody.innerHTML = html;
+        }
+
+        // 🎓 Función auxiliar para iconos de instrumentos
+        function getInstrumentIcon(instrument) {
+            const icons = {
+                'Guitarra': '🎸',
+                'Piano': '🎹', 
+                'Teclado': '🎹',
+                'Batería': '🥁',
+                'Bajo': '🎸',
+                'Canto': '🎤'
+            };
+            return icons[instrument] || '🎵';
         }
 
         // ✅ ACTUALIZACIÓN: Modificar funciones existentes para usar filtro
@@ -2034,13 +2187,13 @@
 
         function getClassIcon(clase) {
             const icons = {
-                'Guitarra': 'fa-guitar',
-                'Teclado': 'fa-piano',
-                'Batería': 'fa-drum', 
-                'Bajo': 'fa-guitar',
-                'Canto': 'fa-microphone'
+                'Guitarra': 'fas fa-guitar', // Guitarra eléctrica
+                'Teclado': 'fas fa-piano-keyboard', // Teclado/Piano
+                'Batería': 'fas fa-drum-steelpan', // Batería más específica
+                'Bajo': 'fas fa-guitar', // Bajo eléctrico (mismo icono pero diferente color)
+                'Canto': 'fas fa-microphone-alt' // Micrófono más moderno
             };
-            return icons[clase] || 'fa-music';
+            return icons[clase] || 'fas fa-music';
         }
 
         // ✅ CORRECCIÓN: Agregar async a la función
