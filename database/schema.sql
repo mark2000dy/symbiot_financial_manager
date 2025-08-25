@@ -85,7 +85,29 @@ CREATE TABLE alumnos (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (maestro_id) REFERENCES maestros(id),
     FOREIGN KEY (empresa_id) REFERENCES empresas(id)
+    -- Agregar después de la línea 88:
+    ALTER TABLE alumnos ADD COLUMN promocion VARCHAR(100);
+    ALTER TABLE alumnos ADD COLUMN tipo_clase VARCHAR(10);
+    ALTER TABLE alumnos ADD COLUMN domiciliado BOOLEAN DEFAULT FALSE;
+    ALTER TABLE alumnos ADD COLUMN tipo_alumno ENUM('G','I','B','C') COMMENT 'G=Guitarra,I=Individual,B=Batería,C=Canto';
 );
+
+-- Agregar después de la tabla alumnos:
+CREATE TABLE pagos_mensuales (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    alumno_id INT NOT NULL,
+    año INT NOT NULL,
+    mes INT NOT NULL COMMENT '1=Enero, 2=Febrero, etc.',
+    monto DECIMAL(8,2) NOT NULL DEFAULT 0,
+    fecha_pago DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (alumno_id) REFERENCES alumnos(id),
+    UNIQUE KEY unique_alumno_mes (alumno_id, año, mes)
+);
+
+-- 3. AGREGAR INDICES PARA PERFORMANCE
+CREATE INDEX idx_alumnos_estatus ON alumnos(estatus);
+CREATE INDEX idx_pagos_fecha ON pagos_mensuales(año, mes);
 
 -- Insertar datos iniciales de empresas
 INSERT INTO empresas (nombre, tipo_negocio) VALUES 

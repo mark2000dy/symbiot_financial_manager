@@ -368,7 +368,7 @@ export const transaccionesController = {
             });
         }
     },
-
+    
     // Obtener solo gastos
     getGastos: async (req, res) => {
         req.query.tipo = 'G';
@@ -410,6 +410,223 @@ export const transaccionesController = {
             res.status(500).json({ 
                 success: false, 
                 message: 'Error interno del servidor' 
+            });
+        }
+    },
+    // ====================================================
+    // NUEVAS FUNCIONES PARA ENDPOINTS FALTANTES
+    // ====================================================
+
+    // Obtener estadísticas de alumnos para dashboard
+    getDashboardAlumnos: async (req, res) => {
+        try {
+            const { empresa_id } = req.query;
+            let whereClause = 'WHERE 1=1';
+            const params = [];
+
+            if (empresa_id) {
+                whereClause += ' AND empresa_id = ?';
+                params.push(empresa_id);
+            }
+
+            // 1. Estadísticas básicas de alumnos
+            const statsQuery = `
+                SELECT 
+                    COUNT(*) as total_alumnos,
+                    COUNT(CASE WHEN estatus = 'Activo' THEN 1 END) as alumnos_activos,
+                    COUNT(CASE WHEN estatus = 'Baja' THEN 1 END) as alumnos_bajas,
+                    ROUND(AVG(precio_mensual), 2) as precio_promedio
+                FROM alumnos 
+                ${whereClause}
+            `;
+
+            const [estadisticas] = await executeQuery(statsQuery, params);
+
+            // 2. Distribución por clases
+            const clasesQuery = `
+                SELECT 
+                    clase,
+                    COUNT(*) as total_alumnos,
+                    COUNT(CASE WHEN estatus = 'Activo' THEN 1 END) as activos,
+                    ROUND(AVG(precio_mensual), 2) as precio_promedio
+                FROM alumnos 
+                ${whereClause}
+                GROUP BY clase
+                ORDER BY total_alumnos DESC
+            `;
+
+            const distribucionClases = await executeQuery(clasesQuery, params);
+
+            // 3. Distribución por maestros (si existe la relación)
+            const maestrosQuery = `
+                SELECT 
+                    COALESCE(m.nombre, 'Sin Maestro') as maestro,
+                    COUNT(a.id) as total_alumnos,
+                    COUNT(CASE WHEN a.estatus = 'Activo' THEN 1 END) as activos
+                FROM alumnos a
+                LEFT JOIN maestros m ON a.maestro_id = m.id
+                ${whereClause.replace('WHERE', 'WHERE')}
+                GROUP BY m.id, m.nombre
+                ORDER BY total_alumnos DESC
+            `;
+
+            const distribucionMaestros = await executeQuery(maestrosQuery, params);
+
+            // 4. Ingresos mensuales estimados
+            const ingresosMensualesQuery = `
+                SELECT 
+                    SUM(CASE WHEN estatus = 'Activo' THEN precio_mensual ELSE 0 END) as ingresos_estimados,
+                    COUNT(CASE WHEN estatus = 'Activo' AND fecha_ultimo_pago >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as pagos_recientes
+                FROM alumnos 
+                ${whereClause}
+            `;
+
+            const [ingresosMensuales] = await executeQuery(ingresosMensualesQuery, params);
+
+            res.json({
+                success: true,
+                data: {
+                    estadisticas: {
+                        total_alumnos: estadisticas.total_alumnos || 0,
+                        alumnos_activos: estadisticas.alumnos_activos || 0,
+                        alumnos_bajas: estadisticas.alumnos_bajas || 0,
+                        precio_promedio: estadisticas.precio_promedio || 0,
+                        tasa_actividad: estadisticas.total_alumnos > 0 ? 
+                            Math.round((estadisticas.alumnos_activos / estadisticas.total_alumnos) * 100) : 0
+                    },
+                    distribucion_clases: distribucionClases,
+                    distribucion_maestros: distribucionMaestros,
+                    ingresos_mensuales: {
+                        estimados: ingresosMensuales.ingresos_estimados || 0,
+                        pagos_recientes: ingresosMensuales.pagos_recientes || 0
+                    }
+                }
+            });
+
+            console.log(`✅ Dashboard alumnos consultado - Empresa: ${empresa_id || 'Todas'}`);
+
+        } catch (error) {
+            console.error('Error al obtener estadísticas de alumnos:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error interno del servidor',
+                error: error.message 
+            });
+        }
+    },
+
+    // Obtener datos para gráfica de gastos
+    getGastosGrafica: async (req, res) => {
+        try {
+            const { 
+                empresa_id, 
+                año = new Date().getFullYear(),
+                vista = 'month' // 'month' o 'year'
+            } = req.query;
+
+            let whereClause = "WHERE tipo = 'G'";
+            const params = ['G'];
+
+            if (empresa_id) {
+                whereClause += ' AND empresa_id = ?';
+                params.push(empresa_id);
+            }
+
+            if (vista === 'month') {
+                // Vista mensual para el año especificado
+                whereClause += ' AND YEAR(fecha) = ?';
+                params.push(año);
+
+                const gastosQuery = `
+                    SELECT 
+                        DATE_FORMAT(fecha, '%Y-%m') as periodo,
+                        MONTHNAME(fecha) as mes_nombre,
+                        COUNT(*) as total_transacciones,
+                        SUM(total) as total_gastos,
+                        ROUND(AVG(total), 2) as promedio_gasto
+                    FROM transacciones 
+                    ${whereClause}
+                    GROUP BY DATE_FORMAT(fecha, '%Y-%m'), MONTHNAME(fecha)
+                    ORDER BY periodo ASC
+                `;
+
+                const gastosPorMes = await executeQuery(gastosQuery, params);
+
+                // Asegurar que tenemos todos los 12 meses
+                const mesesCompletos = [];
+                const mesesNombres = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                ];
+
+                for (let mes = 1; mes <= 12; mes++) {
+                    const mesFormato = `${año}-${mes.toString().padStart(2, '0')}`;
+                    const datosMes = gastosPorMes.find(g => g.periodo === mesFormato);
+                    
+                    mesesCompletos.push({
+                        periodo: mesFormato,
+                        mes_nombre: mesesNombres[mes - 1],
+                        total_transacciones: datosMes?.total_transacciones || 0,
+                        total_gastos: datosMes?.total_gastos || 0,
+                        promedio_gasto: datosMes?.promedio_gasto || 0
+                    });
+                }
+
+                res.json({
+                    success: true,
+                    data: {
+                        vista: 'monthly',
+                        año: parseInt(año),
+                        gastos_por_mes: mesesCompletos,
+                        resumen: {
+                            total_gastos: mesesCompletos.reduce((sum, mes) => sum + (mes.total_gastos || 0), 0),
+                            total_transacciones: mesesCompletos.reduce((sum, mes) => sum + (mes.total_transacciones || 0), 0),
+                            promedio_mensual: Math.round(mesesCompletos.reduce((sum, mes) => sum + (mes.total_gastos || 0), 0) / 12)
+                        }
+                    }
+                });
+
+            } else if (vista === 'year') {
+                // Vista anual (últimos 5 años)
+                const añoActual = new Date().getFullYear();
+                whereClause += ' AND YEAR(fecha) >= ?';
+                params.push(añoActual - 4); // Últimos 5 años
+
+                const gastosQuery = `
+                    SELECT 
+                        YEAR(fecha) as año,
+                        COUNT(*) as total_transacciones,
+                        SUM(total) as total_gastos,
+                        ROUND(AVG(total), 2) as promedio_gasto
+                    FROM transacciones 
+                    ${whereClause}
+                    GROUP BY YEAR(fecha)
+                    ORDER BY año ASC
+                `;
+
+                const gastosPorAño = await executeQuery(gastosQuery, params);
+
+                res.json({
+                    success: true,
+                    data: {
+                        vista: 'yearly',
+                        gastos_por_año: gastosPorAño,
+                        resumen: {
+                            total_gastos: gastosPorAño.reduce((sum, año) => sum + (año.total_gastos || 0), 0),
+                            total_transacciones: gastosPorAño.reduce((sum, año) => sum + (año.total_transacciones || 0), 0)
+                        }
+                    }
+                });
+            }
+
+            console.log(`✅ Gráfica de gastos generada - Vista: ${vista}, Año: ${año}`);
+
+        } catch (error) {
+            console.error('Error al generar gráfica de gastos:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error interno del servidor',
+                error: error.message 
             });
         }
     }

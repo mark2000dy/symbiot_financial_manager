@@ -140,6 +140,12 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
+// GET /api/dashboard/alumnos - Estadísticas de alumnos para dashboard
+router.get('/dashboard/alumnos', transaccionesController.getDashboardAlumnos);
+
+// GET /api/gastos/grafica - Datos específicos para gráfica de gastos
+router.get('/gastos/grafica', transaccionesController.getGastosGrafica);
+
 // ============================================================
 // RUTAS ESPECÍFICAS DE GASTOS
 // ============================================================
