@@ -16,7 +16,7 @@ export const transaccionesController = {
                 fechaInicio, 
                 fechaFin, 
                 page = 1, 
-                limit = 50 
+                limit = 1000 
             } = req.query;
 
             let query = `
@@ -1098,5 +1098,59 @@ export const transaccionesController = {
         }
     }
 };
+
+// Función para gráfica de gastos (AGREGAR ESTA FUNCIÓN)
+getGastosGrafica: async (req, res) => {
+    try {
+        const { empresa_id, año, vista = 'month' } = req.query;
+        
+        let whereClause = 'WHERE tipo = "G"';
+        let params = [];
+        
+        if (empresa_id) {
+            whereClause += ' AND empresa_id = ?';
+            params.push(empresa_id);
+        }
+        
+        if (año) {
+            whereClause += ' AND YEAR(fecha) = ?';
+            params.push(año);
+        }
+        
+        const query = `
+            SELECT 
+                DATE_FORMAT(fecha, '%Y-%m') as periodo,
+                SUM(total) as total_gastos,
+                COUNT(*) as total_transacciones,
+                AVG(total) as promedio_gasto
+            FROM transacciones 
+            ${whereClause}
+            GROUP BY DATE_FORMAT(fecha, '%Y-%m')
+            ORDER BY periodo ASC
+        `;
+        
+        const result = await executeQuery(query, params);
+        
+        res.json({
+            success: true,
+            data: {
+                datos: result,
+                totales: {
+                    total_gastos: result.reduce((sum, item) => sum + parseFloat(item.total_gastos), 0),
+                    total_transacciones: result.reduce((sum, item) => sum + parseInt(item.total_transacciones), 0),
+                    promedio_gasto: result.length > 0 ? result.reduce((sum, item) => sum + parseFloat(item.promedio_gasto), 0) / result.length : 0
+                },
+                periodo_consultado: año ? `Año ${año}` : 'Últimos 12 meses'
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error en getGastosGrafica:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+}
 
 export default transaccionesController;

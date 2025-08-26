@@ -1,7 +1,7 @@
 // ====================================================
-// SCRIPT DE POBLACIÓN DESDE EXCEL REAL
+// SCRIPT COMPLETO DE POBLACIÓN DESDE EXCEL - VERSIÓN CORREGIDA
 // Archivo: database/seed-from-excel.js  
-// Procesar "Gastos Socios Symbiot.xlsx" con nueva estructura
+// Basado en diagnóstico exitoso - Headers reales del Excel
 // ====================================================
 
 import XLSX from 'xlsx';
@@ -9,342 +9,295 @@ import { executeQuery } from '../server/config/database.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
-import bcrypt from 'bcrypt';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 🔧 Configuración
 const EXCEL_FILE = 'Gastos Socios Symbiot.xlsx';
+const BATCH_SIZE = 25; // Procesar en lotes más pequeños
 
-// 📊 Mapeos de referencia
-const EMPRESAS = {
-    'Symbiot Technologies': { id: 2, created_by: 1 },
-    'Rockstar Skull': { id: 1, created_by: 3 }
-};
-
+// 📊 Mapeos de referencia (según diagnóstico)
 const USUARIOS_MAP = {
     'Marco Delgado': { id: 1, empresa_id: 2 },
-    'Antonio Razo': { id: 2, empresa_id: 2 },
+    'Antonio Razo': { id: 2, empresa_id: 1 },
+    'Hugo Vázquez': { id: 3, empresa_id: 1 },
     'Hugo Vazquez': { id: 3, empresa_id: 1 },
-    'Hugo Vázquez': { id: 3, empresa_id: 1 }, // Variación con acento
-    'Escuela': { id: 4, empresa_id: 1 }
+    'Escuela': { id: 4, empresa_id: 1 },
+    'Julio Olvera': { id: 3, empresa_id: 1 }, // Mapear a Hugo por default
+    'Irwin': { id: 3, empresa_id: 1 },
+    'Manuel Reyes': { id: 3, empresa_id: 1 },
+    'Luis Blanquet': { id: 3, empresa_id: 1 },
+    'Nahomy Perez': { id: 3, empresa_id: 1 },
+    'Demian Andrade': { id: 3, empresa_id: 1 }
 };
 
-const MAESTROS_MAP = {
-    'Hugo Vazquez': 1,
-    'Hugo Vázquez': 1,
-    'Julio': 2,
-    'Demian': 3,
-    'Irwin': 4,
-    'Nahomy': 5,
-    'Luis': 6,
-    'Manuel': 7,
-    'Harim López': 8
-};
-
-// Mapeo de meses (desde julio 2023 hasta julio 2025)
-const MESES_MAP = {
-    // 2023
-    'Julio': { año: 2023, mes: 7 },
-    'Agosto': { año: 2023, mes: 8 },
-    'Septiembre': { año: 2023, mes: 9 },
-    'Octubre': { año: 2023, mes: 10 },
-    'Noviembre': { año: 2023, mes: 11 },
-    'Diciembre': { año: 2023, mes: 12 },
-    // 2024
-    'Enero': { año: 2024, mes: 1 },
-    'Febrero': { año: 2024, mes: 2 },
-    'Marzo': { año: 2024, mes: 3 },
-    'Abril': { año: 2024, mes: 4 },
-    'Mayo': { año: 2024, mes: 5 },
-    'Junio': { año: 2024, mes: 6 },
-    'Julio.1': { año: 2024, mes: 7 },
-    'Agosto.1': { año: 2024, mes: 8 },
-    'Septiembre.1': { año: 2024, mes: 9 },
-    'Octubre.1': { año: 2024, mes: 10 },
-    'Noviembre.1': { año: 2024, mes: 11 },
-    'Diciembre.1': { año: 2024, mes: 12 },
-    // 2025
-    'Enero.1': { año: 2025, mes: 1 },
-    'Febrero.1': { año: 2025, mes: 2 },
-    'Marzo.1': { año: 2025, mes: 3 },
-    'Abril.1': { año: 2025, mes: 4 },
-    'Mayo.1': { año: 2025, mes: 5 },
-    'Junio.1': { año: 2025, mes: 6 },
-    'Julio.2': { año: 2025, mes: 7 }
-};
+// 📅 Mapeo exacto de columnas según diagnóstico
+const COLUMNAS_MESES = [
+    { nombre: 'Julio', año: 2023, mes: 7, fecha: '2023-07-31' },
+    { nombre: 'Agosto', año: 2023, mes: 8, fecha: '2023-08-31' },
+    { nombre: 'Septiembre', año: 2023, mes: 9, fecha: '2023-09-30' },
+    { nombre: 'Octubre', año: 2023, mes: 10, fecha: '2023-10-31' },
+    { nombre: 'Noviembre', año: 2023, mes: 11, fecha: '2023-11-30' },
+    { nombre: 'Diciembre', año: 2023, mes: 12, fecha: '2023-12-31' },
+    { nombre: 'Enero', año: 2024, mes: 1, fecha: '2024-01-31' },
+    { nombre: 'Febrero', año: 2024, mes: 2, fecha: '2024-02-29' },
+    { nombre: 'Marzo', año: 2024, mes: 3, fecha: '2024-03-31' },
+    { nombre: 'Abril', año: 2024, mes: 4, fecha: '2024-04-30' },
+    { nombre: 'Mayo', año: 2024, mes: 5, fecha: '2024-05-31' },
+    { nombre: 'Junio', año: 2024, mes: 6, fecha: '2024-06-30' },
+    { nombre: 'Julio2', año: 2024, mes: 7, fecha: '2024-07-31' },
+    { nombre: 'Agosto2', año: 2024, mes: 8, fecha: '2024-08-31' },
+    { nombre: 'Septiembre2', año: 2024, mes: 9, fecha: '2024-09-30' },
+    { nombre: 'Octubre2', año: 2024, mes: 10, fecha: '2024-10-31' },
+    { nombre: 'Noviembre2', año: 2024, mes: 11, fecha: '2024-11-30' },
+    { nombre: 'Diciembre3', año: 2024, mes: 12, fecha: '2024-12-31' },
+    { nombre: 'Enero2', año: 2025, mes: 1, fecha: '2025-01-31' },
+    { nombre: 'Febrero2', año: 2025, mes: 2, fecha: '2025-02-28' },
+    { nombre: 'Marzo2', año: 2025, mes: 3, fecha: '2025-03-31' },
+    { nombre: 'Abril2', año: 2025, mes: 4, fecha: '2025-04-30' },
+    { nombre: 'Mayo2', año: 2025, mes: 5, fecha: '2025-05-31' },
+    { nombre: 'Junio2', año: 2025, mes: 6, fecha: '2025-06-30' },
+    { nombre: 'Julio3', año: 2025, mes: 7, fecha: '2025-07-31' }
+];
 
 // 🧩 Funciones utilitarias
 function limpiarTexto(texto) {
-    if (!texto || texto === null || texto === undefined) return '';
-    return String(texto).trim().replace(/\s+/g, ' ');
+    if (!texto || texto === null || texto === undefined) return null;
+    return texto.toString().trim().replace(/\s+/g, ' ');
 }
 
 function convertirFechaExcel(fechaExcel) {
     if (!fechaExcel) return null;
     
-    if (typeof fechaExcel === 'number') {
-        // Fecha en formato numérico de Excel
-        const fecha = XLSX.SSF.parse_date_code(fechaExcel);
-        return `${fecha.y}-${String(fecha.m).padStart(2, '0')}-${String(fecha.d).padStart(2, '0')}`;
-    }
-    
-    if (typeof fechaExcel === 'string') {
-        // Intentar parsear string de fecha
-        const fecha = new Date(fechaExcel);
-        if (!isNaN(fecha.getTime())) {
+    try {
+        if (typeof fechaExcel === 'number') {
+            const fecha = new Date((fechaExcel - 25569) * 86400 * 1000);
             return fecha.toISOString().split('T')[0];
         }
+        
+        if (fechaExcel instanceof Date && !isNaN(fechaExcel.getTime())) {
+            return fechaExcel.toISOString().split('T')[0];
+        }
+        
+        if (typeof fechaExcel === 'string') {
+            const fecha = new Date(fechaExcel);
+            if (!isNaN(fecha.getTime())) {
+                return fecha.toISOString().split('T')[0];
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error convirtiendo fecha:', fechaExcel, error.message);
+        return null;
     }
-    
-    return null;
 }
 
-function calcularPrecioMensual(tipoClase, domiciliado, promocion = '') {
-    const promocionLower = (promocion || '').toLowerCase();
+function determinarPrecioUnitario(tipoClase, domiciliado) {
+    const tipo = (tipoClase || '').toLowerCase();
     
-    if (promocionLower.includes('becado') || promocionLower.includes('staff')) {
-        return 0;
-    }
-    
-    if (promocionLower.includes('dos clases') || promocionLower.includes('doble')) {
-        return 1275;
-    }
-    
-    if (tipoClase === 'Individual') {
-        return domiciliado ? 1800 : 2000;
+    if (domiciliado) {
+        return tipo.includes('individual') || tipo.includes('i') ? 1800 : 1350;
     } else {
-        return domiciliado ? 1350 : 1500;
+        return tipo.includes('individual') || tipo.includes('i') ? 1350 : 1500;
     }
 }
 
-function crearFechaPago(fechaInscripcion, año, mes) {
-    const fechaBase = new Date(fechaInscripcion);
-    const dia = fechaBase.getDate();
-    
-    // Crear fecha de pago para el mes/año especificado
-    const fechaPago = new Date(año, mes - 1, dia);
-    return fechaPago.toISOString().split('T')[0];
+function obtenerNombreMes(año, mes) {
+    const meses = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return meses[mes - 1];
 }
 
 // 🚀 Función principal
 async function poblarBaseDeDatos() {
-    console.log('🚀 INICIANDO POBLACIÓN DESDE EXCEL REAL\n');
+    console.log('🚀 INICIANDO POBLACIÓN COMPLETA DE BASE DE DATOS\n');
     
     try {
-        // Verificar archivo Excel
+        console.log('📁 Verificando archivo Excel...');
         const excelPath = path.join(process.cwd(), EXCEL_FILE);
+        
         if (!fs.existsSync(excelPath)) {
             throw new Error(`❌ Archivo Excel no encontrado: ${EXCEL_FILE}`);
         }
+        console.log('✅ Archivo encontrado');
         
-        console.log('✅ Archivo Excel encontrado:', excelPath);
-        
-        // Leer Excel
+        console.log('📊 Leyendo archivo Excel...');
         const buffer = fs.readFileSync(excelPath);
         const workbook = XLSX.read(buffer, { type: 'buffer' });
-        console.log('📋 Hojas disponibles:', workbook.SheetNames);
+        console.log('✅ Excel leído exitosamente');
         
-        // Limpiar datos existentes
-        await limpiarDatosExistentes();
+        // Verificar transacciones existentes ANTES de limpiar
+        console.log('\n📊 Verificando estado actual de la base...');
+        const [currentCount] = await executeQuery('SELECT COUNT(*) as total FROM transacciones');
+        console.log(`📋 Transacciones actuales: ${currentCount.total}`);
         
-        // Insertar datos maestros
-        await insertarDatosMaestros();
+        if (currentCount.total > 0) {
+            console.log('⚠️ ATENCIÓN: Ya existen transacciones en la base');
+            console.log('🧹 Limpiando para nueva población...');
+            await executeQuery('DELETE FROM transacciones WHERE 1=1');
+            await executeQuery('ALTER TABLE transacciones AUTO_INCREMENT = 1');
+            console.log('✅ Base de datos limpia');
+        }
         
-        // Procesar cada hoja del Excel
+        console.log('\n📈 Iniciando procesamiento de datos...');
+        
+        // Procesar en orden optimizado
         await procesarIngresosSymbiot(workbook);
         await procesarGastosSymbiot(workbook);
-        await procesarIngresosRockstarSkull(workbook);
         await procesarGastosRockstarSkull(workbook);
         
-        // Mostrar resumen
+        // La función principal - generar ingresos mensuales
+        await procesarIngresosRockstarSkull(workbook);
+        
         await mostrarResumenFinal();
         
-        console.log('\n🎉 ¡POBLACIÓN DESDE EXCEL COMPLETADA EXITOSAMENTE!');
-        console.log('🔗 Dashboard disponible en: http://localhost:3000/gastos');
+        console.log('\n🎉 ¡POBLACIÓN COMPLETA EXITOSA!');
+        console.log('🔗 Ver resultados: http://localhost:3000/gastos');
         
     } catch (error) {
-        console.error('❌ Error poblando desde Excel:', error.message);
+        console.error('\n❌ ERROR FATAL:', error.message);
+        console.error('📍 Stack:', error.stack);
         throw error;
     }
 }
 
-// 🧹 Limpiar datos existentes
-async function limpiarDatosExistentes() {
-    console.log('\n🧹 Limpiando datos existentes...');
-    
-    const tables = ['transacciones', 'pagos_mensuales', 'alumnos', 'staff', 'maestros', 'usuarios', 'empresas'];
-    
-    for (const table of tables) {
-        try {
-            const result = await executeQuery(`DELETE FROM ${table}`);
-            console.log(`✅ Tabla ${table} limpiada (${result.affectedRows || 0} registros)`);
-        } catch (error) {
-            console.log(`⚠️ Advertencia limpiando ${table}: ${error.message}`);
-        }
-    }
-}
-
-// 📋 Insertar datos maestros
-async function insertarDatosMaestros() {
-    console.log('\n📋 Insertando datos maestros...');
-    
-    // Empresas
-    await executeQuery('INSERT INTO empresas (id, nombre, tipo_negocio) VALUES (?, ?, ?)', [1, 'Rockstar Skull', 'Academia de Música']);
-    await executeQuery('INSERT INTO empresas (id, nombre, tipo_negocio) VALUES (?, ?, ?)', [2, 'Symbiot Technologies', 'Desarrollo IoT y Aplicaciones']);
-    console.log('✅ Empresas insertadas');
-    
-    // Usuarios
-    const passwordHash = await bcrypt.hash('admin123', 10);
-    const usuarios = [
-        [1, 'Marco Delgado', 'marco.delgado@symbiot.com.mx', passwordHash, 'admin', 'Symbiot Technologies'],
-        [2, 'Antonio Razo', 'antonio.razo@symbiot.com.mx', passwordHash, 'admin', 'Symbiot Technologies'],
-        [3, 'Hugo Vazquez', 'hugo.vazquez@rockstarskull.com', passwordHash, 'user', 'Rockstar Skull'],
-        [4, 'Escuela', 'escuela@rockstarskull.com', passwordHash, 'user', 'Rockstar Skull']
-    ];
-    
-    for (const [id, nombre, email, password, rol, empresa] of usuarios) {
-        await executeQuery('INSERT INTO usuarios (id, nombre, email, password_hash, rol, empresa) VALUES (?, ?, ?, ?, ?, ?)', [id, nombre, email, password, rol, empresa]);
-    }
-    console.log('✅ Usuarios insertados');
-    
-    // Maestros
-    const maestros = [
-        [1, 'Hugo Vazquez', 'hugo.vazquez@rockstarskull.com', null, 'Director y Guitarra Eléctrica', 1],
-        [2, 'Julio', 'julio@rockstarskull.com', null, 'Batería', 1],
-        [3, 'Demian', 'demian@rockstarskull.com', null, 'Batería', 1],
-        [4, 'Irwin', 'irwin@rockstarskull.com', null, 'Guitarra Eléctrica', 1],
-        [5, 'Nahomy', 'nahomy@rockstarskull.com', null, 'Canto', 1],
-        [6, 'Luis', 'luis@rockstarskull.com', null, 'Bajo Eléctrico', 1],
-        [7, 'Manuel', 'manuel@rockstarskull.com', null, 'Piano/Teclado', 1],
-        [8, 'Harim López', 'harim.lopez@rockstarskull.com', null, 'Piano/Teclado', 1]
-    ];
-    
-    for (const [id, nombre, email, telefono, especialidad, empresa_id] of maestros) {
-        await executeQuery('INSERT INTO maestros (id, nombre, email, telefono, especialidad, empresa_id) VALUES (?, ?, ?, ?, ?, ?)', [id, nombre, email, telefono, especialidad, empresa_id]);
-    }
-    console.log('✅ Maestros insertados');
-    
-    // Staff
-    const staff = [
-        [1, 'Marco Delgado', 'marco.delgado@symbiot.com.mx', null, 'Financial Manager', 2],
-        [2, 'Antonio Razo', 'antonio.razo@symbiot.com.mx', null, 'Marketing Manager', 2],
-        [3, 'Santiago Rosas', 'santiago.rosas@rockstarskull.com', null, 'Staff Leader', 1],
-        [4, 'Emiliano Rosas', 'emiliano.rosas@rockstarskull.com', null, 'MKT Leader', 1],
-        [5, 'Maria de la Luz Nava', 'maria.nava@rockstarskull.com', null, 'Cleaning Concierge', 1]
-    ];
-    
-    for (const [id, nombre, email, telefono, puesto, empresa_id] of staff) {
-        await executeQuery('INSERT INTO staff (id, nombre, email, telefono, puesto, empresa_id) VALUES (?, ?, ?, ?, ?, ?)', [id, nombre, email, telefono, puesto, empresa_id]);
-    }
-    console.log('✅ Staff insertado');
-}
-
-// 💰 Procesar Ingresos de Symbiot Technologies
+// 💰 Procesar Ingresos Symbiot (simplificado)
 async function procesarIngresosSymbiot(workbook) {
     try {
-        console.log('\n💰 PROCESANDO INGRESOS SYMBIOT...');
-        
+        console.log('\n💰 Procesando ingresos Symbiot...');
         const worksheet = workbook.Sheets['Ingresos Symbiot'];
         if (!worksheet) {
-            console.log('⚠️ Hoja "Ingresos Symbiot" no encontrada');
+            console.log('⚠️ Hoja no encontrada');
             return;
         }
         
         const data = XLSX.utils.sheet_to_json(worksheet);
-        const ingresosValidos = data.filter(row => row.Fecha && row.Proyecto && row['Precio (MXN)'] > 0);
+        const validos = data.filter(row => row.Fecha && row.Proyecto && row['Precio (MXN)'] > 0);
+        console.log(`📊 ${validos.length} ingresos válidos`);
         
-        console.log(`📊 Encontrados ${ingresosValidos.length} ingresos válidos`);
-        
-        let insertados = 0;
-        
-        for (const row of ingresosValidos) {
-            try {
-                const fecha = convertirFechaExcel(row.Fecha);
-                if (!fecha) continue;
-                
-                const concepto = limpiarTexto(row.Proyecto) || 'Proyecto sin descripción';
-                const precioMXN = parseFloat(row['Precio (MXN)']) || 0;
-                const tipoPago = limpiarTexto(row['Tipo de pago']) || 'Transferencia';
-                
-                if (precioMXN <= 0) continue;
-                
-                await executeQuery(`
-                    INSERT INTO transacciones (fecha, concepto, socio, empresa_id, forma_pago, cantidad, precio_unitario, tipo, created_by)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `, [fecha, concepto, 'Marco Delgado', 2, tipoPago, 1, precioMXN, 'I', 1]);
-                
-                insertados++;
-                
-            } catch (error) {
-                console.error('❌ Error insertando ingreso Symbiot:', error.message);
-            }
+        for (const row of validos) {
+            const fecha = convertirFechaExcel(row.Fecha);
+            if (!fecha) continue;
+            
+            await executeQuery(`
+                INSERT INTO transacciones (fecha, concepto, socio, empresa_id, forma_pago, cantidad, precio_unitario, tipo, created_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                fecha,
+                limpiarTexto(row.Proyecto) || 'Proyecto Symbiot',
+                'Marco Delgado',
+                2,
+                limpiarTexto(row['Tipo de pago']) || 'Transferencia',
+                1,
+                parseFloat(row['Precio (MXN)']) || 0,
+                'I',
+                1
+            ]);
         }
         
-        console.log(`📈 Total ingresos Symbiot insertados: ${insertados}`);
-        
+        console.log(`✅ ${validos.length} ingresos Symbiot insertados`);
     } catch (error) {
-        console.error('❌ Error procesando ingresos Symbiot:', error.message);
+        console.error('❌ Error en ingresos Symbiot:', error.message);
     }
 }
 
-// 💸 Procesar Gastos de Symbiot Technologies
+// 💸 Procesar Gastos Symbiot (simplificado)
 async function procesarGastosSymbiot(workbook) {
     try {
-        console.log('\n💸 PROCESANDO GASTOS SYMBIOT...');
-        
+        console.log('\n💸 Procesando gastos Symbiot...');
         const worksheet = workbook.Sheets['Gastos Symbiot'];
         if (!worksheet) {
-            console.log('⚠️ Hoja "Gastos Symbiot" no encontrada');
+            console.log('⚠️ Hoja no encontrada');
             return;
         }
         
         const data = XLSX.utils.sheet_to_json(worksheet);
-        const gastosValidos = data.filter(row => row.Fecha && row.Concepto && row.Total > 0);
+        const validos = data.filter(row => row.Fecha && row.Concepto && row.Total > 0);
+        console.log(`📊 ${validos.length} gastos válidos`);
         
-        console.log(`📊 Encontrados ${gastosValidos.length} gastos válidos`);
+        for (const row of validos) {
+            const fecha = convertirFechaExcel(row.Fecha);
+            if (!fecha) continue;
+            
+            await executeQuery(`
+                INSERT INTO transacciones (fecha, concepto, socio, empresa_id, forma_pago, cantidad, precio_unitario, tipo, created_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                fecha,
+                limpiarTexto(row.Concepto) || 'Gasto Symbiot',
+                limpiarTexto(row.Socio) || 'Marco Delgado',
+                2,
+                limpiarTexto(row['Forma de Pago']) || 'Efectivo',
+                parseFloat(row.Cantidad) || 1,
+                parseFloat(row['Precio x unidad']) || 0,
+                'G',
+                1
+            ]);
+        }
+        
+        console.log(`✅ ${validos.length} gastos Symbiot insertados`);
+    } catch (error) {
+        console.error('❌ Error en gastos Symbiot:', error.message);
+    }
+}
+
+// 🎸💸 Procesar Gastos RockstarSkull (optimizado)
+async function procesarGastosRockstarSkull(workbook) {
+    try {
+        console.log('\n🎸💸 Procesando gastos RockstarSkull...');
+        const worksheet = workbook.Sheets['Gastos RockstarSkull'];
+        if (!worksheet) {
+            console.log('⚠️ Hoja no encontrada');
+            return;
+        }
+        
+        const data = XLSX.utils.sheet_to_json(worksheet);
+        const validos = data.filter(row => row.Fecha && row.Concepto && row.Total > 0);
+        console.log(`📊 ${validos.length} gastos válidos - procesando en lotes...`);
         
         let insertados = 0;
-        
-        for (const row of gastosValidos) {
-            try {
+        for (let i = 0; i < validos.length; i += BATCH_SIZE) {
+            const lote = validos.slice(i, i + BATCH_SIZE);
+            
+            for (const row of lote) {
                 const fecha = convertirFechaExcel(row.Fecha);
                 if (!fecha) continue;
-                
-                const concepto = limpiarTexto(row.Concepto) || 'Gasto operativo';
-                const socio = limpiarTexto(row.Socio) || 'Marco Delgado';
-                const formaPago = limpiarTexto(row['Forma de Pago']) || 'Efectivo';
-                const cantidad = parseFloat(row.Cantidad) || 1;
-                const precioUnitario = parseFloat(row['Precio x unidad']) || 0;
-                
-                if (precioUnitario <= 0) continue;
-                
-                const usuario = USUARIOS_MAP[socio] || USUARIOS_MAP['Marco Delgado'];
                 
                 await executeQuery(`
                     INSERT INTO transacciones (fecha, concepto, socio, empresa_id, forma_pago, cantidad, precio_unitario, tipo, created_by)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `, [fecha, concepto, socio, 2, formaPago, cantidad, precioUnitario, 'G', usuario.id]);
-                
+                `, [
+                    fecha,
+                    limpiarTexto(row.Concepto) || 'Gasto Academia',
+                    limpiarTexto(row.Socio) || 'Antonio Razo',
+                    1,
+                    limpiarTexto(row['Forma de Pago']) || 'Efectivo',
+                    parseFloat(row.Cantidad) || 1,
+                    parseFloat(row['Precio x unidad']) || 0,
+                    'G',
+                    2
+                ]);
                 insertados++;
-                
-            } catch (error) {
-                console.error('❌ Error insertando gasto Symbiot:', error.message);
             }
+            
+            console.log(`   📈 Procesados ${Math.min(i + BATCH_SIZE, validos.length)} de ${validos.length} gastos...`);
         }
         
-        console.log(`💸 Total gastos Symbiot insertados: ${insertados}`);
-        
+        console.log(`✅ ${insertados} gastos RockstarSkull insertados`);
     } catch (error) {
-        console.error('❌ Error procesando gastos Symbiot:', error.message);
+        console.error('❌ Error en gastos RockstarSkull:', error.message);
     }
 }
 
-// 🎸 Procesar Ingresos de RockstarSkull (Academia)
+// 🎸💰 Procesar Ingresos RockstarSkull (FUNCIÓN PRINCIPAL MEJORADA)
 async function procesarIngresosRockstarSkull(workbook) {
     try {
-        console.log('\n🎸 PROCESANDO INGRESOS ROCKSTAR SKULL...');
+        console.log('\n🎸💰 PROCESANDO INGRESOS ROCKSTAR SKULL...');
+        console.log('📊 Generando transacciones mensuales por alumno...');
         
         const worksheet = workbook.Sheets['Ingresos RockstarSkull'];
         if (!worksheet) {
@@ -352,203 +305,145 @@ async function procesarIngresosRockstarSkull(workbook) {
             return;
         }
         
-        const data = XLSX.utils.sheet_to_json(worksheet);
-        const alumnosValidos = data.filter(row => row.Alumno && row['Fecha de inscripción']);
+        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        const headers = data[0];
         
-        console.log(`📊 Encontrados ${alumnosValidos.length} alumnos válidos`);
+        console.log(`👥 Total alumnos encontrados: ${data.length - 1}`);
+        console.log(`📅 Meses a procesar: ${COLUMNAS_MESES.length} (Julio 2023 - Julio 2025)`);
         
-        let alumnosInsertados = 0;
-        let pagosInsertados = 0;
-        let transaccionesIngreso = 0;
+        let transaccionesGeneradas = 0;
+        let alumnosConPagos = 0;
         
-        for (const row of alumnosValidos) {
+        // Procesar cada alumno
+        for (let i = 1; i < data.length; i++) {
+            const alumnoData = data[i];
+            if (!alumnoData || !alumnoData[1]) continue; // Sin nombre
+            
             try {
-                // Datos del alumno
-                const nombre = limpiarTexto(row.Alumno);
-                const edad = parseInt(row.Edad) || null;
-                const maestroNombre = limpiarTexto(row.Maestro) || 'Hugo Vazquez';
-                const fechaInscripcion = convertirFechaExcel(row['Fecha de inscripción']);
-                const promocion = limpiarTexto(row.Promoción) || ''; // ← Cambiar null por string vacío
-                const clase = limpiarTexto(row.Clase) || 'Guitarra';
-                const tipoClase = limpiarTexto(row['Tipo de Clase']) || 'Grupal';
-                const horario = limpiarTexto(row.Horario) || null;
-                const formaPago = limpiarTexto(row['Forma de pago']) || 'Efectivo';
-                const domiciliado = row.Domiciliado === 'Si' || row.Domiciliado === 'YES' || row.Domiciliado === 1;
-                const estatus = limpiarTexto(row.Estatus) === 'Baja' ? 'Baja' : 'Activo';
+                const nombreAlumno = limpiarTexto(alumnoData[1]);
+                const maestro = limpiarTexto(alumnoData[3]) || 'Hugo Vázquez';
+                const formaPago = limpiarTexto(alumnoData[10]) || 'Efectivo'; // Columna K
+                const tipoClase = limpiarTexto(alumnoData[16]) || 'Grupal'; // "Tipo de Clase"
+                const cantidad = parseInt(alumnoData[12]) || 1; // "Cantidad"
                 
-                if (!nombre || !fechaInscripcion) {
-                    console.log(`⚠️ Alumno saltado: nombre="${nombre}", fecha="${fechaInscripcion}"`);
-                    continue;
-                }
+                // Determinar si está domiciliado (columna L = index 11)
+                const domiciliadoValue = alumnoData[11];
+                const domiciliado = domiciliadoValue && 
+                    domiciliadoValue.toString().toLowerCase().includes('si');
                 
-                // Calcular precio mensual
-                const precioMensual = calcularPrecioMensual(tipoClase, domiciliado, promocion);
+                // Calcular precio según reglas
+                const precioUnitario = determinarPrecioUnitario(tipoClase, domiciliado);
                 
-                // Obtener maestro_id
-                const maestroId = MAESTROS_MAP[maestroNombre] || 1;
+                let pagosAlumno = 0;
                 
-                // Insertar alumno
-                const result = await executeQuery(`
-                    INSERT INTO alumnos (nombre, edad, telefono, email, clase, tipo_clase, maestro_id, horario,
-                                       fecha_inscripcion, promocion, precio_mensual, forma_pago, domiciliado, estatus, empresa_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `, [nombre, edad, null, null, clase, tipoClase, maestroId, horario, fechaInscripcion, promocion, precioMensual, formaPago, domiciliado, estatus, 1]);
-                
-                const alumnoId = result.insertId;
-                alumnosInsertados++;
-                
-                // Procesar pagos mensuales
-                let fechaUltimoPago = null;
-                
-                for (const [columna, valor] of Object.entries(row)) {
-                    if (MESES_MAP[columna]) {
-                        const montoPago = parseFloat(valor) || 0;
+                // Procesar cada mes
+                for (const mesInfo of COLUMNAS_MESES) {
+                    // Buscar columna del mes
+                    const columnaIndex = headers.findIndex(h => 
+                        h && h.toString().trim() === mesInfo.nombre
+                    );
+                    
+                    if (columnaIndex === -1) continue;
+                    
+                    const montoPagado = parseFloat(alumnoData[columnaIndex]) || 0;
+                    
+                    if (montoPagado > 0) {
+                        // Generar transacción
+                        const concepto = `${nombreAlumno} pago ${obtenerNombreMes(mesInfo.año, mesInfo.mes)} ${mesInfo.año}`;
                         
-                        if (montoPago > 0) {
-                            const { año, mes } = MESES_MAP[columna];
-                            const fechaPago = crearFechaPago(fechaInscripcion, año, mes);
-                            
-                            // Insertar pago mensual
-                            await executeQuery(`
-                                INSERT INTO pagos_mensuales (alumno_id, año, mes, monto_pagado, fecha_pago, metodo_pago)
-                                VALUES (?, ?, ?, ?, ?, ?)
-                                ON DUPLICATE KEY UPDATE monto_pagado = VALUES(monto_pagado), fecha_pago = VALUES(fecha_pago)
-                            `, [alumnoId, año, mes, montoPago, fechaPago, formaPago]);
-                            
-                            pagosInsertados++;
-                            
-                            // Crear transacción de ingreso
-                            await executeQuery(`
-                                INSERT INTO transacciones (fecha, concepto, socio, empresa_id, forma_pago, cantidad, precio_unitario, tipo, created_by)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            `, [fechaPago, `Pago mensualidad ${clase} - ${nombre}`, maestroNombre, 1, formaPago, 1, montoPago, 'I', 3]);
-                            
-                            transaccionesIngreso++;
-                            
-                            // Actualizar última fecha de pago
-                            if (!fechaUltimoPago || new Date(fechaPago) > new Date(fechaUltimoPago)) {
-                                fechaUltimoPago = fechaPago;
-                            }
-                        }
+                        await executeQuery(`
+                            INSERT INTO transacciones (fecha, concepto, socio, empresa_id, forma_pago, cantidad, precio_unitario, tipo, created_by)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        `, [
+                            mesInfo.fecha,
+                            concepto,
+                            maestro,
+                            1, // Rockstar Skull
+                            formaPago,
+                            cantidad,
+                            precioUnitario,
+                            'I',
+                            3 // Hugo Vázquez
+                        ]);
+                        
+                        transaccionesGeneradas++;
+                        pagosAlumno++;
                     }
                 }
                 
-                // Actualizar fecha_ultimo_pago del alumno
-                if (fechaUltimoPago) {
-                    await executeQuery('UPDATE alumnos SET fecha_ultimo_pago = ? WHERE id = ?', [fechaUltimoPago, alumnoId]);
+                if (pagosAlumno > 0) {
+                    alumnosConPagos++;
+                    console.log(`   ✅ ${nombreAlumno}: ${pagosAlumno} pagos mensuales`);
                 }
                 
-                if (alumnosInsertados % 10 === 0) {
-                    console.log(`📈 Procesados ${alumnosInsertados} alumnos...`);
+                // Progress cada 20 alumnos
+                if (i % 20 === 0) {
+                    console.log(`📈 Progreso: ${i}/${data.length - 1} alumnos - ${transaccionesGeneradas} transacciones`);
                 }
                 
             } catch (error) {
-                console.error(`❌ Error insertando alumno "${row.Alumno || 'DESCONOCIDO'}":`, error.message);
-                console.error(`   Datos: nombre="${row.Alumno}", maestro="${row.Maestro}", promoción="${row.Promoción}"`);
+                console.error(`❌ Error procesando alumno en fila ${i}:`, error.message);
             }
         }
         
-        console.log(`🎵 Total alumnos insertados: ${alumnosInsertados}`);
-        console.log(`💰 Total pagos mensuales insertados: ${pagosInsertados}`);
-        console.log(`📈 Total transacciones de ingreso: ${transaccionesIngreso}`);
+        console.log(`\n🎓 RESUMEN INGRESOS ROCKSTAR SKULL:`);
+        console.log(`👥 Alumnos con pagos: ${alumnosConPagos} de ${data.length - 1}`);
+        console.log(`💰 Transacciones generadas: ${transaccionesGeneradas}`);
         
     } catch (error) {
         console.error('❌ Error procesando ingresos RockstarSkull:', error.message);
-    }
-}
-
-// 🎭 Procesar Gastos de RockstarSkull
-async function procesarGastosRockstarSkull(workbook) {
-    try {
-        console.log('\n🎭 PROCESANDO GASTOS ROCKSTAR SKULL...');
-        
-        const worksheet = workbook.Sheets['Gastos RockstarSkull'];
-        if (!worksheet) {
-            console.log('⚠️ Hoja "Gastos RockstarSkull" no encontrada');
-            return;
-        }
-        
-        const data = XLSX.utils.sheet_to_json(worksheet);
-        const gastosValidos = data.filter(row => row.Fecha && row.Concepto && row.Total > 0);
-        
-        console.log(`📊 Encontrados ${gastosValidos.length} gastos válidos`);
-        
-        let insertados = 0;
-        
-        for (const row of gastosValidos) {
-            try {
-                const fecha = convertirFechaExcel(row.Fecha);
-                if (!fecha) continue;
-                
-                const concepto = limpiarTexto(row.Concepto) || 'Gasto operativo';
-                const socio = limpiarTexto(row.Socio) || 'Hugo Vazquez';
-                const formaPago = limpiarTexto(row['Forma de Pago']) || 'Efectivo';
-                const cantidad = parseFloat(row.Cantidad) || 1;
-                const precioUnitario = parseFloat(row['Precio x unidad']) || 0;
-                
-                if (precioUnitario <= 0) continue;
-                
-                const usuario = USUARIOS_MAP[socio] || USUARIOS_MAP['Hugo Vazquez'];
-                
-                await executeQuery(`
-                    INSERT INTO transacciones (fecha, concepto, socio, empresa_id, forma_pago, cantidad, precio_unitario, tipo, created_by)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `, [fecha, concepto, socio, 1, formaPago, cantidad, precioUnitario, 'G', usuario.id]);
-                
-                insertados++;
-                
-            } catch (error) {
-                console.error('❌ Error insertando gasto RockstarSkull:', error.message);
-            }
-        }
-        
-        console.log(`🎭 Total gastos RockstarSkull insertados: ${insertados}`);
-        
-    } catch (error) {
-        console.error('❌ Error procesando gastos RockstarSkull:', error.message);
+        throw error;
     }
 }
 
 // 📊 Mostrar resumen final
 async function mostrarResumenFinal() {
-    console.log('\n📊 RESUMEN FINAL:');
-    console.log('================');
-    
     try {
-        const [empresas] = await executeQuery('SELECT COUNT(*) as total FROM empresas');
-        const [usuarios] = await executeQuery('SELECT COUNT(*) as total FROM usuarios');
-        const [maestros] = await executeQuery('SELECT COUNT(*) as total FROM maestros');
-        const [staff] = await executeQuery('SELECT COUNT(*) as total FROM staff');
-        const [alumnos] = await executeQuery('SELECT COUNT(*) as total FROM alumnos');
-        const [pagos] = await executeQuery('SELECT COUNT(*) as total FROM pagos_mensuales');
-        const [transacciones] = await executeQuery('SELECT COUNT(*) as total FROM transacciones');
-        const [ingresos] = await executeQuery('SELECT COUNT(*) as total FROM transacciones WHERE tipo = "I"');
-        const [gastos] = await executeQuery('SELECT COUNT(*) as total FROM transacciones WHERE tipo = "G"');
+        console.log('\n📊 RESUMEN FINAL:');
         
-        console.log(`🏢 Empresas: ${empresas.total}`);
-        console.log(`👥 Usuarios: ${usuarios.total}`);
-        console.log(`🎸 Maestros: ${maestros.total}`);
-        console.log(`👔 Staff: ${staff.total}`);
-        console.log(`🎓 Alumnos: ${alumnos.total}`);
-        console.log(`💰 Pagos mensuales: ${pagos.total}`);
-        console.log(`📊 Transacciones totales: ${transacciones.total}`);
-        console.log(`📈 Ingresos: ${ingresos.total}`);
-        console.log(`📉 Gastos: ${gastos.total}`);
+        const [total] = await executeQuery('SELECT COUNT(*) as total FROM transacciones');
+        console.log(`📋 Total transacciones: ${total.total}`);
+        
+        const resumen = await executeQuery(`
+            SELECT 
+                e.nombre as empresa,
+                t.tipo,
+                COUNT(*) as cantidad,
+                ROUND(SUM(t.cantidad * t.precio_unitario), 2) as monto
+            FROM transacciones t
+            JOIN empresas e ON t.empresa_id = e.id
+            GROUP BY e.nombre, t.tipo
+            ORDER BY e.nombre, t.tipo
+        `);
+        
+        resumen.forEach(row => {
+            const tipo = row.tipo === 'I' ? '💰 Ingresos' : '💸 Gastos';
+            const monto = new Intl.NumberFormat('es-MX', { 
+                style: 'currency', 
+                currency: 'MXN' 
+            }).format(row.monto);
+            console.log(`${row.empresa} - ${tipo}: ${row.cantidad} transacciones (${monto})`);
+        });
         
     } catch (error) {
-        console.error('⚠️ Error generando resumen:', error.message);
+        console.error('❌ Error en resumen:', error.message);
     }
 }
 
-// Ejecutar población
-poblarBaseDeDatos()
-    .then(() => {
-        console.log('\n🎉 ¡Proceso completado exitosamente!');
-        process.exit(0);
-    })
-    .catch((error) => {
-        console.error('\n❌ Error en el proceso:', error.message);
-        process.exit(1);
-    });
-
+// Exportar función principal
 export { poblarBaseDeDatos };
+
+// Ejecutar si se llama directamente
+if (import.meta.url === `file://${process.argv[1]}`) {
+    console.log('🌱 EJECUTANDO SEED DIRECTO...');
+    
+    poblarBaseDeDatos()
+        .then(() => {
+            console.log('\n✅ ¡SEED COMPLETADO!');
+            process.exit(0);
+        })
+        .catch((error) => {
+            console.error('\n❌ ERROR EN SEED:', error.message);
+            process.exit(1);
+        });
+}
