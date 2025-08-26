@@ -23,6 +23,20 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
         }
+
+        /* FIX PARA DROPDOWN MENU Z-INDEX */
+        .navbar .dropdown-menu {
+            z-index: 9999 !important;
+            position: absolute !important;
+        }
+
+        .dropdown-menu.show {
+            z-index: 9999 !important;
+        }
+
+        .welcome-banner {
+            z-index: 1 !important;
+        }
         
         .navbar {
             background: rgba(25, 28, 36, 0.95) !important;
@@ -764,6 +778,14 @@
             setDefaultIngresosFilter();
             loadTransactions();
             loadIngresosChart();
+
+            if (typeof getCurrentUser === 'function') {
+                const user = getCurrentUser();
+                if (user && user.nombre) {
+                    document.getElementById('userName').textContent = user.nombre;
+                    document.getElementById('userNameDisplay').textContent = user.nombre;
+                }
+            }
         });
 
         // ============================================================
@@ -1513,17 +1535,7 @@
 
         console.log('✅ Sistema de gestión de ingresos configurado');
     </script>
-    <!-- Ejemplo en cualquier página -->
-    <span data-user-name>Cargando...</span>
-    <small data-user-email></small>
-    <button data-logout class="btn btn-outline-danger">
-        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-    </button>
-
-    <!-- Solo visible para admins -->
-    <div data-admin-only>
-        <button class="btn btn-danger">Solo Admins</button>
-    </div>
+    
     <!-- Script de verificación de autenticación -->
     <script src="assets/auth-check.js"></script>
 </body>

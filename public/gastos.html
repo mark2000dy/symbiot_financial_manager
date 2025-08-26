@@ -1358,91 +1358,102 @@
                 gastosChart.destroy();
             }
             
+            // Validar datos
+            if (!data || (!data.gastos_por_mes && !data.gastos_por_año)) {
+                console.error('❌ No hay datos para renderizar la gráfica');
+                showChartError();
+                return;
+            }
+            
             // Preparar datos según vista actual
-            let labels, datasets, chartData;
+            let labels, chartData;
             
             if (currentChartView === 'month') {
                 // Vista mensual
-                labels = data.gastos_por_mes.map(item => {
-                    const fecha = new Date(item.periodo + '-01');
-                    return fecha.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
-                });
-                
-                chartData = data.gastos_por_mes.map(item => parseFloat(item.total_gastos));
-                
-                datasets = [{
-                    label: 'Gastos Mensuales',
-                    data: chartData,
-                    backgroundColor: 'rgba(235, 22, 22, 0.6)',
-                    borderColor: 'rgba(235, 22, 22, 1)',
-                    borderWidth: 2,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                }];
+                if (!data.gastos_por_mes || data.gastos_por_mes.length === 0) {
+                    labels = ['Sin datos'];
+                    chartData = [0];
+                } else {
+                    labels = data.gastos_por_mes.map(item => {
+                        const fecha = new Date(item.periodo + '-01');
+                        return fecha.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+                    });
+                    chartData = data.gastos_por_mes.map(item => parseFloat(item.total_gastos) || 0);
+                }
             } else {
-                // Vista anual (implementar si necesario)
-                labels = ['2023', '2024', '2025'];
-                chartData = [50000, 75000, 25000]; // Datos simulados
-                
-                datasets = [{
-                    label: 'Gastos Anuales',
-                    data: chartData,
-                    backgroundColor: 'rgba(235, 22, 22, 0.6)',
-                    borderColor: 'rgba(235, 22, 22, 1)',
-                    borderWidth: 2,
-                }];
+                // Vista anual - Agrupar datos por año
+                if (!data.gastos_por_mes || data.gastos_por_mes.length === 0) {
+                    labels = ['Sin datos'];
+                    chartData = [0];
+                } else {
+                    const gastosPorAño = {};
+                    
+                    data.gastos_por_mes.forEach(item => {
+                        const año = item.año || new Date(item.periodo + '-01').getFullYear();
+                        gastosPorAño[año] = (gastosPorAño[año] || 0) + (parseFloat(item.total_gastos) || 0);
+                    });
+                    
+                    labels = Object.keys(gastosPorAño).sort();
+                    chartData = labels.map(año => gastosPorAño[año]);
+                }
             }
             
-            // Configuración de Chart.js
-            gastosChart = new Chart(ctx, {
+            // Configuración de la gráfica
+            const config = {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: datasets
+                    datasets: [{
+                        label: currentChartView === 'month' ? 'Gastos Mensuales' : 'Gastos Anuales',
+                        data: chartData,
+                        backgroundColor: 'rgba(220, 53, 69, 0.6)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        title: {
-                            display: true,
-                            text: currentChartView === 'month' ? 'Gastos por Mes' : 'Gastos por Año',
-                            color: '#E4E6EA',
-                            font: {
-                                size: 16,
-                                weight: 'bold'
-                            }
-                        },
                         legend: {
-                            position: 'bottom', // ← Posición horizontal abajo
-                            align: 'center',
                             labels: {
-                                usePointStyle: true,
-                                color: '#ffffff',
-                                padding: 15,
+                                color: 'white',
                                 font: {
-                                    size: 11
+                                    size: 12
                                 }
                             }
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(25, 28, 36, 0.95)',
-                            titleColor: '#FFFFFF',
-                            bodyColor: '#E4E6EA',
-                            borderColor: 'rgba(235, 22, 22, 0.5)',
-                            borderWidth: 1,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
                             callbacks: {
                                 label: function(context) {
-                                    return `💸 ${formatCurrency(context.parsed.y)}`;
+                                    return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
                                 }
                             }
                         }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true,
+                        x: {
                             ticks: {
-                                color: '#E4E6EA',
+                                color: 'rgba(255, 255, 255, 0.8)',
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.8)',
+                                font: {
+                                    size: 11
+                                },
                                 callback: function(value) {
                                     return formatCurrency(value);
                                 }
@@ -1450,34 +1461,73 @@
                             grid: {
                                 color: 'rgba(255, 255, 255, 0.1)'
                             }
-                        },
-                        x: {
-                            ticks: {
-                                color: '#E4E6EA'
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            }
                         }
                     },
-                    onClick: (event, elements) => {
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    onClick: async (event, elements) => {
                         if (elements.length > 0) {
-                            handleChartClick(elements[0].index);
+                            const index = elements[0].index;
+                            const periodo = currentChartView === 'month' ? 
+                                data.gastos_por_mes[index].periodo : 
+                                labels[index];
+                            
+                            console.log(`🔍 Drill-down solicitado para: ${periodo}`);
+                            await handleChartDrillDown(periodo);
                         }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeInOutQuad'
                     }
                 }
-            });
+            };
             
-            // Mostrar contenedor
+            // Crear la gráfica
+            gastosChart = new Chart(ctx, config);
+            
+            // Mostrar contenedores
             document.getElementById('chartContainer').style.display = 'block';
             document.getElementById('chartSummary').style.display = 'block';
+            
+            console.log(`✅ Gráfica renderizada - Vista: ${currentChartView}, Puntos: ${chartData.length}`);
         }
 
-        // Manejar click en gráfica (drill-down)
+        async function handleChartDrillDown(periodo) {
+            try {
+                console.log(`🔍 Ejecutando drill-down para periodo: ${periodo}`);
+                
+                // Construir parámetros
+                const params = new URLSearchParams();
+                const empresa = document.getElementById('filterEmpresa').value;
+                
+                if (empresa) params.append('empresa_id', empresa);
+                
+                if (currentChartView === 'month') {
+                    // Para vista mensual, periodo viene como "2024-01"
+                    const [año, mes] = periodo.split('-');
+                    params.append('año', año);
+                    params.append('mes', mes);
+                } else {
+                    // Para vista anual, periodo es solo el año
+                    params.append('año', periodo);
+                }
+                
+                const response = await fetch(`/gastos/api/gastos/drill-down?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.gastos) {
+                    showDrillDownDetails(data.data.gastos, periodo);
+                } else {
+                    console.log('⚠️ No hay datos detallados para el período seleccionado');
+                    alert(`📊 Período ${periodo}:\n\nNo hay datos detallados disponibles`);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error en drill-down:', error);
+                alert(`❌ Error obteniendo detalles del período ${periodo}`);
+            }
+        }
+
+        /* Manejar click en gráfica (drill-down)
         async function handleChartClick(index) {
             if (!currentChartData || !currentChartData.gastos_por_mes[index]) return;
             
@@ -1503,7 +1553,7 @@
             } catch (error) {
                 console.error('❌ Error en drill-down:', error);
             }
-        }
+        }*/
 
         // Mostrar detalles de drill-down
         function showDrillDownDetails(gastos, periodo) {
@@ -1530,19 +1580,76 @@
 
         // Actualizar resumen de gráfica
         function updateChartSummary(data) {
+            console.log('📊 Actualizando resumen de gráfica:', data);
+            
+            // Validar datos
+            if (!data || !data.totales) {
+                console.error('❌ Datos de totales no disponibles');
+                return;
+            }
+            
             const totales = data.totales;
             
-            document.getElementById('totalGastosChart').textContent = formatCurrency(totales.total_gastos || 0);
-            document.getElementById('promedioGastosChart').textContent = formatCurrency(totales.promedio_gasto || 0);
-            document.getElementById('transaccionesChart').textContent = totales.total_transacciones || 0;
-            document.getElementById('periodoChart').textContent = data.periodo_consultado || '-';
+            // Actualizar cards con validación
+            const totalGastosElement = document.getElementById('totalGastosChart');
+            const promedioGastosElement = document.getElementById('promedioGastosChart');  
+            const transaccionesElement = document.getElementById('transaccionesChart');
+            const periodoElement = document.getElementById('periodoChart');
+            
+            if (totalGastosElement) {
+                totalGastosElement.textContent = formatCurrency(totales.total_gastos || 0);
+            }
+            
+            if (promedioGastosElement) {
+                promedioGastosElement.textContent = formatCurrency(totales.promedio_gasto || 0);
+            }
+            
+            if (transaccionesElement) {
+                transaccionesElement.textContent = (totales.total_transacciones || 0).toLocaleString();
+            }
+            
+            if (periodoElement) {
+                periodoElement.textContent = data.periodo_consultado || '-';
+            }
+            
+            console.log('✅ Resumen actualizado - Total gastos:', formatCurrency(totales.total_gastos || 0));
         }
 
         // Mostrar/ocultar loading de gráfica
         function showChartLoading(show) {
-            document.getElementById('chartLoading').style.display = show ? 'block' : 'none';
-            document.getElementById('chartContainer').style.display = show ? 'none' : 'block';
-            document.getElementById('chartSummary').style.display = show ? 'none' : 'block';
+            const loadingElement = document.getElementById('chartLoading');
+            const containerElement = document.getElementById('chartContainer');
+            const summaryElement = document.getElementById('chartSummary');
+            const errorElement = document.getElementById('chartError');
+            
+            if (show) {
+                // Mostrar loading
+                if (loadingElement) loadingElement.style.display = 'block';
+                if (containerElement) containerElement.style.display = 'none';
+                if (summaryElement) summaryElement.style.display = 'none';
+                if (errorElement) errorElement.style.display = 'none';
+            } else {
+                // Ocultar loading
+                if (loadingElement) loadingElement.style.display = 'none';
+                if (containerElement) containerElement.style.display = 'block';
+                if (summaryElement) summaryElement.style.display = 'block';
+                if (errorElement) errorElement.style.display = 'none';
+            }
+        }
+
+        function showChartError() {
+            const loadingElement = document.getElementById('chartLoading');
+            const containerElement = document.getElementById('chartContainer');
+            const summaryElement = document.getElementById('chartSummary');
+            const errorElement = document.getElementById('chartError');
+            
+            // Mostrar error
+            if (loadingElement) loadingElement.style.display = 'none';
+            if (containerElement) containerElement.style.display = 'none';
+            if (summaryElement) summaryElement.style.display = 'none';
+            if (errorElement) errorElement.style.display = 'block';
+            
+            console.log('❌ Mostrando error de gráfica');
         }
 
         // Mostrar error en gráfica
@@ -1796,17 +1903,7 @@
             });
         });*/
     </script>
-    <!-- Ejemplo en cualquier página -->
-    <span data-user-name>Cargando...</span>
-    <small data-user-email></small>
-    <button data-logout class="btn btn-outline-danger">
-        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-    </button>
-
-    <!-- Solo visible para admins -->
-    <div data-admin-only>
-        <button class="btn btn-danger">Solo Admins</button>
-    </div>
+    
     <!-- Script de verificación de autenticación -->
     <script src="assets/auth-check.js"></script>
 </body>
