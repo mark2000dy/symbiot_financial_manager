@@ -733,7 +733,7 @@
                                 <label for="transactionTotal" class="form-label">
                                     <i class="fas fa-calculator me-1"></i>Total
                                 </label>
-                                <input type="text" class="form-control" id="transactionTotal" readonly style="background: rgba(82, 196, 26, 0.1); border-color: #52C41A;">
+                                <input type="text" class="form-control" id="transactionTotal" readonly style="background: rgba(196, 26, 26, 0.1); border-color: #EB1616;">
                             </div>
                         </div>
                         
@@ -820,12 +820,18 @@
                 const tipo = document.getElementById('filterTipo').value || 'G'; // Solo Gastos por defecto
                 
                 if (empresa) params.append('empresa_id', empresa);
-                if (ano) params.append('año', ano);
-                if (mes) params.append('mes', mes);
-                params.append('tipo', tipo); // Forzar solo Gastos
-                
-                console.log('📥 Cargando Gastos con filtros:', params.toString());
-                
+                if (tipo) params.append('tipo', tipo);
+
+                // Construir rango de fechas (IGUAL que en ingresos.html)
+                if (ano) {
+                    const fechaInicio = mes ? `${ano}-${mes}-01` : `${ano}-01-01`;
+                    const fechaFin = mes ? `${ano}-${mes}-31` : `${ano}-12-31`;
+                    params.append('fechaInicio', fechaInicio);
+                    params.append('fechaFin', fechaFin);
+                }
+
+                console.log('📥 Cargando ingresos con filtros:', params.toString());
+
                 const response = await fetch(`/gastos/api/transacciones?${params.toString()}`);
                 const result = await response.json();
                 
@@ -1289,20 +1295,31 @@
         // FUNCIONES DE GRÁFICA INTERACTIVA
         // ============================================================
 
-        // Cargar y renderizar gráfica de Gastos
+        // Cargar y renderizar gráfica de gastos
         async function loadGastosChart() {
             try {
                 showChartLoading(true);
                 
-                // Construir parámetros basados en filtros actuales
+                // Construir parámetros basados en TODOS los filtros actuales
                 const params = new URLSearchParams();
                 
                 const empresa = document.getElementById('filterEmpresa').value;
                 const ano = document.getElementById('filterAno').value;
-                
+                const mes = document.getElementById('filterMes').value;
+                const tipo = document.getElementById('filterTipo').value || 'G'; // Forzar gastos
+
                 if (empresa) params.append('empresa_id', empresa);
                 if (ano) params.append('año', ano);
-                params.append('tipo', 'G'); // Solo Gastos
+                if (mes) params.append('mes', mes);
+                params.append('tipo', tipo); // Asegurar solo gastos
+
+                // Construir fechas como en loadTransactions()
+                if (ano) {
+                    const fechaInicio = mes ? `${ano}-${mes}-01` : `${ano}-01-01`;
+                    const fechaFin = mes ? `${ano}-${mes}-31` : `${ano}-12-31`;
+                    params.append('fechaInicio', fechaInicio);
+                    params.append('fechaFin', fechaFin);
+                }
                 
                 console.log('📊 Cargando datos de gráfica con filtros:', params.toString());
                 
@@ -1319,6 +1336,8 @@
             } catch (error) {
                 console.error('❌ Error cargando gráfica:', error);
                 showChartError();
+            } finally {
+                showChartLoading(false);
             }
         }
 
@@ -1400,22 +1419,29 @@
         function processMonthlyData(data) {
             const monthlyData = {};
             const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
-                           'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                        'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             
             data.forEach(transaction => {
                 const date = new Date(transaction.fecha);
-                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-                const monthLabel = `${months[date.getMonth()]} ${date.getFullYear()}`;
+                const year = date.getFullYear();
+                const month = date.getMonth(); // 0-11
+                const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+                const monthLabel = `${months[month]} ${year}`;
                 
                 if (!monthlyData[monthKey]) {
-                    monthlyData[monthKey] = { label: monthLabel, total: 0 };
+                    monthlyData[monthKey] = { 
+                        label: monthLabel, 
+                        total: 0,
+                        sortDate: new Date(year, month, 1) // Para ordenamiento correcto
+                    };
                 }
                 
                 monthlyData[monthKey].total += (transaction.cantidad || 1) * (transaction.precio_unitario || 0);
             });
             
+            // ✅ ORDENAMIENTO CRONOLÓGICO CORRECTO
             const sortedEntries = Object.entries(monthlyData)
-                .sort(([a], [b]) => a.localeCompare(b))
+                .sort(([, a], [, b]) => a.sortDate - b.sortDate) // Ordenar por fecha real
                 .slice(-12); // Últimos 12 meses
             
             return {

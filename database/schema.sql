@@ -175,12 +175,12 @@ INSERT INTO usuarios (nombre, email, password_hash, rol, empresa) VALUES
 -- ============================================================
 INSERT INTO maestros (nombre, email, telefono, especialidad, empresa_id) VALUES 
 ('Hugo Vazquez', 'hugo.vazquez@rockstarskull.com', NULL, 'Director y Guitarra Eléctrica', 1),
-('Julio', 'julio@rockstarskull.com', NULL, 'Batería', 1),
-('Demian', 'demian@rockstarskull.com', NULL, 'Batería', 1), 
-('Irwin', 'irwin@rockstarskull.com', NULL, 'Guitarra Eléctrica', 1),
-('Nahomy', 'nahomy@rockstarskull.com', NULL, 'Canto', 1),
-('Luis', 'luis@rockstarskull.com', NULL, 'Bajo Eléctrico', 1),
-('Manuel', 'manuel@rockstarskull.com', NULL, 'Piano/Teclado', 1),
+('Julio Olvera', 'julio@rockstarskull.com', NULL, 'Batería', 1),
+('Demian Andrade', 'demian@rockstarskull.com', NULL, 'Batería', 1), 
+('Irwin Hernandez', 'irwin@rockstarskull.com', NULL, 'Guitarra Eléctrica', 1),
+('Nahomy Pérez', 'nahomy@rockstarskull.com', NULL, 'Canto', 1),
+('Luis Blanquet', 'luis@rockstarskull.com', NULL, 'Bajo Eléctrico', 1),
+('Manuel Reyes', 'manuel@rockstarskull.com', NULL, 'Piano/Teclado', 1),
 ('Harim López', 'harim.lopez@rockstarskull.com', NULL, 'Piano/Teclado', 1);
 
 -- ============================================================

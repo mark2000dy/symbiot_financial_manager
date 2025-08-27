@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Ingresos - Sistema de Gastos Symbiot</title>
+    <title>Gastos - Sistema de Gastos Symbiot</title>
     
     <!-- PWA Configuration -->
     <link rel="manifest" href="manifest.json">
@@ -85,7 +85,7 @@
         }
         
         .card-header {
-            background: rgba(82, 196, 26, 0.1);
+            background: rgba(220, 53, 69, 0.1);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
@@ -97,8 +97,8 @@
         
         .form-control:focus, .form-select:focus {
             background: rgba(255, 255, 255, 0.15);
-            border-color: #52C41A;
-            box-shadow: 0 0 0 0.25rem rgba(82, 196, 26, 0.25);
+            border-color: #DC3545;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
             color: white;
         }
         
@@ -112,13 +112,13 @@
         }
         
         .btn-primary {
-            background-color: #52C41A;
-            border-color: #52C41A;
+            background-color: #DC3545;
+            border-color: #DC3545;
         }
-        
+
         .btn-primary:hover {
-            background-color: #389E0D;
-            border-color: #389E0D;
+            background-color: #C82333;
+            border-color: #C82333;
         }
         
         .btn-outline-secondary {
@@ -147,12 +147,12 @@
         }
         
         .badge.bg-success {
-            background-color: #52C41A !important;
+            background-color: #DC3545 !important;
         }
-        
+
         .alert-info {
-            background-color: rgba(82, 196, 26, 0.15) !important;
-            border-color: rgba(82, 196, 26, 0.4) !important;
+            background-color: rgba(220, 53, 69, 0.15) !important;
+            border-color: rgba(220, 53, 69, 0.4) !important;
             color: #FFFFFF !important;
         }
         
@@ -196,14 +196,14 @@
         }
         
         .page-link:hover {
-            background: rgba(82, 196, 26, 0.2);
-            border-color: #52C41A;
+            background: rgba(220, 53, 69, 0.2);
+            border-color: #DC3545;
             color: white;
         }
-        
+
         .page-item.active .page-link {
-            background-color: #52C41A;
-            border-color: #52C41A;
+            background-color: #DC3545;
+            border-color: #DC3545;
             color: white;
         }
         
@@ -296,17 +296,17 @@
         
         /* Welcome banner */
         .welcome-banner {
-            background: linear-gradient(135deg, rgba(82, 196, 26, 0.15), rgba(115, 209, 61, 0.1));
-            border: 1px solid rgba(82, 196, 26, 0.3);
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.15), rgba(248, 215, 218, 0.1));
+            border: 1px solid rgba(220, 53, 69, 0.3);
             border-radius: 15px;
             padding: 2rem;
             margin-bottom: 2rem;
             text-align: center;
             backdrop-filter: blur(10px);
         }
-        
+
         .welcome-banner h4 {
-            color: #52C41A;
+            color: #DC3545;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
@@ -337,12 +337,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="gastos.html">
+                        <a class="nav-link active" href="gastos.html">
                             <i class="fas fa-money-bill-wave me-1"></i>Gastos
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="ingresos.html">
+                        <a class="nav-link" href="ingresos.html">
                             <i class="fas fa-coins me-1"></i>Ingresos
                         </a>
                     </li>
@@ -374,7 +374,7 @@
     <div class="container-fluid main-content">
         <!-- Welcome Banner -->
         <div class="welcome-banner" id="welcomeBanner">
-             <h4 class="mb-1"><i class="fas fa-money-bill-wave me-2"></i>Análisis de Ingresos</h4>
+             <h4 class="mb-1"><i class="fas fa-money-bill-wave me-2"></i>Análisis de Gastos</h4>
                 <p class="mb-0">¡Bienvenido, <span id="userNameDisplay">Usuario</span>! •
                     <i class="fas fa-building me-1"></i>
                     <span id="userCompany">Cargando...</span> • 
@@ -382,11 +382,11 @@
                 </p>
         </div>
 
-        <!-- Widget Gráfica de Ingresos Interactivo -->
+        <!-- Widget Gráfica de Gastos Interactivo -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="text-white mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>Análisis de Ingresos por Período
+                    <i class="fas fa-chart-line me-2"></i>Análisis de Gastos por Período
                 </h5>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="btn btn-outline-light" id="chartViewYear" onclick="setChartView('year')">📅 Anual</button>
@@ -402,21 +402,21 @@
                 
                 <!-- Canvas para Chart.js -->
                 <div id="chartContainer" style="display: none; position: relative; height: 400px;">
-                    <canvas id="ingresosChart"></canvas>
+                    <canvas id="gastosChart"></canvas>
                 </div>
                 
                 <!-- Error state -->
                 <div class="text-center py-4" id="chartError" style="display: none;">
                     <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
                     <p class="mt-2 text-white">Error cargando gráfica</p>
-                    <button class="btn btn-outline-primary btn-sm" onclick="loadIngresosChart()">🔄 Reintentar</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="loadGastosChart()">🔄 Reintentar</button>
                 </div>
                 
                 <!-- Estadísticas del Análisis -->
                 <div id="chartSummary" style="display: none;">
                     <hr class="my-4" style="border-color: rgba(255, 255, 255, 0.2);">
                     <div class="row g-3">
-                        <!-- Total Ingresos Card -->
+                        <!-- Total Gastos Card -->
                         <div class="col-sm-6 col-lg-3">
                             <div class="card stat-card-small h-100">
                                 <div class="card-body d-flex align-items-center p-3">
@@ -424,8 +424,8 @@
                                         <i class="fas fa-coins text-success"></i>
                                     </div>
                                     <div>
-                                        <h5 class="mb-0 text-success" id="totalIngresosChart">$0</h5>
-                                        <small style="color: #E4E6EA !important;">💰 Total Ingresos</small>
+                                        <h5 class="mb-0 text-success" id="totalGastosChart">$0</h5>
+                                        <small style="color: #E4E6EA !important;">💸 Total Gastos</small>
                                     </div>
                                 </div>
                             </div>
@@ -439,14 +439,14 @@
                                         <i class="fas fa-chart-bar text-info"></i>
                                     </div>
                                     <div>
-                                        <h5 class="mb-0 text-info" id="promedioIngresosChart">$0</h5>
+                                        <h5 class="mb-0 text-info" id="promedioGastosChart">$0</h5>
                                         <small style="color: #E4E6EA !important;">📊 Promedio</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Mayor Ingreso Card -->
+                        <!-- Mayor Gasto Card -->
                         <div class="col-sm-6 col-lg-3">
                             <div class="card stat-card-small h-100">
                                 <div class="card-body d-flex align-items-center p-3">
@@ -454,8 +454,8 @@
                                         <i class="fas fa-trophy text-warning"></i>
                                     </div>
                                     <div>
-                                        <h5 class="mb-0 text-warning" id="mayorIngresoChart">$0</h5>
-                                        <small style="color: #E4E6EA !important;">🏆 Mayor Ingreso</small>
+                                        <h5 class="mb-0 text-warning" id="mayorGastoChart">$0</h5>
+                                        <small style="color: #E4E6EA !important;">🏆 Mayor Gasto</small>
                                     </div>
                                 </div>
                             </div>
@@ -543,8 +543,8 @@
                         </label>
                         <select class="form-select" id="filterTipo" onchange="applyFilters()">
                             <option value="">Todos</option>
-                            <option value="I">💰 Ingresos</option>
-                            <option value="G" disabled>💸 Gastos (Solo en sección Gastos)</option>
+                            <option value="I" disabled>💰 Ingresos (Solo en sección Ingresos)</option>
+                            <option value="G" selected>💸 Gastos </option>
                         </select>
                     </div>
                     
@@ -568,7 +568,7 @@
                         <div class="alert alert-info d-flex justify-content-between align-items-center py-2 mb-0">
                             <div>
                                 <strong>Filtros aplicados:</strong>
-                                <span id="filterSummary">Mostrando 💰 ingresos</span>
+                                <span id="filterSummary">Mostrando 💸 Gastos</span>
                             </div>
                             <div>
                                 <span class="badge bg-success fs-6" id="totalRegistros">0</span> registros
@@ -579,7 +579,7 @@
             </div>
         </div>
 
-        <!-- Tabla de Ingresos -->
+        <!-- Tabla de Gastos -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="text-white mb-0">
@@ -590,7 +590,7 @@
                         <i class="fas fa-sync-alt me-1"></i>Actualizar
                     </button>
                     <button class="btn btn-primary btn-sm" onclick="showAddModal()">
-                        <i class="fas fa-plus me-1"></i>Nuevo Ingreso
+                        <i class="fas fa-plus me-1"></i>Nuevo Gasto
                     </button>
                 </div>
             </div>
@@ -623,7 +623,7 @@
                 </div>
 
                 <!-- Paginación -->
-                <nav aria-label="Paginación de ingresos" class="mt-3" id="paginationNav" style="display: none;">
+                <nav aria-label="Paginación de gastos" class="mt-3" id="paginationNav" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <small class="text-white">
@@ -684,8 +684,8 @@
                                     <i class="fas fa-tag me-1"></i>Tipo
                                 </label>
                                 <select class="form-select" id="transactionType" required>
-                                    <option value="I" selected>💰 Ingreso</option>
-                                    <option value="G" disabled>💸 Gasto (Solo en sección Gastos)</option>
+                                    <option value="I" disabled>💰 Ingresos (Solo en sección Ingresos)</option>
+                                    <option value="G" selected>💸 Gasto </option>
                                 </select>
                             </div>
                         </div>
@@ -713,7 +713,7 @@
                             <label for="transactionConcept" class="form-label">
                                 <i class="fas fa-receipt me-1"></i>Concepto/Descripción
                             </label>
-                            <textarea class="form-control" id="transactionConcept" rows="2" placeholder="Descripción del ingreso" required></textarea>
+                            <textarea class="form-control" id="transactionConcept" rows="2" placeholder="Descripción del gasto" required></textarea>
                         </div>
                         
                         <div class="row">
@@ -733,7 +733,7 @@
                                 <label for="transactionTotal" class="form-label">
                                     <i class="fas fa-calculator me-1"></i>Total
                                 </label>
-                                <input type="text" class="form-control" id="transactionTotal" readonly style="background: rgba(82, 196, 26, 0.1); border-color: #52C41A;">
+                                <input type="text" class="form-control" id="transactionTotal" readonly style="background: rgba(196, 26, 26, 0.1); border-color: #EB1616;">
                             </div>
                         </div>
                         
@@ -763,7 +763,7 @@
                         <i class="fas fa-trash me-1"></i>Eliminar
                     </button>
                     <button type="button" class="btn btn-primary" onclick="saveTransaction()">
-                        <i class="fas fa-save me-1"></i>Guardar Ingreso
+                        <i class="fas fa-save me-1"></i>Guardar Gasto
                     </button>
                 </div>
             </div>
@@ -788,10 +788,10 @@
         // INICIALIZACIÓN
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Inicializando Gestión de Ingresos...');
-            setDefaultIngresosFilter();
+            console.log('🚀 Inicializando Gestión de Gastos...');
+            setDefaultGastosFilter();
             loadTransactions();
-            loadIngresosChart();
+            loadGastosChart();
 
             if (typeof getCurrentUser === 'function') {
                 const user = getCurrentUser();
@@ -817,14 +817,14 @@
                 const empresa = document.getElementById('filterEmpresa').value;
                 const ano = document.getElementById('filterAno').value;
                 const mes = document.getElementById('filterMes').value;
-                const tipo = document.getElementById('filterTipo').value || 'I'; // Solo ingresos por defecto
+                const tipo = document.getElementById('filterTipo').value || 'G'; // Solo Gastos por defecto
                 
                 if (empresa) params.append('empresa_id', empresa);
                 if (ano) params.append('año', ano);
                 if (mes) params.append('mes', mes);
-                params.append('tipo', tipo); // Forzar solo ingresos
+                params.append('tipo', tipo); // Forzar solo Gastos
                 
-                console.log('📥 Cargando ingresos con filtros:', params.toString());
+                console.log('📥 Cargando Gastos con filtros:', params.toString());
                 
                 const response = await fetch(`/gastos/api/transacciones?${params.toString()}`);
                 const result = await response.json();
@@ -837,14 +837,14 @@
                 totalTransactions = transactionsData.length;
                 currentPage = 1;
                 
-                console.log(`✅ ${totalTransactions} ingresos cargados`);
+                console.log(`✅ ${totalTransactions} Gastos cargados`);
                 
                 renderCurrentPage();
                 updateFilterSummary();
                 updatePaginationControls();
                 
             } catch (error) {
-                console.error('❌ Error cargando ingresos:', error);
+                console.error('❌ Error cargando Gastos:', error);
                 showAlert('error', `Error cargando datos: ${error.message}`);
                 showEmptyState();
             }
@@ -884,7 +884,7 @@
                         <span class="badge bg-secondary">${transaction.forma_pago}</span>
                     </td>
                     <td>
-                        <span class="badge bg-success">💰 Ingreso</span>
+                        <span class="badge bg-success">💸 Gasto</span>
                     </td>
                     <td class="text-end text-success fw-bold">${formatCurrency((transaction.cantidad || 1) * (transaction.precio_unitario || 0))}</td>
                     <td class="text-center">
@@ -936,7 +936,7 @@
         function applyFilters() {
             console.log('🔍 Aplicando filtros...');
             loadTransactions();
-            loadIngresosChart(); // Actualizar gráfica también
+            loadGastosChart(); // Actualizar gráfica también
         }
 
         // Limpiar filtros
@@ -944,16 +944,16 @@
             document.getElementById('filterEmpresa').value = '';
             document.getElementById('filterAno').value = '';
             document.getElementById('filterMes').value = '';
-            document.getElementById('filterTipo').value = 'I'; // Mantener solo ingresos
+            document.getElementById('filterTipo').value = 'G'; // Mantener solo Gastos
             applyFilters();
         }
 
-        // Establecer filtros por defecto para mostrar solo ingresos
-        function setDefaultIngresosFilter() {
+        // Establecer filtros por defecto para mostrar solo Gastos
+        function setDefaultGastosFilter() {
             document.getElementById('filterEmpresa').value = '';
             document.getElementById('filterAno').value = '';
             document.getElementById('filterMes').value = '';
-            document.getElementById('filterTipo').value = 'I'; // Solo ingresos por defecto
+            document.getElementById('filterTipo').value = 'G'; // Solo Gastos por defecto
         }
 
         // Actualizar resumen de filtros
@@ -962,7 +962,7 @@
             const ano = document.getElementById('filterAno').value;
             const mes = document.getElementById('filterMes').value;
             
-            let summary = 'Mostrando 💰 ingresos';
+            let summary = 'Mostrando 💸 Gastos';
             
             const filters = [];
             if (empresa) {
@@ -1024,7 +1024,7 @@
         // Mostrar modal para nueva transacción
         function showAddModal() {
             editingTransactionId = null;
-            document.getElementById('modalTitle').textContent = 'Nuevo Ingreso';
+            document.getElementById('modalTitle').textContent = 'Nuevo Gasto';
             document.getElementById('deleteTransactionBtn').style.display = 'none';
             
             // Limpiar formulario
@@ -1032,7 +1032,7 @@
             
             // Establecer valores por defecto
             document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('transactionType').value = 'I'; // Ingreso por defecto
+            document.getElementById('transactionType').value = 'G'; // Gasto por defecto
             document.getElementById('transactionQuantity').value = 1;
             
             // Configurar listeners de cálculo
@@ -1051,7 +1051,7 @@
             }
             
             editingTransactionId = id;
-            document.getElementById('modalTitle').textContent = 'Editar Ingreso';
+            document.getElementById('modalTitle').textContent = 'Editar Gasto';
             document.getElementById('deleteTransactionBtn').style.display = 'inline-block';
             
             // Llenar formulario con datos existentes
@@ -1126,28 +1126,28 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    showAlert('success', editingTransactionId ? 'Ingreso actualizado exitosamente' : 'Ingreso creado exitosamente');
+                    showAlert('success', editingTransactionId ? 'Gasto actualizado exitosamente' : 'Gasto creado exitosamente');
                     
                     // Cerrar modal
                     bootstrap.Modal.getInstance(document.getElementById('transactionModal')).hide();
                     
                     // Recargar datos
                     loadTransactions();
-                    loadIngresosChart();
+                    loadGastosChart();
                     
                 } else {
                     throw new Error(result.error || 'Error en la operación');
                 }
                 
             } catch (error) {
-                console.error('❌ Error guardando ingreso:', error);
-                showAlert('error', `Error guardando ingreso: ${error.message}`);
+                console.error('❌ Error guardando gasto:', error);
+                showAlert('error', `Error guardando gasto: ${error.message}`);
             }
         }
 
         // Confirmar eliminación
         function confirmDelete(id) {
-            if (confirm('¿Estás seguro de que deseas eliminar este ingreso?')) {
+            if (confirm('¿Estás seguro de que deseas eliminar este gasto?')) {
                 deleteTransaction(id);
             }
         }
@@ -1165,7 +1165,7 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    showAlert('success', 'Ingreso eliminado exitosamente');
+                    showAlert('success', 'asto eliminado exitosamente');
                     
                     // Cerrar modal si está abierto
                     const modalInstance = bootstrap.Modal.getInstance(document.getElementById('transactionModal'));
@@ -1173,23 +1173,23 @@
                     
                     // Recargar datos
                     loadTransactions();
-                    loadIngresosChart();
+                    loadGastosChart();
                     
                 } else {
-                    throw new Error(result.error || 'Error eliminando ingreso');
+                    throw new Error(result.error || 'Error eliminando Gasto');
                 }
                 
             } catch (error) {
-                console.error('❌ Error eliminando ingreso:', error);
-                showAlert('error', `Error eliminando ingreso: ${error.message}`);
+                console.error('❌ Error eliminando Gasto:', error);
+                showAlert('error', `Error eliminando Gasto: ${error.message}`);
             }
         }
 
         // Refrescar transacciones
         function refreshTransactions() {
-            console.log('🔄 Actualizando lista de ingresos...');
+            console.log('🔄 Actualizando lista de Gastos...');
             loadTransactions();
-            loadIngresosChart();
+            loadGastosChart();
         }
 
         // ============================================================
@@ -1198,7 +1198,7 @@
 
         // Función mejorada de exportar
         async function exportData() {
-            console.log('📥 Iniciando exportación completa de ingresos...');
+            console.log('📥 Iniciando exportación completa de gastos...');
             
             try {
                 // Mostrar indicador de carga
@@ -1207,8 +1207,8 @@
                 exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exportando...';
                 exportBtn.disabled = true;
                 
-                // Obtener todos los ingresos (filtrado por tipo = 'I')
-                const response = await fetch('/gastos/api/transacciones?tipo=I');
+                // Obtener todos los Gastos (filtrado por tipo = 'G')
+                const response = await fetch('/gastos/api/transacciones?tipo=G');
                 const result = await response.json();
                 
                 if (!result.success) {
@@ -1236,7 +1236,7 @@
                 const csvData = allData.map(t => [
                     t.id,
                     formatDate(t.fecha),
-                    t.tipo === 'I' ? 'Ingreso' : 'Gasto',
+                    t.tipo === 'G' ? '' : 'Gasto',
                     t.empresa_id == 1 ? 'Rockstar Skull' : 'Symbiot Technologies',
                     t.socio,
                     `"${t.concepto.replace(/"/g, '""')}"`, // Escapar comillas dobles
@@ -1257,7 +1257,7 @@
                 const url = URL.createObjectURL(blob);
                 
                 const timestamp = new Date().toISOString().split('T')[0];
-                const filename = `symbiot_ingresos_${timestamp}.csv`;
+                const filename = `symbiot_gastos_${timestamp}.csv`;
                 
                 link.setAttribute('href', url);
                 link.setAttribute('download', filename);
@@ -1289,8 +1289,8 @@
         // FUNCIONES DE GRÁFICA INTERACTIVA
         // ============================================================
 
-        // Cargar y renderizar gráfica de ingresos
-        async function loadIngresosChart() {
+        // Cargar y renderizar gráfica de Gastos
+        async function loadGastosChart() {
             try {
                 showChartLoading(true);
                 
@@ -1302,7 +1302,7 @@
                 
                 if (empresa) params.append('empresa_id', empresa);
                 if (ano) params.append('año', ano);
-                params.append('tipo', 'I'); // Solo ingresos
+                params.append('tipo', 'G'); // Solo Gastos
                 
                 console.log('📊 Cargando datos de gráfica con filtros:', params.toString());
                 
@@ -1314,7 +1314,7 @@
                 }
                 
                 const data = result.data || [];
-                renderIngresosChart(data);
+                renderGastosChart(data);
                 
             } catch (error) {
                 console.error('❌ Error cargando gráfica:', error);
@@ -1322,9 +1322,9 @@
             }
         }
 
-        // Renderizar gráfica de ingresos
-        function renderIngresosChart(data) {
-            const ctx = document.getElementById('ingresosChart').getContext('2d');
+        // Renderizar gráfica de Gastos
+        function renderGastosChart(data) {
+            const ctx = document.getElementById('gastosChart').getContext('2d');
             
             // Destruir gráfica anterior si existe
             if (currentChart) {
@@ -1345,10 +1345,10 @@
                 data: {
                     labels: processedData.labels,
                     datasets: [{
-                        label: 'Ingresos ($)',
+                        label: 'Gastos ($)',
                         data: processedData.values,
-                        backgroundColor: 'rgba(82, 196, 26, 0.7)',
-                        borderColor: 'rgba(82, 196, 26, 1)',
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
                         borderWidth: 2,
                         borderRadius: 6,
                         borderSkipped: false,
@@ -1388,9 +1388,9 @@
             const transacciones = data.length;
             
             // Actualizar estadísticas
-            document.getElementById('totalIngresosChart').textContent = formatCurrency(total);
-            document.getElementById('promedioIngresosChart').textContent = formatCurrency(promedio);
-            document.getElementById('mayorIngresoChart').textContent = formatCurrency(mayor);
+            document.getElementById('totalGastosChart').textContent = formatCurrency(total);
+            document.getElementById('promedioGastosChart').textContent = formatCurrency(promedio);
+            document.getElementById('mayorGastoChart').textContent = formatCurrency(mayor);
             document.getElementById('totalTransaccionesChart').textContent = transacciones;
             
             showChartLoading(false);
@@ -1456,7 +1456,7 @@
             document.getElementById('chartViewMonth').classList.toggle('active', view === 'month');
             
             // Recargar gráfica
-            loadIngresosChart();
+            loadGastosChart();
         }
 
         // Mostrar loading de gráfica
@@ -1617,12 +1617,12 @@
             }
         }
 
-        console.log('✅ Sistema de gestión de ingresos configurado');
+        console.log('✅ Sistema de gestión de Gastos configurado');
 
         // 🔐 Verificación de autenticación al cargar página
         document.addEventListener('DOMContentLoaded', async function() {
             try {
-                console.log('🚀 Inicializando página de ingresos...');
+                console.log('🚀 Inicializando página de Gastos...');
                 
                 // Cargar usuario actual
                 await loadCurrentUser();
