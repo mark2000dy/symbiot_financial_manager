@@ -1414,6 +1414,7 @@
         // 🌐 Variables globales
         let currentUser = null;
         let currentPage = 1;
+        
         const transactionsPerPage = 10;
 
         // ✅ CORREGIDO: Asegurar que el modal esté disponible
@@ -2186,60 +2187,33 @@
         }
 
         // 🎓 Función loadStudentsList() - NUEVA IMPLEMENTACIÓN
-        async function loadStudentsList() {
+        async function loadStudentsList(page = 1) {
             try {
-                console.log('🎓 Cargando lista de alumnos...');
+                console.log(`🎓 Cargando página ${page} de alumnos...`);
                 
-                // Por ahora simulamos datos basados en el análisis del Excel RockstarSkull
-                const studentsData = [
-                    { 
-                        id: 1, nombre: 'Juan Pérez', edad: 16, clase: 'Guitarra', maestro: 'Hugo Vázquez',
-                        estatus: 'Activo', precioMensual: 1500, fechaInscripcion: '2024-01-15',
-                        fechaUltimoPago: '2025-01-15', formaPago: 'Efectivo', totalPagado: 18000
-                    },
-                    { 
-                        id: 2, nombre: 'María García', edad: 22, clase: 'Piano', maestro: 'Manuel Reyes',
-                        estatus: 'Activo', precioMensual: 1200, fechaInscripcion: '2024-02-10',
-                        fechaUltimoPago: '2025-01-10', formaPago: 'Transferencia', totalPagado: 14400
-                    },
-                    { 
-                        id: 3, nombre: 'Carlos López', edad: 19, clase: 'Batería', maestro: 'Julio Olvera',
-                        estatus: 'Baja', precioMensual: 1800, fechaInscripcion: '2023-08-20',
-                        fechaUltimoPago: '2024-12-20', formaPago: 'TPV', totalPagado: 25200
-                    },
-                    { 
-                        id: 4, nombre: 'Ana Martínez', edad: 17, clase: 'Canto', maestro: 'Nahomy Perez',
-                        estatus: 'Activo', precioMensual: 1000, fechaInscripcion: '2024-03-05',
-                        fechaUltimoPago: '2024-12-05', formaPago: 'Efectivo', totalPagado: 10000
-                    },
-                    { 
-                        id: 5, nombre: 'Luis Rivera', edad: 25, clase: 'Bajo', maestro: 'Luis Blanquet',
-                        estatus: 'Baja', precioMensual: 1300, fechaInscripcion: '2023-11-12',
-                        fechaUltimoPago: '2024-11-12', formaPago: 'Transferencia', totalPagado: 15600
-                    }
-                ];
+                const response = await fetch(`/gastos/api/alumnos?empresa_id=1&page=${page}&limit=10`);
+                const result = await response.json();
                 
-                // Almacenar datos globalmente para otras funciones
-                window.rockstarStudentsData = studentsData;
-                
-                // Actualizar contadores en los widgets
-                const activeStudents = studentsData.filter(s => s.estatus === 'Activo').length;
-                const inactiveStudents = studentsData.filter(s => s.estatus === 'Baja').length;
-                
-                document.getElementById('totalStudents').textContent = studentsData.length;
-                document.getElementById('activeStudents').textContent = activeStudents;
-                document.getElementById('inactiveStudents').textContent = inactiveStudents;
-                
-                // Renderizar tabla de alumnos (si existe el elemento)
-                const tableBody = document.getElementById('studentsTableBody');
-                if (tableBody) {
-                    renderStudentsTable(studentsData);
+                if (result.success && result.data) {
+                    studentsData = result.data;
+                    filteredStudents = [...studentsData];
+                    
+                    // Actualizar información de paginación
+                    currentStudentPage = result.pagination.current_page;
+                    totalStudentPages = result.pagination.total_pages;
+                    totalStudentsCount = result.pagination.total_records;
+                    
+                    renderStudentsTable();
+                    updateStudentsPagination();
+                    
+                    console.log(`✅ ${studentsData.length} alumnos cargados (página ${page} de ${totalStudentPages})`);
+                    console.log(`📊 Total de registros: ${totalStudentsCount}`);
+                } else {
+                    throw new Error(result.message || 'Error cargando alumnos');
                 }
                 
-                console.log(`✅ Lista de alumnos cargada: ${studentsData.length} estudiantes`);
-                
             } catch (error) {
-                console.error('❌ Error cargando lista de alumnos:', error);
+                console.error('❌ Error cargando alumnos:', error);
                 showAlert('error', 'Error cargando lista de alumnos');
             }
         }
@@ -2437,12 +2411,7 @@
 
         // 🎯 CAMBIO 6: Variables para filtros interactivos
         let currentStudentFilter = 'all'; // 'all', 'active', 'inactive'
-        /*let studentsData = {
-            all: [],
-            active: [],
-            inactive: []
-        };*/
-
+        
         // ====================================================
         // FUNCIÓN CORREGIDA: filterStudentsByStatus CON FILTRADO REAL
         // REEMPLAZAR EN DASHBOARD.HTML
@@ -2654,7 +2623,7 @@
                                         <div class="text-white fw-bold" style="font-size: 0.95em;" title="Raw: ${maestro.ingresos_activos}">
                                             ${formatCurrency(ingresosActivos)}
                                         </div>
-                                        <small class="text-white fw-bold">Con Activos</small>
+                                        <small class="text-white fw-bold">Alumnos Activos</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
@@ -2662,7 +2631,7 @@
                                         <div class="text-white fw-bold" style="font-size: 0.95em;" title="Raw: ${maestro.ingresos_bajas}">
                                             ${formatCurrency(ingresosBajas)}
                                         </div>
-                                        <small class="text-white fw-bold">Perdidos (Bajas)</small>
+                                        <small class="text-white fw-bold">Alumnos en Baja</small>
                                     </div>
                                 </div>
                             </div>
@@ -2769,7 +2738,9 @@
         let studentsData = [];
         let filteredStudents = [];
         let currentStudentPage = 1;
-        const studentsPerPage = 15;
+        let totalStudentPages = 1;
+        let totalStudentsCount = 0;
+        const studentsPerPage = 10;
 
         // 🎓 Datos simulados basados en análisis del Excel (muestra representativa)
         const sampleStudentsData = [
@@ -3360,38 +3331,6 @@
             // Insertar mensaje antes de la distribución
             const currentHTML = document.getElementById('classDistribution').innerHTML;
             document.getElementById('classDistribution').innerHTML = filterMessage + currentHTML;
-        }
-
-        // 🎯 FUNCIÓN ACTUALIZADA: updateTeachersOverview CON COLORES MEJORADOS
-        function updateTeachersOverview(teachersData) {
-            console.log('👨‍🏫 Actualizando maestros con datos REALES:', teachersData);
-            
-            if (!teachersData || teachersData.length === 0) {
-                document.getElementById('teachersOverview').innerHTML = '<small class="text-light">No hay datos de maestros disponibles</small>';
-                return;
-            }
-            
-            const teachersHTML = `
-                <div class="teachers-list">
-                    ${teachersData.map(maestro => `
-                        <div class="teacher-item d-flex justify-content-between align-items-center mb-3">
-                            <div class="teacher-info">
-                                <div class="teacher-name">
-                                    <strong style="color: #E4E6EA; font-size: 0.95em;">${maestro.maestro}</strong>
-                                </div>
-                                <small style="color: #C8CCD0; font-weight: 500;">${maestro.especialidad}</small>
-                            </div>
-                            <div class="text-end">
-                                <div class="text-success fw-bold" style="font-size: 0.9em;">${maestro.alumnos_activos || 0} alumnos</div>
-                                <div class="text-success" style="font-size: 0.85em; font-weight: 600;">${formatCurrency(maestro.ingresos_potenciales || 0)}</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            
-            document.getElementById('teachersOverview').innerHTML = teachersHTML;
-            console.log('✅ Maestros actualizados con datos reales');
         }
 
         // ====================================================

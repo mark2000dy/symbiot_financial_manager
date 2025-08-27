@@ -703,47 +703,95 @@ export const transaccionesController = {
     // Obtener lista de alumnos
     getAlumnos: async (req, res) => {
         try {
-            console.log('👥 Obteniendo lista de alumnos...');
+            console.log('👥 Obteniendo lista completa de alumnos...');
             
-            const alumnos = [
-                {
-                    id: 1,
-                    nombre: "Gwyneth Adriana Tagliabue Cruz",
-                    edad: 15,
-                    maestro: "Hugo Vázquez", 
-                    fechaInscripcion: new Date("2023-08-01"),
-                    fechaUltimoPago: new Date("2023-11-01"),
-                    clase: "Guitarra",
-                    horario: "19:00 a 20:00 V",
-                    formaPago: "TPV",
-                    precioMensual: 1500,
-                    estatus: "Baja",
-                    totalPagado: 5550
-                },
-                {
-                    id: 2,
-                    nombre: "Fanny Ieraldini Gutierrez Jasso",
-                    edad: 30,
-                    maestro: "Julio Olvera",
-                    fechaInscripcion: new Date("2023-09-04"),
-                    fechaUltimoPago: new Date("2025-08-17"),
-                    clase: "Batería",
-                    horario: "17:00 a 18:00 Ma",
-                    formaPago: "Transferencia",
-                    precioMensual: 1500,
-                    estatus: "Activo",
-                    totalPagado: 24300
-                }
-            ];
+            const { empresa_id = 1, page = 1, limit = 10, estatus, maestro_id, clase } = req.query;
+            
+            // Calcular offset para paginación
+            const offset = (parseInt(page) - 1) * parseInt(limit);
+            
+            // Construir query con filtros
+            let whereClause = 'WHERE a.empresa_id = ?';
+            let params = [empresa_id];
+            
+            if (estatus) {
+                whereClause += ' AND a.estatus = ?';
+                params.push(estatus);
+            }
+            
+            if (maestro_id) {
+                whereClause += ' AND a.maestro_id = ?';
+                params.push(maestro_id);
+            }
+            
+            if (clase) {
+                whereClause += ' AND a.clase = ?';
+                params.push(clase);
+            }
+            
+            // Query principal con JOIN a maestros
+            const alumnos = await executeQuery(`
+                SELECT 
+                    a.id,
+                    a.nombre,
+                    a.edad,
+                    a.telefono,
+                    a.email,
+                    a.clase,
+                    a.tipo_clase,
+                    a.horario,
+                    a.fecha_inscripcion,
+                    a.fecha_ultimo_pago,
+                    a.promocion,
+                    a.precio_mensual,
+                    a.forma_pago,
+                    a.domiciliado,
+                    a.estatus,
+                    m.nombre as maestro,
+                    -- Calcular total pagado estimado (meses desde inscripción * precio)
+                    COALESCE(
+                        FLOOR(DATEDIFF(COALESCE(a.fecha_ultimo_pago, CURDATE()), a.fecha_inscripcion) / 30) * a.precio_mensual,
+                        0
+                    ) as total_pagado
+                FROM alumnos a
+                LEFT JOIN maestros m ON a.maestro_id = m.id
+                ${whereClause}
+                ORDER BY a.nombre
+                LIMIT ? OFFSET ?
+            `, [...params, parseInt(limit), offset]);
+
+            // Query para contar total de registros
+            const [countResult] = await executeQuery(`
+                SELECT COUNT(*) as total
+                FROM alumnos a
+                ${whereClause}
+            `, params);
+
+            const total = countResult.total;
+            const totalPages = Math.ceil(total / parseInt(limit));
+
+            console.log(`✅ ${alumnos.length} alumnos obtenidos (página ${page} de ${totalPages})`);
 
             res.json({
                 success: true,
-                data: alumnos
+                data: alumnos,
+                pagination: {
+                    current_page: parseInt(page),
+                    total_pages: totalPages,
+                    total_records: total,
+                    records_per_page: parseInt(limit),
+                    has_next: parseInt(page) < totalPages,
+                    has_prev: parseInt(page) > 1
+                }
             });
 
         } catch (error) {
             console.error('Error obteniendo alumnos:', error);
-            res.status(500).json({ success: false, message: 'Error interno' });
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error interno del servidor',
+                error: error.message
+            });
         }
     }
 };

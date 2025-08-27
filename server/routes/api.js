@@ -730,35 +730,82 @@ router.get('/alertas-pagos', async (req, res) => {
     try {
         console.log('📅 Calculando alertas de pagos...');
         
-        // Obtener todos los alumnos activos (esto sería de una tabla de alumnos)
-        // Por ahora simulamos con datos de ejemplo basados en el patrón de fechas
+        // OBTENER ALUMNOS REALES DE LA BASE DE DATOS
+        console.log('🔍 Verificando datos de alumnos...');
+
+        // Verificar si hay alumnos activos primero
+        const [countResult] = await executeQuery(`
+            SELECT COUNT(*) as total 
+            FROM alumnos 
+            WHERE empresa_id = 1 AND estatus = 'Activo'
+        `);
+
+        console.log(`📊 Total alumnos activos: ${countResult.total}`);
+
+        if (countResult.total === 0) {
+            console.log('⚠️ No hay alumnos activos, generando alertas de ejemplo');
+            // Simular algunas alertas si no hay datos reales
+            const alertasEjemplo = {
+                proximos_vencer: [
+                    {
+                        id: 1, nombre: 'Ejemplo - Juan Pérez', clase: 'Guitarra', 
+                        dias_restantes: 3, fecha_proximo_pago: '2025-08-30'
+                    }
+                ],
+                vencidos: []
+            };
+            
+            return res.json({
+                success: true,
+                data: {
+                    proximos_vencer: alertasEjemplo.proximos_vencer,
+                    vencidos: alertasEjemplo.vencidos,
+                    total_alertas: alertasEjemplo.proximos_vencer.length,
+                    fecha_calculo: new Date().toISOString(),
+                    mensaje: 'Datos de ejemplo - No hay alumnos reales'
+                }
+            });
+        }
+
+        // Obtener alumnos reales con lógica de fechas simplificada
+        const alumnos = await executeQuery(`
+            SELECT 
+                id,
+                nombre,
+                clase,
+                precio_mensual,
+                fecha_inscripcion,
+                fecha_ultimo_pago,
+                estatus
+            FROM alumnos 
+            WHERE empresa_id = 1 AND estatus = 'Activo'
+            ORDER BY nombre
+        `);
+
+        console.log(`📊 Procesando alertas para ${alumnos.length} alumnos activos`);
+        
+        // Definir variables necesarias
+        const hoy = new Date();
         const alertas = {
             proximos_vencer: [],
             vencidos: []
         };
-        
-        // Simulación de datos de alumnos para demostración
-        // En implementación real, estos vendrían de una tabla `alumnos`
-        const alumnosEjemplo = [
-            {
-                id: 1, nombre: 'Juan Pérez', clase: 'Guitarra', 
-                fecha_ultimo_pago: '2025-01-15', precio_mensual: 1500
-            },
-            {
-                id: 2, nombre: 'María García', clase: 'Piano', 
-                fecha_ultimo_pago: '2025-01-10', precio_mensual: 1200
-            },
-            {
-                id: 3, nombre: 'Carlos López', clase: 'Batería', 
-                fecha_ultimo_pago: '2025-01-05', precio_mensual: 1800
+
+        alumnos.forEach(alumno => {
+            const fechaInscripcion = new Date(alumno.fecha_inscripcion);
+            
+            // Usar fecha_ultimo_pago si existe, sino calcular basado en inscripción
+            let fechaUltimoPago;
+            if (alumno.fecha_ultimo_pago) {
+                fechaUltimoPago = new Date(alumno.fecha_ultimo_pago);
+            } else {
+                // Simular que el último pago fue hace un mes aproximadamente
+                fechaUltimoPago = new Date();
+                fechaUltimoPago.setMonth(fechaUltimoPago.getMonth() - 1);
             }
-        ];
-        
-        const hoy = new Date();
-        
-        alumnosEjemplo.forEach(alumno => {
-            const ultimoPago = new Date(alumno.fecha_ultimo_pago);
-            const proximoPago = new Date(ultimoPago);
+            
+            // Calcular fecha del próximo pago (un mes después del último)
+            const proximoPago = new Date(fechaUltimoPago);
             proximoPago.setMonth(proximoPago.getMonth() + 1);
             
             const diasDiferencia = Math.ceil((proximoPago - hoy) / (1000 * 60 * 60 * 24));
@@ -790,11 +837,15 @@ router.get('/alertas-pagos', async (req, res) => {
             }
         });
         
-    } catch (error) {
-        console.error('Error obteniendo alertas de pagos:', error);
+        } catch (error) {
+        console.error('❌ ERROR DETALLADO en alertas-pagos:', error);
+        console.error('📍 Stack trace:', error.stack);
+        
         res.status(500).json({
             success: false,
-            error: 'Error interno del servidor'
+            error: 'Error interno del servidor procesando alertas',
+            details: error.message,
+            timestamp: new Date().toISOString()
         });
     }
 });
