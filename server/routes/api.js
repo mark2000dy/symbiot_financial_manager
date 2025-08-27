@@ -5,6 +5,7 @@
 
 import express from 'express';
 import { transaccionesController } from '../controllers/transacciones.js';
+import { executeQuery } from '../config/database.js';
 
 const router = express.Router();
 
@@ -158,9 +159,6 @@ router.get('/dashboard', async (req, res) => {
 
 // GET /api/dashboard/alumnos - Estadísticas de alumnos para dashboard
 router.get('/dashboard/alumnos', transaccionesController.getDashboardAlumnos);
-
-// GET /api/gastos/grafica - Datos específicos para gráfica de gastos
-router.get('/gastos/grafica', transaccionesController.getGastosGrafica);
 
 // ============================================================
 // RUTAS ESPECÍFICAS DE GASTOS
@@ -725,9 +723,6 @@ router.get('/balance', async (req, res) => {
     }
 });
 
-// Importar executeQuery para las rutas de reportes
-import { executeQuery } from '../config/database.js';
-
 // ==================== RUTAS DE ALERTAS DE PAGOS (ROCKSTARSKULL) ====================
 
 // GET /api/alertas-pagos - Obtener alertas de pagos próximos y vencidos
@@ -830,27 +825,40 @@ router.post('/alertas-pagos/marcar-notificado/:alumno_id', async (req, res) => {
     }
 });
 
-// ==================== RUTAS DE ALUMNOS ====================
-// GET /api/alumnos - Obtener alumnos con filtros
+// PUT /api/alumnos/:id/estatus - Cambiar estatus de alumno (Activo/Baja)
+router.put('/alumnos/:id/estatus', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { estatus } = req.body;
+        
+        if (!['Activo', 'Baja'].includes(estatus)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Estatus inválido. Debe ser "Activo" o "Baja"'
+            });
+        }
+        
+        await executeQuery(
+            'UPDATE alumnos SET estatus = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [estatus, id]
+        );
+        
+        res.json({
+            success: true,
+            message: `Alumno ${estatus === 'Activo' ? 'activado' : 'dado de baja'} exitosamente`
+        });
+        
+    } catch (error) {
+        console.error('Error cambiando estatus alumno:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+// ==================== RUTAS DASHBOARD ====================
+router.get('/dashboard/alumnos', transaccionesController.getDashboardAlumnos);
 router.get('/alumnos', transaccionesController.getAlumnos);
-
-// POST /api/alumnos - Crear nuevo alumno
-router.post('/alumnos', transaccionesController.createAlumno);
-
-// PUT /api/alumnos/:id - Actualizar alumno
-router.put('/alumnos/:id', transaccionesController.updateAlumno);
-
-// DELETE /api/alumnos/:id - Dar de baja alumno
-router.delete('/alumnos/:id', transaccionesController.deleteAlumno);
-
-// ==================== RUTAS DE PAGOS MENSUALES ====================
-// GET /api/pagos-mensuales - Obtener pagos mensuales con filtros
-router.get('/pagos-mensuales', transaccionesController.getPagosMensuales);
-
-// POST /api/pagos-mensuales - Registrar pago mensual
-router.post('/pagos-mensuales', transaccionesController.createPagoMensual);
-
-// GET /api/pagos-mensuales/alumno/:alumno_id - Histórico de pagos por alumno
-router.get('/pagos-mensuales/alumno/:alumno_id', transaccionesController.getHistoricoPagos);
 
 export default router;

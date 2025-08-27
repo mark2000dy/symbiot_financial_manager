@@ -381,340 +381,6 @@
         }
 
     </style>
-
-    <style>
-    /* 🎯 MEJORAR CONTRASTE DE TEXTOS GRISES */
-    .text-muted {
-        color: #C8CCD0 !important; /* Más claro que el original Bootstrap */
-    }
-
-    /* 🎯 MEJORAR TEXTO SECUNDARIO */
-    small.text-muted, 
-    .small.text-muted {
-        color: #D1D5DB !important;
-        font-weight: 500 !important;
-    }
-
-    /* 🎯 MEJORAR CONTRASTE DE ELEMENTOS ESPECÍFICOS */
-    .card-body small {
-        color: #C8CCD0 !important;
-        font-weight: 500 !important;
-    }
-
-    /* 🎯 SELECTOR DE EMPRESA - LABELS MEJORADOS */
-    .stat-label {
-        color: #D1D5DB !important;
-        font-weight: 600 !important;
-        font-size: 0.8em !important;
-    }
-
-    /* 🎯 WIDGET MAESTROS - ESPECIALIDADES MÁS VISIBLES */
-    .teacher-info small,
-    .maestro-especialidad {
-        color: #C8CCD0 !important;
-        font-weight: 500 !important;
-    }
-
-    /* 🎯 ALERTAS DE PAGOS - TEXTO MÁS VISIBLE */
-    .alert small {
-        color: #E5E7EB !important;
-        font-weight: 500 !important;
-    }
-
-    /* 🎯 TABLA DE ALUMNOS - TEXTO SECUNDARIO */
-    .table small {
-        color: #D1D5DB !important;
-        font-weight: 500 !important;
-    }
-
-    /* 🎯 BADGES Y ELEMENTOS INFORMATIVOS */
-    .badge small {
-        color: #F3F4F6 !important;
-    }
-
-    /* 🎯 DISTRIBUCIÓN DE CLASES - MEJORES CONTRASTES */
-    .class-item small {
-        color: #C8CCD0 !important;
-        font-weight: 500 !important;
-    }
-
-    .class-stats small {
-        color: #D1D5DB !important;
-        font-weight: 500 !important;
-    }
-
-    /* 🎯 ELEMENTOS DE FORMULARIO - PLACEHOLDERS MÁS VISIBLES */
-    .form-control::placeholder {
-        color: #9CA3AF !important;
-        opacity: 1 !important;
-    }
-
-    /* 🎯 TEXTO DE AYUDA Y HINTS */
-    .form-text {
-        color: #C8CCD0 !important;
-    }
-
-    /* 🎯 ICONOS CON MEJOR VISIBILIDAD */
-    .fas.text-muted,
-    .far.text-muted {
-        color: #C8CCD0 !important;
-    }
-
-    /* 🎯 LOADING STATES CON MEJOR CONTRASTE */
-    .loading-spinner p {
-        color: #E5E7EB !important;
-        font-weight: 500 !important;
-    }
-
-    /* 🎯 ESTADOS VACÍOS MÁS VISIBLES */
-    .empty-state small {
-        color: #D1D5DB !important;
-        font-weight: 500 !important;
-    }
-
-    /* 🎯 HOVER EFFECTS MEJORADOS */
-    .teacher-item:hover,
-    .class-item:hover {
-        background: rgba(255,255,255,0.08) !important;
-        border-radius: 6px;
-        transition: background 0.2s ease;
-    }
-
-    /* 🎯 BORDES MÁS SUAVES */
-    .card {
-        border: 1px solid rgba(255,255,255,0.1) !important;
-    }
-
-    /* 🎯 SEPARADORES MÁS VISIBLES */
-    hr {
-        border-top: 1px solid rgba(255,255,255,0.15) !important;
-    }
-
-    /* 🎯 ELEMENTOS ESPECÍFICOS DE ROCKSTAR SKULL */
-    .student-stat small {
-        color: #E4E6EA !important;
-        font-weight: 600 !important;
-    }
-
-    .instrument-card small {
-        color: #D1D5DB !important;
-        font-weight: 500 !important;
-    }
-
-    /* 🎯 RESPONSIVE - MEJORAR EN PANTALLAS PEQUEÑAS */
-    @media (max-width: 768px) {
-        .stat-label {
-            font-size: 0.75em !important;
-        }
-        
-        small.text-muted {
-            font-size: 0.8em !important;
-        }
-    }
-
-    /* 🎯 EFECTOS PARA WIDGET ALUMNOS INSCRITOS */
-    .student-stat {
-        transition: all 0.3s ease;
-        border-radius: 8px;
-        padding: 10px;
-        cursor: pointer;
-    }
-
-    .student-stat:hover {
-        background: rgba(255,255,255,0.05) !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-
-    /* 🎯 ESTADO ACTIVO DEL FILTRO */
-    .student-stat.active-filter {
-        background: rgba(13, 110, 253, 0.2) !important;
-        border: 2px solid rgba(13, 110, 253, 0.5) !important;
-        border-radius: 8px !important;
-        transition: all 0.3s ease !important;
-        transform: scale(1.02);
-        box-shadow: 0 0 20px rgba(13, 110, 253, 0.3);
-    }
-
-    .student-stat.active-filter:hover {
-        background: rgba(13, 110, 253, 0.3) !important;
-        border-color: rgba(13, 110, 253, 0.7) !important;
-    }
-
-    /* 🎯 ANIMACIÓN DE PULSO PARA ELEMENTO ACTIVO */
-    .student-stat.active-filter::before {
-        content: '';
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        background: linear-gradient(45deg, rgba(13, 110, 253, 0.3), rgba(13, 202, 240, 0.3));
-        border-radius: 10px;
-        z-index: -1;
-        opacity: 0;
-        animation: pulse-border 2s infinite;
-    }
-
-    @keyframes pulse-border {
-        0% { opacity: 0; transform: scale(1); }
-        50% { opacity: 1; transform: scale(1.02); }
-        100% { opacity: 0; transform: scale(1); }
-    }
-
-    /* 🎯 MEJORAS EN DISTRIBUCIÓN DE CLASES */
-    .class-item {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .class-item::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 100%;
-        width: 4px;
-        background: linear-gradient(to bottom, #0d6efd, #20c997);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .class-item:hover::before {
-        opacity: 1;
-    }
-
-    /* 🎯 ANIMACIÓN DE ENTRADA PARA ELEMENTOS FILTRADOS */
-    .class-item {
-        animation: fadeInUp 0.4s ease-out;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* 🎯 BADGES MEJORADOS PARA CLASES */
-    .class-item .badge {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .class-item .badge::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        transition: left 0.6s ease;
-    }
-
-    .class-item:hover .badge::before {
-        left: 100%;
-    }
-
-    /* 🎯 ALERTAS DE FILTRO MEJORADAS */
-    .alert {
-        border-radius: 10px;
-        border: none;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .alert::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: linear-gradient(90deg, #0d6efd, #20c997, #ffc107);
-        animation: progress-line 2s ease-in-out infinite;
-    }
-
-    @keyframes progress-line {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-    }
-
-    /* 🎯 CONTADORES CON MEJOR VISIBILIDAD */
-    .student-stat h4 {
-        font-size: 2.2em !important;
-        font-weight: 700 !important;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
-    }
-
-    .student-stat:hover h4 {
-        transform: scale(1.1);
-        text-shadow: 0 4px 8px rgba(0,0,0,0.4);
-    }
-
-    /* 🎯 ETIQUETAS DEL TOTAL DE ESTUDIANTES */
-    .badge.bg-primary {
-        font-size: 1.1em !important;
-        padding: 8px 12px !important;
-        border-radius: 20px !important;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .badge.bg-primary:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
-    }
-
-    /* 🎯 RESPONSIVE - EFECTOS EN MÓVILES */
-    @media (max-width: 768px) {
-        .student-stat {
-            margin-bottom: 10px;
-        }
-        
-        .student-stat h4 {
-            font-size: 1.8em !important;
-        }
-        
-        .class-item {
-            margin-bottom: 15px !important;
-            padding: 15px !important;
-        }
-    }
-
-    /* 🎯 THEME TRANSITIONS */
-    .class-item, .student-stat, .badge {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* 🎯 LOADING STATES PARA FILTROS */
-    .filter-loading {
-        position: relative;
-    }
-
-    .filter-loading::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.1);
-        border-radius: 8px;
-        animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 0.3; }
-        50% { opacity: 0.7; }
-    }
-    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -1394,11 +1060,6 @@
                 // Establecer fecha actual
                 updateCurrentDate();
 
-                // ✅ Cargar alertas automáticamente
-                setTimeout(async () => {
-                    await refreshPaymentAlerts();
-                }, 1000);
-
                 // Cargar alertas automáticamente
                 await refreshPaymentAlerts();
                 
@@ -1628,39 +1289,6 @@
                 
                 tbody.appendChild(row);
             });
-        }
-
-        // ✅ NUEVA: Función para editar transacciones desde dashboard
-        function editTransactionFromDashboard(transactionId) {
-            console.log(`✏️ Editando transacción ${transactionId} desde dashboard`);
-            
-            // Redirigir a la página apropiada según el tipo de transacción
-            fetch(`/gastos/api/transacciones/${transactionId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.data) {
-                        const transaction = data.data;
-                        
-                        // Determinar página de destino según el tipo
-                        const targetPage = transaction.tipo === 'G' ? 'gastos.html' : 'ingresos.html';
-                        
-                        // Guardar datos en sessionStorage para cargar en el modal
-                        sessionStorage.setItem('editTransaction', JSON.stringify({
-                            id: transaction.id,
-                            ...transaction
-                        }));
-                        
-                        // Redirigir a la página correspondiente
-                        window.location.href = targetPage;
-                        
-                    } else {
-                        showAlert('error', 'No se pudo cargar la transacción para editar');
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Error cargando transacción:', error);
-                    showAlert('error', 'Error cargando la transacción');
-                });
         }
 
         // 📄 Renderizar paginación
@@ -2008,7 +1636,7 @@
                 if (selectedCompany === '1') { // RockstarSkull
                     rockstarWidgets.style.display = 'block';
                     await loadRockstarSkullData();
-                    showRockstarSkullIndicators();
+                    updateRockstarSkullIndicators();
                     loadStudentsList(); // ← ESTA LÍNEA DEBE EXISTIR
                 }
                 
@@ -2047,47 +1675,186 @@
             }
         }
 
-        // 🎯 FUNCIÓN ACTUALIZADA: showRockstarSkullIndicators SIN HARDCODE
-        function showRockstarSkullIndicators() {
-            console.log('🎸 Mostrando indicadores RockstarSkull...');
-            
-            // Mostrar los indicadores específicos
-            document.getElementById('groupClassesIndicator').style.display = 'block'; 
-            document.getElementById('individualClassesIndicator').style.display = 'block'; 
-            document.getElementById('currentStudentsIndicator').style.display = 'block';
-            document.getElementById('pendingStudentsIndicator').style.display = 'block';
-            
-            // ❌ ELIMINADO: Datos hardcodeados
-            // Los valores ahora se cargan desde loadRockstarSkullData() con datos reales del API
-            
-            // ✅ Los datos se mostrarán una vez que loadRockstarSkullData() los cargue
-            console.log('✅ Indicadores RockstarSkull mostrados (datos cargados desde API)');
-        }
+        // 🎸 Cargar datos específicos de RockstarSkull
+        async function loadRockstarSkullData() {
+            try {
+                console.log('🎸 Cargando datos específicos de RockstarSkull...');
+                
+                // Aquí cargaríamos los datos de alumnos desde una nueva API
+                // Por ahora simulamos los datos basados en el análisis del Excel
+                
+                // ✅ DATOS REALES DE LA API
 
-        // 🎯 FUNCIÓN DE FALLBACK (solo en caso de error crítico)
-        function loadFallbackRockstarData() {
-            console.log('⚠️ Usando datos de fallback para RockstarSkull');
-            
-            // Solo en caso de error crítico, usar valores por defecto
-            document.getElementById('totalStudents').textContent = '0';
-            document.getElementById('activeStudents').textContent = '0';
-            document.getElementById('inactiveStudents').textContent = '0';
-            document.getElementById('groupClasses').textContent = '0';
-            document.getElementById('individualClasses').textContent = '0';
-            document.getElementById('currentStudents').textContent = '0';
-            document.getElementById('pendingStudents').textContent = '0';
-            
-            // Mostrar mensaje de error en lugar de datos falsos
-            document.getElementById('classDistribution').innerHTML = '<div class="alert alert-warning">Error cargando datos de clases</div>';
-            document.getElementById('teachersOverview').innerHTML = '<div class="alert alert-warning">Error cargando datos de maestros</div>';
-        }
+                // Cargar estadísticas reales de alumnos
+                async function loadRealStudentStats() {
+                    try {
+                        console.log('📊 Cargando estadísticas reales de alumnos...');
+                        
+                        // Construir query con filtro de empresa si existe
+                        let queryParam = '';
+                        if (currentCompanyFilter) {
+                            queryParam = `?empresa_id=${currentCompanyFilter}`;
+                        }
+                        
+                        // Llamada a la API real
+                        const response = await fetch(`/gastos/api/dashboard/alumnos${queryParam}`);
+                        const result = await response.json();
+                        
+                        if (result.success && result.data) {
+                            const stats = result.data.estadisticas;
+                            
+                            // Actualizar widgets con datos reales
+                            document.getElementById('totalStudents').textContent = stats.total_alumnos || 0;
+                            document.getElementById('activeStudents').textContent = stats.alumnos_activos || 0;
+                            document.getElementById('inactiveStudents').textContent = stats.alumnos_bajas || 0;
+                            
+                            // Actualizar distribución de clases con datos reales
+                            updateClassDistribution(result.data.distribucion_clases || []);
+                            
+                            // Actualizar maestros con datos reales
+                            updateTeachersOverview(result.data.distribucion_maestros || []);
+                            
+                            console.log('✅ Estadísticas de alumnos cargadas exitosamente');
+                        } else {
+                            console.error('❌ Error en respuesta de API alumnos:', result.message);
+                            // Fallback a datos simulados si la API falla
+                            loadFallbackStudentStats();
+                        }
+                        
+                    } catch (error) {
+                        console.error('🔥 Error cargando estadísticas de alumnos:', error);
+                        // Fallback a datos simulados si hay error
+                        loadFallbackStudentStats();
+                    }
+                }
 
-        // Función fallback con datos simulados
-        function loadFallbackRockstarData() {
-            console.log('⚠️ Usando datos simulados como fallback');
-            document.getElementById('totalStudents').textContent = '100';
-            document.getElementById('activeStudents').textContent = '47';
-            document.getElementById('inactiveStudents').textContent = '53';
+                // Función de fallback con datos simulados
+                function loadFallbackStudentStats() {
+                    console.log('⚠️ Usando datos simulados como fallback');
+                    const studentStats = {
+                        total: 100,
+                        activos: 35,
+                        bajas: 65
+                    };
+                    
+                    document.getElementById('totalStudents').textContent = studentStats.total;
+                    document.getElementById('activeStudents').textContent = studentStats.activos;
+                    document.getElementById('inactiveStudents').textContent = studentStats.bajas;
+                }
+
+                // Actualizar distribución de clases con datos reales
+                function updateClassDistribution(realClasses) {
+                    if (!realClasses || realClasses.length === 0) {
+                        // Usar distribución simulada si no hay datos
+                        const classDistribution = [
+                            { clase: 'Guitarra Eléctrica', alumnos: 45, color: 'danger', icon: 'fas fa-guitar' },
+                            { clase: 'Teclado/Piano', alumnos: 20, color: 'success', icon: 'fas fa-piano-keyboard' },
+                            { clase: 'Batería', alumnos: 15, color: 'warning', icon: 'fas fa-drum-steelpan' },
+                            { clase: 'Bajo Eléctrico', alumnos: 12, color: 'info', icon: 'fas fa-guitar' },
+                            { clase: 'Canto/Vocal', alumnos: 8, color: 'secondary', icon: 'fas fa-microphone-alt' }
+                        ];
+                        generateClassDistributionHTML(classDistribution);
+                    } else {
+                        // Mapear datos reales al formato esperado
+                        const mappedClasses = realClasses.map((item, index) => ({
+                            clase: item.clase,
+                            alumnos: item.total_alumnos,
+                            color: ['danger', 'success', 'warning', 'info', 'secondary'][index % 5],
+                            icon: getInstrumentIcon(item.clase)
+                        }));
+                        generateClassDistributionHTML(mappedClasses);
+                    }
+                }
+
+                // Función auxiliar para iconos
+                function getInstrumentIcon(className) {
+                    const icons = {
+                        'Guitarra': 'fas fa-guitar',
+                        'Guitarra Eléctrica': 'fas fa-guitar',
+                        'Piano': 'fas fa-piano-keyboard',
+                        'Teclado': 'fas fa-piano-keyboard',
+                        'Batería': 'fas fa-drum-steelpan',
+                        'Bajo': 'fas fa-guitar',
+                        'Bajo Eléctrico': 'fas fa-guitar',
+                        'Canto': 'fas fa-microphone-alt',
+                        'Vocal': 'fas fa-microphone-alt'
+                    };
+                    return icons[className] || 'fas fa-music';
+                }
+
+                // Llamar a la función real al cargar
+                loadRealStudentStats();
+                
+                // Actualizar widgets
+                document.getElementById('totalStudents').textContent = studentStats.total;
+                document.getElementById('activeStudents').textContent = studentStats.activos;
+                document.getElementById('inactiveStudents').textContent = studentStats.bajas;
+                
+                // Distribución por clases (simulada)
+                const classDistribution = [
+                    { clase: 'Guitarra Eléctrica', alumnos: 45, color: 'danger', icon: 'fas fa-guitar' },
+                    { clase: 'Teclado/Piano', alumnos: 20, color: 'success', icon: 'fas fa-piano-keyboard' },
+                    { clase: 'Batería', alumnos: 15, color: 'warning', icon: 'fas fa-drum-steelpan' },
+                    { clase: 'Bajo Eléctrico', alumnos: 12, color: 'info', icon: 'fas fa-guitar' },
+                    { clase: 'Canto/Vocal', alumnos: 8, color: 'secondary', icon: 'fas fa-microphone-alt' }
+                ];
+
+                const classDistributionHTML = `
+                    <div class="row g-2">
+                        ${classDistribution.map(item => `
+                            <div class="col">
+                                <div class="instrument-card text-center p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                                    <i class="fas ${item.icon} fa-2x text-${item.color} mb-2"></i>
+                                    <div class="fw-bold" style="color: #E4E6EA;">${item.alumnos}</div>
+                                    <small style="color: #B8B9BA;">${item.clase}</small>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                document.getElementById('classDistribution').innerHTML = classDistributionHTML;
+                
+                // Overview de maestros (simulado)
+                const teachersData = [
+                    { nombre: 'Hugo Vázquez', alumnos: 35, ingresos: 52500 },
+                    { nombre: 'Manuel Reyes', alumnos: 20, ingresos: 30000 },
+                    { nombre: 'Julio Olvera', alumnos: 18, ingresos: 27000 },
+                    { nombre: 'Irwin', alumnos: 15, ingresos: 22500 },
+                    { nombre: 'Luis Blanquet', alumnos: 8, ingresos: 12000 },
+                    { nombre: 'Nahomy Perez', alumnos: 4, ingresos: 6000 }
+                ];
+                
+                const teachersHTML = teachersData.map(teacher => `
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                        <div>
+                            <strong style="color: #E4E6EA;">${teacher.nombre}</strong><br>
+                            <small style="color: #B8B9BA;">${teacher.alumnos} alumnos</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-success">${formatCurrency(teacher.ingresos)}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('teachersOverview').innerHTML = teachersHTML;
+                
+                // Alertas de pagos (placeholder por ahora)
+                document.getElementById('upcomingPayments').innerHTML = `
+                    <small class="text-muted">📅 Próximamente: Sistema de alertas de pagos basado en fechas de inscripción</small>
+                `;
+                
+                document.getElementById('overduePayments').innerHTML = `
+                    <small class="text-muted">⚠️ Próximamente: Detección automática de pagos vencidos (+5 días)</small>
+                `;
+
+                await refreshPaymentAlerts();
+                
+                console.log('✅ Datos de RockstarSkull cargados');
+                
+            } catch (error) {
+                console.error('❌ Error cargando datos de RockstarSkull:', error);
+            }
         }
 
         // 🔄 Actualizar alertas de pagos
@@ -2401,184 +2168,97 @@
             inactive: []
         };*/
 
-        // ====================================================
-        // FUNCIÓN CORREGIDA: filterStudentsByStatus CON FILTRADO REAL
-        // REEMPLAZAR EN DASHBOARD.HTML
-        // ====================================================
-
-        // 🎯 VARIABLE GLOBAL PARA ALMACENAR DATOS DE CLASES REALES
-        let classDistributionData = [];
-
-        // 🎯 FUNCIÓN CORREGIDA: filterStudentsByStatus
+        // 🎯 CAMBIO 7: Función para filtrar alumnos por estatus
+        // ✅ VERSIÓN ACTUALIZADA
         function filterStudentsByStatus(status) {
-            console.log(`👥 Filtrando distribución de clases por estatus: ${status}`);
+            console.log(`👥 Filtrando alumnos por: ${status}`);
             
-            // Verificar que tengamos datos de distribución de clases
-            if (!classDistributionData || classDistributionData.length === 0) {
-                console.log('⚠️ No hay datos de distribución de clases disponibles');
-                showAlert('warning', 'Datos de clases no disponibles. Recargando...');
-                
-                // Intentar recargar datos si no están disponibles
-                if (document.getElementById('companyFilter').value === '1') {
-                    loadRockstarSkullData();
-                }
-                return;
-            }
+            // Contar alumnos según estatus desde studentsData real
+            const activeCount = studentsData.filter(s => s.estatus === 'Activo').length;
+            const inactiveCount = studentsData.filter(s => s.estatus === 'Baja').length;
+            const totalCount = studentsData.length;
             
-            // Crear datos filtrados según el estatus seleccionado
-            let filteredClasses = [];
-            let totalStudents = 0;
-            
-            switch(status) {
-                case 'active':
-                    // Mostrar solo alumnos activos por clase
-                    filteredClasses = classDistributionData.map(clase => ({
-                        clase: clase.clase,
-                        total_alumnos: clase.activos, // Solo activos
-                        activos: clase.activos,
-                        inactivos: 0, // Ocultar inactivos en este filtro
-                        percentage: 100 // 100% porque solo mostramos activos
-                    })).filter(clase => clase.total_alumnos > 0); // Solo clases que tienen activos
-                    
-                    totalStudents = classDistributionData.reduce((sum, clase) => sum + clase.activos, 0);
-                    break;
-                    
-                case 'inactive':
-                    // Mostrar solo alumnos inactivos por clase
-                    filteredClasses = classDistributionData.map(clase => ({
-                        clase: clase.clase,
-                        total_alumnos: clase.inactivos, // Solo inactivos
-                        activos: 0, // Ocultar activos en este filtro
-                        inactivos: clase.inactivos,
-                        percentage: 100 // 100% porque solo mostramos inactivos
-                    })).filter(clase => clase.total_alumnos > 0); // Solo clases que tienen inactivos
-                    
-                    totalStudents = classDistributionData.reduce((sum, clase) => sum + clase.inactivos, 0);
-                    break;
-                    
-                case 'all':
-                default:
-                    // Mostrar todos los alumnos (vista completa)
-                    filteredClasses = classDistributionData.map(clase => ({
-                        clase: clase.clase,
-                        total_alumnos: clase.total_alumnos,
-                        activos: clase.activos,
-                        inactivos: clase.inactivos,
-                        percentage: clase.total_alumnos > 0 ? Math.round((clase.activos / clase.total_alumnos) * 100) : 0
-                    }));
-                    
-                    totalStudents = classDistributionData.reduce((sum, clase) => sum + clase.total_alumnos, 0);
-                    break;
-            }
-            
-            // Actualizar indicadores visuales
-            updateStatusIndicators(status);
-            
-            // Actualizar distribución de clases con datos filtrados
-            updateClassDistribution(filteredClasses);
-            
-            // Mostrar mensaje informativo mejorado
-            const statusLabels = {
-                'active': 'Alumnos Activos',
-                'inactive': 'Alumnos con Baja',
-                'all': 'Todos los Alumnos'
+            const counts = {
+                'active': { total: activeCount, title: 'Alumnos Activos' },
+                'inactive': { total: inactiveCount, title: 'Alumnos con Baja' },  
+                'all': { total: totalCount, title: 'Todos los Alumnos' }
             };
             
-            const statusLabel = statusLabels[status] || 'Alumnos';
-            showAlert('success', `📊 Mostrando: ${statusLabel} (${totalStudents} estudiantes en ${filteredClasses.length} clases)`);
+            const info = counts[status] || counts['all'];
+            showAlert('info', `📊 Mostrando: ${info.title} (${info.total} estudiantes)`);
             
-            console.log(`✅ Filtro aplicado: ${status} - ${totalStudents} estudiantes en ${filteredClasses.length} clases`);
+            // Actualizar distribución
+            updateClassDistribution(status);
         }
 
-        // 🎯 FUNCIÓN AUXILIAR: Actualizar indicadores visuales del widget
-        function updateStatusIndicators(selectedStatus) {
-            // Remover clases activas previas
-            document.querySelectorAll('.student-stat').forEach(stat => {
-                stat.classList.remove('active-filter');
-                stat.style.background = '';
-                stat.style.borderRadius = '';
-            });
+        // 🎯 CAMBIO 8: Actualizar distribución de clases según filtro
+        function updateClassDistribution(filterStatus) {
+            const classData = {
+                'all': [
+                    { clase: 'Guitarra', alumnos: 45, activos: 18, inactivos: 27 },
+                    { clase: 'Teclado', alumnos: 20, activos: 8, inactivos: 12 },
+                    { clase: 'Batería', alumnos: 15, activos: 5, inactivos: 10 },
+                    { clase: 'Bajo', alumnos: 12, activos: 3, inactivos: 9 },
+                    { clase: 'Canto', alumnos: 8, activos: 1, inactivos: 7 }
+                ]
+            };
             
-            // Agregar clase activa al indicador seleccionado
-            let activeElement = null;
+            // Ejemplo de cómo podrían ser tus funciones getClassColor y getClassIcon
+            const getClassColor = (clase) => {
+                const colors = {
+                    'Guitarra': 'primary', 'Teclado': 'success', 'Batería': 'warning', 'Bajo': 'info', 'Canto': 'secondary'
+                };
+                return colors[clase];
+            };
             
-            switch(selectedStatus) {
-                case 'active':
-                    activeElement = document.querySelector('[onclick="filterStudentsByStatus(\'active\')"]');
-                    break;
-                case 'inactive':
-                    activeElement = document.querySelector('[onclick="filterStudentsByStatus(\'inactive\')"]');
-                    break;
-                case 'all':
-                    activeElement = document.querySelector('[onclick="filterStudentsByStatus(\'all\')"]');
-                    break;
-            }
+            const getClassIcon = (clase) => {
+                const icons = {
+                    'Guitarra': 'fa-solid fa-electric-guitar', 'Teclado': 'fa-solid fa-piano', 'Batería': 'fa-solid fa-drum', 'Bajo': 'fa-solid fa-electric-guitar', 'Canto': 'fa-solid fa-microphone'
+                };
+                return icons[clase];
+            };
             
-            if (activeElement) {
-                activeElement.classList.add('active-filter');
-                activeElement.style.background = 'rgba(13, 110, 253, 0.2)'; // Azul suave
-                activeElement.style.borderRadius = '8px';
-                activeElement.style.border = '2px solid rgba(13, 110, 253, 0.5)';
-                activeElement.style.transition = 'all 0.3s ease';
-            }
+            const classDistribution = classData.all.map(item => ({
+                ...item,
+                color: getClassColor(item.clase),
+                icon: getClassIcon(item.clase),
+                displayCount: filterStatus === 'active' ? item.activos : 
+                    filterStatus === 'inactive' ? item.inactivos : item.alumnos
+            }));
             
-            console.log(`✅ Indicadores visuales actualizados para: ${selectedStatus}`);
-        }
-
-        // 🎯 FUNCIÓN AUXILIAR: Almacenar datos de distribución de clases
-        function setClassDistributionData(data) {
-            classDistributionData = data || [];
-            console.log(`📊 Datos de distribución almacenados: ${classDistributionData.length} clases`);
-            
-            // Auto-aplicar filtro 'all' por defecto si hay datos
-            if (classDistributionData.length > 0) {
-                // Solo aplicar filtro por defecto si no hay uno activo
-                const hasActiveFilter = document.querySelector('.active-filter');
-                if (!hasActiveFilter) {
-                    setTimeout(() => {
-                        filterStudentsByStatus('all');
-                    }, 100);
-                }
-            }
-        }
-
-        // Función para actualizar maestros con datos reales
-        function updateTeachersOverview(maestros = []) {
-            if (!maestros || maestros.length === 0) {
-                // Datos simulados como fallback
-                maestros = [
-                    { maestro: 'Hugo Vázquez', especialidad: 'Guitarra', alumnos_activos: 18, ingresos_potenciales: 27000 },
-                    { maestro: 'Julio Olvera', especialidad: 'Batería', alumnos_activos: 12, ingresos_potenciales: 18000 },
-                    { maestro: 'Nahomy Perez', especialidad: 'Canto', alumnos_activos: 6, ingresos_potenciales: 10200 },
-                    { maestro: 'Luis Blanquet', especialidad: 'Bajo', alumnos_activos: 3, ingresos_potenciales: 4800 },
-                    { maestro: 'Manuel Reyes', especialidad: 'Teclado', alumnos_activos: 7, ingresos_potenciales: 10500 },
-                    { maestro: 'Irwin', especialidad: 'Guitarra', alumnos_activos: 1, ingresos_potenciales: 1900 }
-                ];
-            }
-            
-            const teachersHTML = `
+            const classDistributionHTML = `
                 <div class="row g-2">
-                    ${maestros.slice(0, 6).map(maestro => `
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: rgba(255,255,255,0.05);">
-                                <div>
-                                    <div class="fw-bold" style="color: #E4E6EA; font-size: 0.9em;">${maestro.maestro}</div>
-                                    <small style="color: #B8B9BA;">${maestro.especialidad}</small>
-                                </div>
-                                <div class="text-end">
-                                    <div class="text-success">${maestro.alumnos_activos || 0} alumnos</div>
-                                    <div class="text-success">${formatCurrency(maestro.ingresos_potenciales || 0)}</div>
-                                </div>
+                    ${classDistribution.map(item => `
+                        <div class="col">
+                            <div class="instrument-card text-center p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                                <i class="${item.icon} fa-2x text-${item.color} mb-2"></i>
+                                <div class="fw-bold" style="color: #E4E6EA;">${item.displayCount}</div>
+                                <small style="color: #B8B9BA;">${item.clase}</small>
                             </div>
                         </div>
                     `).join('')}
                 </div>
             `;
             
-            document.getElementById('teachersOverview').innerHTML = teachersHTML;
+            document.getElementById('classDistribution').innerHTML = classDistributionHTML;
         }
 
-        // Ocultar indicadores específicos para otras empresas  
+        // 🎯 CAMBIO 9: Actualizar indicadores del selector para RockstarSkull
+        function updateRockstarSkullIndicators() {
+            // Mostrar indicadores específicos de academia
+            document.getElementById('groupClassesIndicator').style.display = 'block';
+            document.getElementById('individualClassesIndicator').style.display = 'block'; 
+            document.getElementById('currentStudentsIndicator').style.display = 'block';
+            document.getElementById('pendingStudentsIndicator').style.display = 'block';
+            
+            // Datos simulados basados en análisis
+            document.getElementById('groupClasses').textContent = '15';
+            document.getElementById('individualClasses').textContent = '85';
+            document.getElementById('currentStudents').textContent = '35';
+            document.getElementById('pendingStudents').textContent = '12';
+        }
+
+        // 🎯 CAMBIO 10: Ocultar indicadores específicos para otras empresas  
         function hideRockstarSkullIndicators() {
             document.getElementById('groupClassesIndicator').style.display = 'none';
             document.getElementById('individualClassesIndicator').style.display = 'none';
@@ -2631,8 +2311,8 @@
                 if (selectedCompany === '1') { 
                     rockstarWidgets.style.display = 'block';
                     await loadRockstarSkullData();
-                    showRockstarSkullIndicators();
-                    loadStudentsList();
+                    updateRockstarSkullIndicators();
+                    loadStudentsList(); // ← AGREGAR ESTA LÍNEA
                 } else {
                     rockstarWidgets.style.display = 'none';
                     hideRockstarSkullIndicators();
@@ -2798,37 +2478,19 @@
             }
         ];
 
-        // 🎓 Cargar lista de alumnos real
-        async function loadStudentsList() {
-            try {
-                console.log('🎓 Cargando lista real de alumnos...');
-                
-                const response = await fetch('/gastos/api/alumnos?empresa_id=1');
-                const result = await response.json();
-                
-                if (result.success && result.data) {
-                    studentsData = result.data;
-                    filteredStudents = [...studentsData];
-                    
-                    renderStudentsTable();
-                    updateStudentsPagination();
-                    
-                    console.log(`✅ ${studentsData.length} alumnos cargados desde API`);
-                } else {
-                    throw new Error(result.message || 'Error cargando alumnos');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error cargando alumnos reales:', error);
-                
-                // Fallback a datos simulados
-                console.log('⚠️ Usando datos simulados como fallback');
-                studentsData = sampleStudentsData;
-                filteredStudents = [...studentsData];
-                
-                renderStudentsTable();
-                updateStudentsPagination();
-            }
+        // 🎓 Cargar lista de alumnos (actualizar cuando tengamos API real)
+        function loadStudentsList() {
+            console.log('🎓 Cargando lista de alumnos...');
+            
+            // Por ahora usar datos simulados, después conectar a API
+            studentsData = sampleStudentsData;
+            filteredStudents = [...studentsData];
+            
+            renderStudentsTable();
+            updateStudentsPagination();
+            updateFilterSummary();
+            
+            console.log(`✅ ${studentsData.length} alumnos cargados`);
         }
 
         // 🎓 Filtrar alumnos por criterios
@@ -3112,6 +2774,13 @@
             showAlert('info', 'Envío de recordatorio de pago - Próximamente implementado');
         }
 
+        // 🎓 Auto-inicializar cuando se muestre RockstarSkull
+        /*const originalLoadRockstarSkullData = window.loadRockstarSkullData;
+        window.loadRockstarSkullData = async function() {
+            await originalLoadRockstarSkullData();
+            loadStudentsList();
+        };*/
+
         // Auto-cargar cuando se inicialice
         document.addEventListener('DOMContentLoaded', function() {
             // Si RockstarSkull ya está seleccionado, cargar alumnos
@@ -3123,293 +2792,7 @@
             }, 2000);
         });
 
-        // ====================================================
-        // FUNCIÓN MEJORADA: updateClassDistribution CON SOPORTE PARA FILTROS
-        // REEMPLAZAR EN DASHBOARD.HTML
-        // ====================================================
-
-        // 🎯 FUNCIÓN MEJORADA: updateClassDistribution
-        function updateClassDistribution(classesData) {
-            console.log('📊 Actualizando distribución de clases con datos:', classesData);
-            
-            if (!classesData || classesData.length === 0) {
-                document.getElementById('classDistribution').innerHTML = '<small style="color: #D1D5DB !important; font-weight: 500;">No hay datos de clases disponibles</small>';
-                return;
-            }
-            
-            const getClassColor = (clase) => {
-                const colors = {
-                    'Guitarra': 'danger', // Rojo para guitarra
-                    'Teclado': 'success', 
-                    'Piano': 'success',
-                    'Batería': 'warning', 
-                    'Bajo': 'info', 
-                    'Canto': 'secondary'
-                };
-                return colors[clase] || 'primary';
-            };
-            
-            const getClassIcon = (clase) => {
-                const icons = {
-                    'Guitarra': '🎸', 
-                    'Teclado': '🎹',
-                    'Piano': '🎹',
-                    'Batería': '🥁', 
-                    'Bajo': '🎸', 
-                    'Canto': '🎤'
-                };
-                return icons[clase] || '🎵';
-            };
-            
-            const distributionHTML = classesData.map((item, index) => {
-                const color = getClassColor(item.clase);
-                const icon = getClassIcon(item.clase);
-                const percentage = item.percentage !== undefined ? item.percentage : 
-                                (item.total_alumnos > 0 ? Math.round((item.activos / item.total_alumnos) * 100) : 0);
-                
-                // Determinar qué números mostrar según el tipo de filtro
-                let primaryCount = item.total_alumnos;
-                let secondaryInfo = '';
-                
-                if (item.activos === 0 && item.inactivos > 0) {
-                    // Filtro de inactivos solamente
-                    primaryCount = item.inactivos;
-                    secondaryInfo = `${item.inactivos} bajas | ${percentage}%`;
-                } else if (item.inactivos === 0 && item.activos > 0) {
-                    // Filtro de activos solamente
-                    primaryCount = item.activos;
-                    secondaryInfo = `${item.activos} activos | ${percentage}%`;
-                } else {
-                    // Vista completa (todos los alumnos)
-                    primaryCount = item.total_alumnos;
-                    secondaryInfo = `${item.activos} activos, ${item.inactivos} bajas | ${percentage}%`;
-                }
-                
-                return `
-                    <div class="class-item d-flex justify-content-between align-items-center mb-3 p-3 rounded" 
-                        style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(255,255,255,0.2)';"
-                        onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)';">
-                        <div class="class-info d-flex align-items-center">
-                            <span class="badge bg-${color} me-3 fs-6" style="padding: 8px 10px;">${icon}</span>
-                            <div>
-                                <strong style="color: #E4E6EA; font-size: 1.1em;">${item.clase}</strong>
-                                <div>
-                                    <small style="color: #C8CCD0; font-weight: 500;">(${item.total_alumnos} total inscritos)</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="class-stats text-end">
-                            <div class="fw-bold mb-1" style="color: #E4E6EA; font-size: 1.2em;">
-                                ${primaryCount}
-                            </div>
-                            <small style="color: #D1D5DB; font-weight: 500; font-size: 0.85em;">
-                                ${secondaryInfo}
-                            </small>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            document.getElementById('classDistribution').innerHTML = distributionHTML;
-            
-            // Agregar mensaje de filtro activo si corresponde
-            addFilterStatusMessage(classesData);
-            
-            console.log('✅ Distribución de clases actualizada con datos reales');
-        }
-
-        // 🎯 FUNCIÓN AUXILIAR: Agregar mensaje de estado del filtro
-        function addFilterStatusMessage(classesData) {
-            // Detectar tipo de filtro basado en los datos
-            let filterType = 'all';
-            let hasOnlyActives = classesData.every(item => item.inactivos === 0 && item.activos > 0);
-            let hasOnlyInactives = classesData.every(item => item.activos === 0 && item.inactivos > 0);
-            
-            if (hasOnlyActives) {
-                filterType = 'active';
-            } else if (hasOnlyInactives) {
-                filterType = 'inactive';
-            }
-            
-            let message = '';
-            let messageClass = 'alert-info';
-            
-            switch(filterType) {
-                case 'active':
-                    message = '<i class="fas fa-filter me-2"></i><strong>Filtro:</strong> Mostrando solo alumnos activos por clase';
-                    messageClass = 'alert-success';
-                    break;
-                case 'inactive':
-                    message = '<i class="fas fa-filter me-2"></i><strong>Filtro:</strong> Mostrando solo alumnos dados de baja por clase';
-                    messageClass = 'alert-warning';
-                    break;
-                case 'all':
-                default:
-                    message = '<i class="fas fa-list me-2"></i><strong>Vista completa:</strong> Mostrando todos los alumnos por clase';
-                    messageClass = 'alert-info';
-                    break;
-            }
-            
-            const filterMessage = `
-                <div class="alert ${messageClass} mb-3 py-2" style="border: none; background: rgba(13, 110, 253, 0.1);">
-                    <small style="color: #E4E6EA; font-weight: 500;">
-                        ${message}
-                    </small>
-                </div>
-            `;
-            
-            // Insertar mensaje antes de la distribución
-            const currentHTML = document.getElementById('classDistribution').innerHTML;
-            document.getElementById('classDistribution').innerHTML = filterMessage + currentHTML;
-        }
-
-        // 🎯 FUNCIÓN ACTUALIZADA: updateTeachersOverview CON COLORES MEJORADOS
-        function updateTeachersOverview(teachersData) {
-            console.log('👨‍🏫 Actualizando maestros con datos REALES:', teachersData);
-            
-            if (!teachersData || teachersData.length === 0) {
-                document.getElementById('teachersOverview').innerHTML = '<small class="text-light">No hay datos de maestros disponibles</small>';
-                return;
-            }
-            
-            const teachersHTML = `
-                <div class="teachers-list">
-                    ${teachersData.map(maestro => `
-                        <div class="teacher-item d-flex justify-content-between align-items-center mb-3">
-                            <div class="teacher-info">
-                                <div class="teacher-name">
-                                    <strong style="color: #E4E6EA; font-size: 0.95em;">${maestro.maestro}</strong>
-                                </div>
-                                <small style="color: #C8CCD0; font-weight: 500;">${maestro.especialidad}</small>
-                            </div>
-                            <div class="text-end">
-                                <div class="text-success fw-bold" style="font-size: 0.9em;">${maestro.alumnos_activos || 0} alumnos</div>
-                                <div class="text-success" style="font-size: 0.85em; font-weight: 600;">${formatCurrency(maestro.ingresos_potenciales || 0)}</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            
-            document.getElementById('teachersOverview').innerHTML = teachersHTML;
-            console.log('✅ Maestros actualizados con datos reales');
-        }
-
-        // ====================================================
-        // FUNCIÓN ACTUALIZADA: loadRockstarSkullData CON ALMACENAMIENTO DE DATOS
-        // REEMPLAZAR EN DASHBOARD.HTML
-        // ====================================================
-
-        // 🎯 FUNCIÓN ACTUALIZADA: loadRockstarSkullData
-        async function loadRockstarSkullData() {
-            try {
-                console.log('🎸 Cargando datos REALES de RockstarSkull...');
-                
-                const response = await fetch('/gastos/api/dashboard/alumnos?empresa_id=1');
-                const result = await response.json();
-                
-                if (result.success && result.data) {
-                    const stats = result.data.estadisticas;
-                    const clases = result.data.distribucion_clases;
-                    const maestros = result.data.distribucion_maestros;
-                    const metricas = result.data.metricas_rockstar;
-                    
-                    // Actualizar contadores generales con datos reales
-                    document.getElementById('totalStudents').textContent = stats.total_alumnos || 0;
-                    document.getElementById('activeStudents').textContent = stats.alumnos_activos || 0;
-                    document.getElementById('inactiveStudents').textContent = stats.alumnos_bajas || 0;
-                    
-                    // 🎯 ACTUALIZAR MÉTRICAS DE ROCKSTAR SKULL CON DATOS REALES
-                    if (metricas) {
-                        document.getElementById('groupClasses').textContent = metricas.clases_grupales || 0;
-                        document.getElementById('individualClasses').textContent = metricas.clases_individuales || 0;
-                        document.getElementById('currentStudents').textContent = metricas.alumnos_corriente || 0;
-                        document.getElementById('pendingStudents').textContent = metricas.alumnos_pendientes || 0;
-                        
-                        console.log('✅ Métricas RockstarSkull actualizadas:', {
-                            grupales: metricas.clases_grupales,
-                            individuales: metricas.clases_individuales,
-                            corriente: metricas.alumnos_corriente,
-                            pendientes: metricas.alumnos_pendientes
-                        });
-                    }
-                    
-                    // 🎯 ALMACENAR DATOS DE DISTRIBUCIÓN DE CLASES PARA FILTROS
-                    if (clases && clases.length > 0) {
-                        // Almacenar datos globalmente para filterStudentsByStatus
-                        setClassDistributionData(clases);
-                        
-                        // Actualizar distribución de clases con datos completos (vista inicial)
-                        updateClassDistribution(clases);
-                        
-                        console.log('✅ Datos de distribución de clases almacenados para filtros');
-                    } else {
-                        console.log('⚠️ No se encontraron datos de distribución de clases');
-                        setClassDistributionData([]); // Limpiar datos si no hay
-                    }
-                    
-                    // Actualizar maestros con datos reales  
-                    if (maestros && maestros.length > 0) {
-                        updateTeachersOverview(maestros);
-                    }
-                    
-                    console.log('✅ Datos REALES de RockstarSkull cargados correctamente');
-                    
-                } else {
-                    console.error('❌ Error en respuesta API alumnos:', result.message);
-                    
-                    // Limpiar datos si hay error
-                    setClassDistributionData([]);
-                    loadFallbackRockstarData();
-                }
-                
-            } catch (error) {
-                console.error('❌ Error cargando datos RockstarSkull:', error);
-                
-                // Limpiar datos si hay error
-                setClassDistributionData([]);
-                loadFallbackRockstarData();
-            }
-        }
-
-        // 🎯 FUNCIÓN ACTUALIZADA: loadFallbackRockstarData CON DATOS SIMULADOS PARA FILTROS
-        function loadFallbackRockstarData() {
-            console.log('⚠️ Usando datos simulados como fallback para RockstarSkull');
-            
-            // Datos simulados básicos
-            document.getElementById('totalStudents').textContent = '98';
-            document.getElementById('activeStudents').textContent = '47';
-            document.getElementById('inactiveStudents').textContent = '51';
-            document.getElementById('groupClasses').textContent = '45';
-            document.getElementById('individualClasses').textContent = '2';
-            document.getElementById('currentStudents').textContent = '41';
-            document.getElementById('pendingStudents').textContent = '6';
-            
-            // Datos simulados de distribución de clases para filtros
-            const fallbackClassData = [
-                { clase: 'Guitarra', total_alumnos: 39, activos: 18, inactivos: 21 },
-                { clase: 'Batería', total_alumnos: 26, activos: 12, inactivos: 14 },
-                { clase: 'Teclado', total_alumnos: 14, activos: 7, inactivos: 7 },
-                { clase: 'Canto', total_alumnos: 14, activos: 6, inactivos: 8 },
-                { clase: 'Bajo', total_alumnos: 5, activos: 3, inactivos: 2 }
-            ];
-            
-            // Almacenar datos simulados para filtros
-            setClassDistributionData(fallbackClassData);
-            
-            // Actualizar distribución con datos simulados
-            updateClassDistribution(fallbackClassData);
-            
-            // Mostrar mensaje de fallback
-            document.getElementById('classDistribution').innerHTML = '<div class="alert alert-warning mb-0"><small>⚠️ Usando datos simulados. Verifique la conexión a la base de datos.</small></div>';
-            document.getElementById('teachersOverview').innerHTML = '<div class="alert alert-warning mb-0"><small>⚠️ Datos de maestros no disponibles</small></div>';
-            
-            console.log('✅ Datos simulados cargados para filtros');
-        }
-
         console.log('✅ Sistema de gestión de alumnos configurado');
-
     </script>
     
     <!-- Script de verificación de autenticación -->
