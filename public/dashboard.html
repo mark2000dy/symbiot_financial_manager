@@ -714,6 +714,48 @@
         0%, 100% { opacity: 0.3; }
         50% { opacity: 0.7; }
     }
+
+    /* Widget Maestros - Mejoras visuales */
+    .teachers-grid {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .teacher-card {
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .teacher-card:hover {
+        background: rgba(255,255,255,0.15) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* Indicadores de estado */
+    .text-success {
+        color: #28a745 !important;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-info {
+        color: #17a2b8 !important;
+    }
+
+    .text-warning {
+        color: #ffc107 !important;
+    }
+
+    .text-white {
+        color: #ffffff !important;
+    }
+
+    .text-light {
+        color: #f8f9fa !important;
+    }
     </style>
 </head>
 <body>
@@ -2542,40 +2584,96 @@
             }
         }
 
-        // Función para actualizar maestros con datos reales
+        // Función para actualizar maestros con datos reales - CON DEBUGGING
         function updateTeachersOverview(maestros = []) {
-            if (!maestros || maestros.length === 0) {
-                // Datos simulados como fallback
-                maestros = [
-                    { maestro: 'Hugo Vázquez', especialidad: 'Guitarra', alumnos_activos: 18, ingresos_potenciales: 27000 },
-                    { maestro: 'Julio Olvera', especialidad: 'Batería', alumnos_activos: 12, ingresos_potenciales: 18000 },
-                    { maestro: 'Nahomy Perez', especialidad: 'Canto', alumnos_activos: 6, ingresos_potenciales: 10200 },
-                    { maestro: 'Luis Blanquet', especialidad: 'Bajo', alumnos_activos: 3, ingresos_potenciales: 4800 },
-                    { maestro: 'Manuel Reyes', especialidad: 'Teclado', alumnos_activos: 7, ingresos_potenciales: 10500 },
-                    { maestro: 'Irwin', especialidad: 'Guitarra', alumnos_activos: 1, ingresos_potenciales: 1900 }
-                ];
+            console.log('👨‍🏫 Actualizando maestros con datos REALES:', maestros);
+            
+            // 🔍 DEBUGGING DIRECTO
+            if (window.debugMaestros) {
+                window.debugMaestros(maestros);
             }
             
+            // 🔍 DEBUGGING: Verificar datos de cada maestro
+            maestros.forEach((maestro, index) => {
+                console.log(`🔍 Maestro ${index + 1}:`, {
+                    nombre: maestro.maestro,
+                    especialidad: maestro.especialidad,
+                    alumnos_activos: maestro.alumnos_activos,
+                    alumnos_bajas: maestro.alumnos_bajas,
+                    ingresos_activos: maestro.ingresos_activos,
+                    ingresos_bajas: maestro.ingresos_bajas,
+                    tipo_ingresos_activos: typeof maestro.ingresos_activos,
+                    tipo_ingresos_bajas: typeof maestro.ingresos_bajas
+                });
+            });
+            
+            if (!maestros || maestros.length === 0) {
+                document.getElementById('teachersOverview').innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle text-warning fa-2x mb-2"></i>
+                        <div class="text-white fw-bold">Sin datos de maestros</div>
+                        <small class="text-warning">Verifique que hay alumnos asignados a maestros</small>
+                        <button class="btn btn-sm btn-outline-info mt-2" onclick="loadRockstarSkullData()">
+                            <i class="fas fa-sync me-1"></i>Reintentar
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
             const teachersHTML = `
-                <div class="row g-2">
-                    ${maestros.slice(0, 6).map(maestro => `
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: rgba(255,255,255,0.05);">
-                                <div>
-                                    <div class="fw-bold" style="color: #E4E6EA; font-size: 0.9em;">${maestro.maestro}</div>
-                                    <small style="color: #B8B9BA;">${maestro.especialidad}</small>
+                <div class="teachers-grid" style="max-height: 350px; overflow-y: auto;">
+                    ${maestros.map(maestro => {
+                        // 🔍 DEBUGGING: Verificar valores individuales
+                        const ingresosActivos = parseFloat(maestro.ingresos_activos) || 0;
+                        const ingresosBajas = parseFloat(maestro.ingresos_bajas) || 0;
+                        
+                        console.log(`💰 ${maestro.maestro}: Activos=${ingresosActivos}, Bajas=${ingresosBajas}`);
+                        
+                        return `
+                        <div class="teacher-card mb-3 p-3" style="background: rgba(255,255,255,0.1); border-radius: 8px; border-left: 4px solid #007bff;">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="text-white mb-1 fw-bold">${maestro.maestro}</h6>
+                                    <small class="text-info fw-bold">${maestro.especialidad}</small>
                                 </div>
                                 <div class="text-end">
-                                    <div class="text-success">${maestro.alumnos_activos || 0} alumnos</div>
-                                    <div class="text-success">${formatCurrency(maestro.ingresos_potenciales || 0)}</div>
+                                    <div class="text-white mb-1">
+                                        <i class="fas fa-users me-1 text-info"></i>
+                                        <strong class="text-white">${maestro.alumnos_activos || 0}</strong> 
+                                        <span class="text-info">activos</span>
+                                        ${(maestro.alumnos_bajas > 0) ? `<span class="text-warning ms-2">| ${maestro.alumnos_bajas} bajas</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Ingresos separados con debugging -->
+                            <div class="row mt-3">
+                                <div class="col-6">
+                                    <div class="text-center p-2" style="background: rgba(40,167,69,0.3); border-radius: 6px; border: 1px solid rgba(40,167,69,0.5);">
+                                        <div class="text-white fw-bold" style="font-size: 0.95em;" title="Raw: ${maestro.ingresos_activos}">
+                                            ${formatCurrency(ingresosActivos)}
+                                        </div>
+                                        <small class="text-white fw-bold">Con Activos</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2" style="background: rgba(220,53,69,0.3); border-radius: 6px; border: 1px solid rgba(220,53,69,0.5);">
+                                        <div class="text-white fw-bold" style="font-size: 0.95em;" title="Raw: ${maestro.ingresos_bajas}">
+                                            ${formatCurrency(ingresosBajas)}
+                                        </div>
+                                        <small class="text-white fw-bold">Perdidos (Bajas)</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `;
             
             document.getElementById('teachersOverview').innerHTML = teachersHTML;
+            console.log('✅ Maestros actualizados con datos reales - Ingresos separados');
         }
 
         // Ocultar indicadores específicos para otras empresas  
@@ -3403,12 +3501,36 @@
             
             // Mostrar mensaje de fallback
             document.getElementById('classDistribution').innerHTML = '<div class="alert alert-warning mb-0"><small>⚠️ Usando datos simulados. Verifique la conexión a la base de datos.</small></div>';
-            document.getElementById('teachersOverview').innerHTML = '<div class="alert alert-warning mb-0"><small>⚠️ Datos de maestros no disponibles</small></div>';
+            //document.getElementById('teachersOverview').innerHTML = '<div class="alert alert-warning mb-0"><small>⚠️ Datos de maestros no disponibles</small></div>';
             
+            console.log('⚠️ Fallback activado - manteniendo datos reales de maestros');
             console.log('✅ Datos simulados cargados para filtros');
         }
 
         console.log('✅ Sistema de gestión de alumnos configurado');
+
+        // 🔍 DEBUGGING TEMPORAL - AGREGAR AL FINAL DEL SCRIPT
+        window.debugMaestros = function(maestros) {
+            console.log('🔍 DEBUGGING DIRECTO - Maestros recibidos:', maestros);
+            
+            maestros.forEach((maestro, index) => {
+                console.log(`🔍 Maestro ${index + 1}:`, {
+                    nombre: maestro.maestro,
+                    especialidad: maestro.especialidad,
+                    ingresos_activos_raw: maestro.ingresos_activos,
+                    ingresos_bajas_raw: maestro.ingresos_bajas,
+                    tipo_activos: typeof maestro.ingresos_activos,
+                    tipo_bajas: typeof maestro.ingresos_bajas
+                });
+                
+                const ingresosActivos = parseFloat(maestro.ingresos_activos) || 0;
+                const ingresosBajas = parseFloat(maestro.ingresos_bajas) || 0;
+                
+                console.log(`💰 ${maestro.maestro}:`);
+                console.log(`   - Activos: ${ingresosActivos} (${formatCurrency(ingresosActivos)})`);
+                console.log(`   - Bajas: ${ingresosBajas} (${formatCurrency(ingresosBajas)})`);
+            });
+        };
 
     </script>
     

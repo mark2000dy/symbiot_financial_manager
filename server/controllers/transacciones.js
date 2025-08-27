@@ -503,33 +503,42 @@ export const transaccionesController = {
                     }));
 
                     // =====================================================
-                    // 4. DISTRIBUCIÓN POR MAESTROS (REAL - si existe campo maestro_id)
+                    // 4. DISTRIBUCIÓN POR MAESTROS (REAL - CON SEPARACIÓN ACTIVOS/BAJAS)
                     // =====================================================
                     try {
                         const maestrosQuery = await executeQuery(`
                             SELECT 
                                 m.nombre as maestro,
                                 m.especialidad,
-                                COUNT(a.id) as alumnos_activos,
-                                COALESCE(AVG(a.precio_mensual), 1500) * COUNT(a.id) as ingresos_potenciales
+                                -- Alumnos y ingresos ACTIVOS
+                                COUNT(CASE WHEN a.estatus = 'Activo' THEN 1 END) as alumnos_activos,
+                                COALESCE(SUM(CASE WHEN a.estatus = 'Activo' THEN a.precio_mensual ELSE 0 END), 0) as ingresos_activos,
+                                -- Alumnos y ingresos de BAJAS
+                                COUNT(CASE WHEN a.estatus = 'Baja' THEN 1 END) as alumnos_bajas,
+                                COALESCE(SUM(CASE WHEN a.estatus = 'Baja' THEN a.precio_mensual ELSE 0 END), 0) as ingresos_bajas
                             FROM maestros m
-                            LEFT JOIN alumnos a ON a.maestro_id = m.id AND a.estatus = 'Activo'
-                            WHERE m.empresa_id = 1 AND m.activo = TRUE
+                            LEFT JOIN alumnos a ON a.maestro_id = m.id
+                            WHERE m.empresa_id = 1 AND m.activo = 1
                             GROUP BY m.id, m.nombre, m.especialidad
-                            ORDER BY alumnos_activos DESC
+                            ORDER BY alumnos_activos DESC, ingresos_activos DESC
                         `);
 
                         distribucionMaestros = maestrosQuery.map(row => ({
                             maestro: row.maestro,
                             especialidad: row.especialidad || 'Sin especialidad',
                             alumnos_activos: parseInt(row.alumnos_activos || 0),
-                            ingresos_potenciales: parseFloat(row.ingresos_potenciales || 0)
+                            alumnos_bajas: parseInt(row.alumnos_bajas || 0),
+                            ingresos_activos: parseFloat(row.ingresos_activos || 0),
+                            ingresos_bajas: parseFloat(row.ingresos_bajas || 0)
                         }));
+
+                        console.log(`📊 MAESTROS REALES obtenidos: ${distribucionMaestros.length}`);
+                        console.log('🔍 Datos maestros:', distribucionMaestros);
+
                     } catch (maestrosError) {
-                        console.log('⚠️ Error obteniendo maestros, usando datos básicos');
-                        distribucionMaestros = [
-                            { maestro: 'Hugo Vazquez', especialidad: 'Guitarra', alumnos_activos: 0, ingresos_potenciales: 0 }
-                        ];
+                        console.error('❌ ERROR CRÍTICO obteniendo maestros:', maestrosError);
+                        // ⚠️ IMPORTANTE: NO usar datos simulados, devolver array vacío
+                        distribucionMaestros = [];
                     }
 
                     // =====================================================
