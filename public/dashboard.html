@@ -1146,15 +1146,15 @@
                                 <table class="table table-dark table-hover table-sm">
                                     <thead>
                                         <tr>
-                                            <th><i class="fas fa-hashtag me-1"></i>#</th>
                                             <th><i class="fas fa-user me-1"></i>Alumno</th>
                                             <th><i class="fas fa-birthday-cake me-1"></i>Edad</th>
-                                            <th><i class="fas fa-music me-1"></i>Clase</th>
                                             <th><i class="fas fa-chalkboard-teacher me-1"></i>Maestro</th>
-                                            <th><i class="fas fa-toggle-on me-1"></i>Estatus</th>
+                                            <th><i class="fas fa-music me-1"></i>Clase</th>
+                                            <th><i class="fas fa-toggle-on me-1"></i>Inscripción</th>
                                             <th><i class="fas fa-dollar-sign me-1"></i>Mensualidad</th>
                                             <th><i class="fas fa-calendar-day me-1"></i>Próximo Pago</th>
                                             <th><i class="fas fa-exclamation-triangle me-1"></i>Alerta</th>
+                                            <th><i class="fas fa-check-circle me-1"></i>Estatus</th>
                                             <th><i class="fas fa-cogs me-1"></i>Acciones</th>
                                         </tr>
                                     </thead>
@@ -2880,6 +2880,24 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        // Funciones placeholder para acciones de alumnos
+        function viewStudentDetail(id) {
+            console.log('Ver detalle del alumno:', id);
+            showAlert('info', 'Funcionalidad de detalles - En desarrollo');
+        }
+
+        function editStudent(id) {
+            console.log('Editar alumno:', id);
+            showAlert('info', 'Funcionalidad de edición - En desarrollo');
+        }
+
+        function deleteStudent(id) {
+            if (confirm('¿Estás seguro de eliminar este alumno?')) {
+                console.log('Eliminar alumno:', id);
+                showAlert('info', 'Funcionalidad de eliminación - En desarrollo');
+            }
         }
 
         // 🎓 Obtener badge de alerta de pago
