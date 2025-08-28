@@ -720,9 +720,15 @@ export const transaccionesController = {
             }
             
             if (maestro_id) {
+            // Si es un número, buscar por ID, si no por nombre del maestro
+            if (!isNaN(maestro_id)) {
                 whereClause += ' AND a.maestro_id = ?';
                 params.push(maestro_id);
+            } else {
+                whereClause += ' AND m.nombre = ?';
+                params.push(maestro_id);
             }
+        }
             
             if (clase) {
                 whereClause += ' AND a.clase = ?';
@@ -748,13 +754,12 @@ export const transaccionesController = {
                     a.domiciliado,
                     a.estatus,
                     COALESCE(m.nombre, 'Sin asignar') as maestro,
-                    -- Calcular total pagado más simple
                     COALESCE(a.precio_mensual, 0) * GREATEST(1, FLOOR(DATEDIFF(CURDATE(), a.fecha_inscripcion) / 30)) as total_pagado
                 FROM alumnos a
-                LEFT JOIN maestros m ON a.maestro_id = m.idos m ON a.maestro_id = m.id
-                    ${whereClause}
-                    ORDER BY a.nombre
-                    LIMIT ? OFFSET ?
+                LEFT JOIN maestros m ON a.maestro_id = m.id
+                ${whereClause}
+                ORDER BY a.nombre
+                LIMIT ? OFFSET ?
             `, [...params, parseInt(limit), offset]);
 
             // Query para contar total de registros

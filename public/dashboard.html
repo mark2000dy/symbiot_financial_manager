@@ -1166,6 +1166,20 @@
                                             </td>
                                         </tr>
                                     </tbody>
+                                    <!-- Paginación de alumnos -->
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <div>
+                                            <small class="text-white">
+                                                Mostrando <span id="studentsStart">1</span>-<span id="studentsEnd">10</span> 
+                                                de <span id="studentsTotal">0</span> alumnos
+                                            </small>
+                                        </div>
+                                        <nav>
+                                            <ul id="studentsPagination" class="pagination pagination-sm mb-0">
+                                                <!-- Se llena dinámicamente -->
+                                            </ul>
+                                        </nav>
+                                    </div>
                                 </table>
                             </div>
                             
@@ -1976,13 +1990,20 @@
         }
 
         function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('es-MX', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
+            if (!dateString) return 'No disponible';
+            
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return 'Fecha inválida';
+                
+                return date.toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric'
+                });
+            } catch (error) {
+                return 'Error en fecha';
+            }
         }
 
         function updateCurrentDate() {
@@ -2107,32 +2128,6 @@
             console.log('✅ Indicadores RockstarSkull mostrados (datos cargados desde API)');
         }
 
-        // 🎯 FUNCIÓN DE FALLBACK (solo en caso de error crítico)
-        function loadFallbackRockstarData() {
-            console.log('⚠️ Usando datos de fallback para RockstarSkull');
-            
-            // Solo en caso de error crítico, usar valores por defecto
-            document.getElementById('totalStudents').textContent = '0';
-            document.getElementById('activeStudents').textContent = '0';
-            document.getElementById('inactiveStudents').textContent = '0';
-            document.getElementById('groupClasses').textContent = '0';
-            document.getElementById('individualClasses').textContent = '0';
-            document.getElementById('currentStudents').textContent = '0';
-            document.getElementById('pendingStudents').textContent = '0';
-            
-            // Mostrar mensaje de error en lugar de datos falsos
-            document.getElementById('classDistribution').innerHTML = '<div class="alert alert-warning">Error cargando datos de clases</div>';
-            document.getElementById('teachersOverview').innerHTML = '<div class="alert alert-warning">Error cargando datos de maestros</div>';
-        }
-
-        // Función fallback con datos simulados
-        function loadFallbackRockstarData() {
-            console.log('⚠️ Usando datos simulados como fallback');
-            document.getElementById('totalStudents').textContent = '100';
-            document.getElementById('activeStudents').textContent = '47';
-            document.getElementById('inactiveStudents').textContent = '53';
-        }
-
         // 🔄 Actualizar alertas de pagos
         async function refreshPaymentAlerts() {
             try {
@@ -2189,17 +2184,16 @@
         // 🎓 Función loadStudentsList() - NUEVA IMPLEMENTACIÓN
         async function loadStudentsList(page = 1) {
             try {
-                // Obtener filtros actuales
-                const teacherFilter = document.getElementById('teacherFilter')?.value || '';
+                console.log(`Cargando página ${page} de alumnos...`);
+                
+                // Obtener filtros actuales si existen
                 const statusFilter = document.getElementById('statusFilter')?.value || '';
                 const instrumentFilter = document.getElementById('instrumentFilter')?.value || '';
                 
-                // Construir URL con filtros
-                let url = `/gastos/api/alumnos?empresa_id=1&page=${page}&limit=10`;
+                // Construir URL con parámetros
+                let url = `/gastos/api/alumnos?empresa_id=1&page=${page}&limit=${studentsPerPage}`;
                 if (statusFilter) url += `&estatus=${statusFilter}`;
                 if (instrumentFilter) url += `&clase=${instrumentFilter}`;
-                
-                console.log(`🎓 Cargando página ${page} con filtros...`);
                 
                 const response = await fetch(url);
                 const result = await response.json();
@@ -2208,7 +2202,7 @@
                     studentsData = result.data;
                     filteredStudents = [...studentsData];
                     
-                    // Actualizar paginación
+                    // Actualizar información de paginación global
                     currentStudentPage = result.pagination.current_page;
                     totalStudentPages = result.pagination.total_pages;
                     totalStudentsCount = result.pagination.total_records;
@@ -2216,43 +2210,28 @@
                     renderStudentsTable();
                     updateStudentsPagination();
                     
-                    console.log(`✅ ${studentsData.length} alumnos cargados (${totalStudentsCount} total)`);
+                    console.log(`${studentsData.length} alumnos cargados (${totalStudentsCount} total)`);
+                } else {
+                    throw new Error(result.message || 'Error cargando alumnos');
                 }
-            } catch (error) {
-                console.error('❌ Error:', error);
-            }
-        }
-
-        // 🎓 Función auxiliar para renderizar tabla de alumnos
-        function renderStudentsTable(students) {
-            const tableBody = document.getElementById('studentsTableBody');
-            if (!tableBody) return;
-            
-            const html = students.map((student, index) => {
-                const statusBadge = student.estatus === 'Activo' 
-                    ? '<span class="badge bg-success">✅ Activo</span>'
-                    : '<span class="badge bg-danger">❌ Baja</span>';
                 
-                return `
-                    <tr class="student-row" onclick="showStudentDetail(${student.id})">
-                        <td>${index + 1}</td>
-                        <td><strong>${student.nombre}</strong><br><small class="text-muted">#${student.id}</small></td>
-                        <td>${student.edad}</td>
-                        <td>${getInstrumentIcon(student.clase)} ${student.clase}</td>
-                        <td>${student.maestro}</td>
-                        <td>${statusBadge}</td>
-                        <td class="text-success">${formatCurrency(student.precioMensual)}</td>
-                        <td>${formatDate(student.fechaUltimoPago)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showStudentDetail(${student.id})" title="Ver Detalle">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-            
-            tableBody.innerHTML = html;
+            } catch (error) {
+                console.error('Error cargando alumnos:', error);
+                // Mostrar error en la tabla
+                const tbody = document.getElementById('studentsTableBody');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" class="text-center py-4 text-danger">
+                                Error cargando alumnos: ${error.message}
+                                <br><button class="btn btn-sm btn-outline-info mt-2" onclick="loadStudentsList(1)">
+                                    Reintentar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
         }
 
         // 🎓 Función auxiliar para iconos de instrumentos
@@ -2747,131 +2726,6 @@
         let totalStudentsCount = 0;
         const studentsPerPage = 10;
 
-        // 🎓 Datos simulados basados en análisis del Excel (muestra representativa)
-        const sampleStudentsData = [
-            {
-                id: 1,
-                nombre: "Gwyneth Adriana Tagliabue Cruz",
-                edad: 15,
-                maestro: "Hugo Vázquez", 
-                fechaInscripcion: new Date("2023-08-01"),
-                fechaUltimoPago: new Date("2023-11-01"),
-                clase: "Guitarra",
-                tipo: "G",
-                horario: "19:00 a 20:00 V",
-                formaPago: "TPV",
-                precioMensual: 1500,
-                estatus: "Baja",
-                totalPagado: 5550
-            },
-            {
-                id: 2,
-                nombre: "Alejandro Navarro Baltazar",
-                edad: 36,
-                maestro: "Hugo Vázquez",
-                fechaInscripcion: new Date("2023-08-02"),
-                fechaUltimoPago: new Date("2023-09-01"),
-                clase: "Guitarra",
-                tipo: "G", 
-                horario: "17:00 a 18:00 Mi",
-                formaPago: "Efectivo",
-                precioMensual: 1500,
-                estatus: "Baja",
-                totalPagado: 3000
-            },
-            {
-                id: 3,
-                nombre: "Manuel Zacate Millan",
-                edad: 62,
-                maestro: "Hugo Vázquez",
-                fechaInscripcion: new Date("2023-08-03"),
-                fechaUltimoPago: new Date("2023-09-01"),
-                clase: "Guitarra", 
-                tipo: "G",
-                horario: "18:00 a 19:00 J",
-                formaPago: "Efectivo",
-                precioMensual: 1400,
-                estatus: "Baja",
-                totalPagado: 2900
-            },
-            {
-                id: 4,
-                nombre: "Luis Erik Arias Ayala",
-                edad: 11,
-                maestro: "Manuel Reyes",
-                fechaInscripcion: new Date("2023-09-01"),
-                fechaUltimoPago: new Date("2025-07-01"),
-                clase: "Teclado",
-                tipo: "T",
-                horario: "16:00 a 17:00 S",
-                formaPago: "Transferencia",
-                precioMensual: 1500,
-                estatus: "Activo",
-                totalPagado: 36600
-            },
-            {
-                id: 5,
-                nombre: "Jose Fernando Campos Esparza",
-                edad: 28,
-                maestro: "Hugo Vázquez",
-                fechaInscripcion: new Date("2023-09-01"),
-                fechaUltimoPago: new Date("2023-09-01"),
-                clase: "Guitarra",
-                tipo: "G",
-                horario: "20:00 a 21:00 V",
-                formaPago: "Efectivo",
-                precioMensual: 2000,
-                estatus: "Baja", 
-                totalPagado: 2000
-            },
-            // Agregar más alumnos activos para demostrar alertas
-            {
-                id: 6,
-                nombre: "María González López",
-                edad: 25,
-                maestro: "Julio Olvera",
-                fechaInscripcion: new Date("2024-01-15"),
-                fechaUltimoPago: new Date("2025-08-15"),
-                clase: "Batería",
-                tipo: "B",
-                horario: "18:00 a 19:00 L",
-                formaPago: "TPV",
-                precioMensual: 1800,
-                estatus: "Activo",
-                totalPagado: 14400
-            },
-            {
-                id: 7,
-                nombre: "Carlos Mendoza Ruiz",
-                edad: 17,
-                maestro: "Luis Blanquet", 
-                fechaInscripcion: new Date("2024-06-10"),
-                fechaUltimoPago: new Date("2025-08-10"),
-                clase: "Bajo",
-                tipo: "B",
-                horario: "17:00 a 18:00 Ma",
-                formaPago: "Transferencia",
-                precioMensual: 1600,
-                estatus: "Activo",
-                totalPagado: 8000
-            },
-            {
-                id: 8,
-                nombre: "Ana Sofía Hernández",
-                edad: 22,
-                maestro: "Nahomy Perez",
-                fechaInscripcion: new Date("2025-03-20"),
-                fechaUltimoPago: new Date("2025-08-14"), // Próximo a vencer
-                clase: "Canto",
-                tipo: "C",
-                horario: "19:00 a 20:00 Mi",
-                formaPago: "TPV",
-                precioMensual: 1700,
-                estatus: "Activo",
-                totalPagado: 8500
-            }
-        ];
-
         // 🎓 Cargar lista de alumnos real
         async function loadStudentsList() {
             try {
@@ -2895,11 +2749,6 @@
             } catch (error) {
                 console.error('❌ Error cargando alumnos reales:', error);
                 
-                // Fallback a datos simulados
-                console.log('⚠️ Usando datos simulados como fallback');
-                studentsData = sampleStudentsData;
-                filteredStudents = [...studentsData];
-                
                 renderStudentsTable();
                 updateStudentsPagination();
             }
@@ -2920,7 +2769,7 @@
         // Función para calcular próximo pago
         function getNextPaymentDate(student) {
             try {
-                const inscripcion = new Date(student.fecha_inscripcion);
+                const inscripcion = new Date(student.fechaInscripcion || student.fecha_inscripcion);
                 const today = new Date();
                 
                 // Calcular meses desde inscripción
@@ -2932,8 +2781,33 @@
                 
                 return nextPayment;
             } catch (error) {
+                console.log('Error calculando fecha:', error);
                 return new Date(); // Fallback
             }
+        }
+
+        // Función para determinar estado de pago del alumno
+        function getPaymentStatus(student) {
+            if (student.estatus === 'Baja') return 'inactive';
+            
+            const today = new Date();
+            const nextDueDate = getNextPaymentDate(student);
+            const daysDiff = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff < -5) return 'overdue';  // Vencido +5 días
+            if (daysDiff <= 3 && daysDiff >= 0) return 'upcoming'; // Próximo (3 días)
+            return 'current'; // Al corriente
+        }
+
+        // Función para generar badge de alerta de pago
+        function getPaymentAlertBadge(paymentStatus) {
+            const badges = {
+                'overdue': '<span class="badge bg-danger">Vencido</span>',
+                'upcoming': '<span class="badge bg-warning">Próximo</span>',
+                'current': '<span class="badge bg-success">Al corriente</span>',
+                'inactive': '<span class="badge bg-secondary">Inactivo</span>'
+            };
+            return badges[paymentStatus] || badges['current'];
         }
 
         // 🎓 Renderizar tabla de alumnos
@@ -2957,34 +2831,51 @@
             const pageStudents = filteredStudents.slice(startIndex, endIndex);
             
             tbody.innerHTML = pageStudents.map((student, index) => {
-                const paymentStatus = getPaymentStatus(student);
-                const nextPaymentDate = getNextPaymentDate(student);
+                // Estandarizar y limpiar datos del backend
+                const studentData = {
+                    id: student.id,
+                    nombre: student.nombre || 'Sin nombre',
+                    edad: student.edad || 'N/A',
+                    maestro: student.maestro || 'Sin asignar',
+                    fechaInscripcion: student.fecha_inscripcion,
+                    precioMensual: student.precio_mensual || 0,
+                    totalPagado: student.total_pagado || 0,
+                    estatus: student.estatus,
+                    clase: student.clase || 'Sin clase',
+                    formaPago: student.forma_pago || 'No especificado'
+                };
+                
+                const paymentStatus = getPaymentStatus(studentData);
+                const nextPaymentDate = getNextPaymentDate(studentData);
                 
                 const alertBadge = getPaymentAlertBadge(paymentStatus);
-                const statusBadge = student.estatus === 'Activo' 
-                    ? '<span class="badge bg-success">✅ Activo</span>'
-                    : '<span class="badge bg-danger">❌ Baja</span>';
-                    
+                const statusBadge = studentData.estatus === 'Activo' 
+                    ? '<span class="badge bg-success">Activo</span>'
+                    : '<span class="badge bg-danger">Baja</span>';
+                
                 return `
-                    <tr class="student-row" onclick="showStudentDetail(${student.id})">
-                        <td>${startIndex + index + 1}</td>
-                        <td>
-                            <strong>${student.nombre}</strong><br>
-                            <small class="text-muted">#${student.id}</small>
-                        </td>
-                        <td>${student.edad}</td>
-                        <td>
-                            ${getInstrumentIcon(student.clase)} ${student.clase}
-                        </td>
-                        <td>${student.maestro}</td>
-                        <td>${statusBadge}</td>
-                        <td class="text-success">${formatCurrency(student.precioMensual)}</td>
-                        <td>${formatDate(nextPaymentDate)}</td>
+                    <tr>
+                        <td class="text-white">${studentData.nombre}</td>
+                        <td class="text-light">${studentData.edad}</td>
+                        <td class="text-light">${studentData.maestro}</td>
+                        <td class="text-light">${studentData.clase}</td>
+                        <td class="text-light">${formatDate(studentData.fechaInscripcion)}</td>
+                        <td class="text-light">${formatCurrency(studentData.precioMensual)}</td>
+                        <td class="text-light">${formatDate(nextPaymentDate)}</td>
                         <td>${alertBadge}</td>
+                        <td>${statusBadge}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showStudentDetail(${student.id})" title="Ver Detalle">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-info" onclick="viewStudentDetail(${studentData.id})" title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="editStudent(${studentData.id})" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteStudent(${studentData.id})" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -3017,30 +2908,42 @@
             return icons[instrument] || '🎵';
         }
 
-        // 🎓 Actualizar paginación
+        // Actualizar UI de paginación
         function updateStudentsPagination() {
-            const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
             const pagination = document.getElementById('studentsPagination');
+            if (!pagination) return;
             
-            if (totalPages <= 1) {
-                pagination.innerHTML = '';
-                return;
-            }
+            const totalPages = Math.ceil(totalStudentsCount / studentsPerPage) || 1;
+            const currentPage = currentStudentPage;
             
+            // Actualizar contadores
+            const start = Math.min((currentPage - 1) * studentsPerPage + 1, totalStudentsCount);
+            const end = Math.min(currentPage * studentsPerPage, totalStudentsCount);
+            
+            document.getElementById('studentsStart').textContent = start;
+            document.getElementById('studentsEnd').textContent = end;
+            document.getElementById('studentsTotal').textContent = totalStudentsCount;
+            
+            // Generar botones de paginación
             let paginationHTML = '';
             
-            // Página anterior
-            if (currentStudentPage > 1) {
+            // Botón anterior
+            if (currentPage > 1) {
                 paginationHTML += `
                     <li class="page-item">
-                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentStudentPage - 1})">Anterior</a>
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentPage - 1})">
+                            Anterior
+                        </a>
                     </li>
                 `;
             }
             
-            // Páginas numeradas
-            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-                const isActive = i === currentStudentPage ? 'active' : '';
+            // Páginas numeradas (máximo 5)
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === currentPage ? 'active' : '';
                 paginationHTML += `
                     <li class="page-item ${isActive}">
                         <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${i})">${i}</a>
@@ -3048,16 +2951,24 @@
                 `;
             }
             
-            // Página siguiente
-            if (currentStudentPage < totalPages) {
+            // Botón siguiente
+            if (currentPage < totalPages) {
                 paginationHTML += `
                     <li class="page-item">
-                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentStudentPage + 1})">Siguiente</a>
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentPage + 1})">
+                            Siguiente
+                        </a>
                     </li>
                 `;
             }
             
             pagination.innerHTML = paginationHTML;
+        }
+
+        // Cambiar página de alumnos
+        function changeStudentPage(page) {
+            currentStudentPage = page;
+            loadStudentsList(page);
         }
 
         // 🎓 Cambiar página de alumnos
@@ -3388,21 +3299,21 @@
             console.log('⚠️ Usando datos simulados como fallback para RockstarSkull');
             
             // Datos simulados básicos
-            document.getElementById('totalStudents').textContent = '98';
-            document.getElementById('activeStudents').textContent = '47';
-            document.getElementById('inactiveStudents').textContent = '51';
-            document.getElementById('groupClasses').textContent = '45';
-            document.getElementById('individualClasses').textContent = '2';
-            document.getElementById('currentStudents').textContent = '41';
-            document.getElementById('pendingStudents').textContent = '6';
+            document.getElementById('totalStudents').textContent = '0';
+            document.getElementById('activeStudents').textContent = '0';
+            document.getElementById('inactiveStudents').textContent = '0';
+            document.getElementById('groupClasses').textContent = '0';
+            document.getElementById('individualClasses').textContent = '0';
+            document.getElementById('currentStudents').textContent = '0';
+            document.getElementById('pendingStudents').textContent = '0';
             
             // Datos simulados de distribución de clases para filtros
             const fallbackClassData = [
-                { clase: 'Guitarra', total_alumnos: 39, activos: 18, inactivos: 21 },
-                { clase: 'Batería', total_alumnos: 26, activos: 12, inactivos: 14 },
-                { clase: 'Teclado', total_alumnos: 14, activos: 7, inactivos: 7 },
-                { clase: 'Canto', total_alumnos: 14, activos: 6, inactivos: 8 },
-                { clase: 'Bajo', total_alumnos: 5, activos: 3, inactivos: 2 }
+                { clase: 'Guitarra', total_alumnos: 0, activos: 0, inactivos: 0 },
+                { clase: 'Batería', total_alumnos: 0, activos: 0, inactivos: 0 },
+                { clase: 'Teclado', total_alumnos: 0, activos: 0, inactivos: 0 },
+                { clase: 'Canto', total_alumnos: 0, activos: 0, inactivos: 0 },
+                { clase: 'Bajo', total_alumnos: 0, activos: 0, inactivos: 0 }
             ];
             
             // Almacenar datos simulados para filtros
