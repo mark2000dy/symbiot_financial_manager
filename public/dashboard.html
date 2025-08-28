@@ -1083,7 +1083,7 @@
                                         <option value="Hugo Vázquez">🎸 Hugo Vázquez</option>
                                         <option value="Manuel Reyes">🎹 Manuel Reyes</option>
                                         <option value="Julio Olvera">🥁 Julio Olvera</option>
-                                        <option value="Irwin">🎵 Irwin</option>
+                                        <option value="Irwin Hernandez">🎵 Irwin Hernandez</option>
                                         <option value="Luis Blanquet">🎸 Luis Blanquet</option>
                                         <option value="Nahomy Perez">🎤 Nahomy Perez</option>
                                         <option value="Demian Andrade">🎸 Demian Andrade</option>
@@ -2189,16 +2189,26 @@
         // 🎓 Función loadStudentsList() - NUEVA IMPLEMENTACIÓN
         async function loadStudentsList(page = 1) {
             try {
-                console.log(`🎓 Cargando página ${page} de alumnos...`);
+                // Obtener filtros actuales
+                const teacherFilter = document.getElementById('teacherFilter')?.value || '';
+                const statusFilter = document.getElementById('statusFilter')?.value || '';
+                const instrumentFilter = document.getElementById('instrumentFilter')?.value || '';
                 
-                const response = await fetch(`/gastos/api/alumnos?empresa_id=1&page=${page}&limit=10`);
+                // Construir URL con filtros
+                let url = `/gastos/api/alumnos?empresa_id=1&page=${page}&limit=10`;
+                if (statusFilter) url += `&estatus=${statusFilter}`;
+                if (instrumentFilter) url += `&clase=${instrumentFilter}`;
+                
+                console.log(`🎓 Cargando página ${page} con filtros...`);
+                
+                const response = await fetch(url);
                 const result = await response.json();
                 
                 if (result.success && result.data) {
                     studentsData = result.data;
                     filteredStudents = [...studentsData];
                     
-                    // Actualizar información de paginación
+                    // Actualizar paginación
                     currentStudentPage = result.pagination.current_page;
                     totalStudentPages = result.pagination.total_pages;
                     totalStudentsCount = result.pagination.total_records;
@@ -2206,15 +2216,10 @@
                     renderStudentsTable();
                     updateStudentsPagination();
                     
-                    console.log(`✅ ${studentsData.length} alumnos cargados (página ${page} de ${totalStudentPages})`);
-                    console.log(`📊 Total de registros: ${totalStudentsCount}`);
-                } else {
-                    throw new Error(result.message || 'Error cargando alumnos');
+                    console.log(`✅ ${studentsData.length} alumnos cargados (${totalStudentsCount} total)`);
                 }
-                
             } catch (error) {
-                console.error('❌ Error cargando alumnos:', error);
-                showAlert('error', 'Error cargando lista de alumnos');
+                console.error('❌ Error:', error);
             }
         }
 
@@ -2900,67 +2905,35 @@
             }
         }
 
-        // 🎓 Filtrar alumnos por criterios
         function filterStudents() {
             const teacherFilter = document.getElementById('teacherFilter').value;
             const statusFilter = document.getElementById('statusFilter').value;
             const instrumentFilter = document.getElementById('instrumentFilter').value;
-            const paymentFilter = document.getElementById('paymentFilter').value;
             
-            console.log('🔍 Aplicando filtros:', { teacherFilter, statusFilter, instrumentFilter, paymentFilter });
+            console.log('🔍 Aplicando filtros del servidor:', { teacherFilter, statusFilter, instrumentFilter });
             
-            filteredStudents = studentsData.filter(student => {
-                // Filtro por maestro
-                if (teacherFilter && student.maestro !== teacherFilter) return false;
-                
-                // Filtro por estatus  
-                if (statusFilter && student.estatus !== statusFilter) return false;
-                
-                // Filtro por instrumento
-                if (instrumentFilter && student.clase !== instrumentFilter) return false;
-                
-                // Filtro por estado de pagos
-                if (paymentFilter) {
-                    const paymentStatus = getPaymentStatus(student);
-                    if (paymentFilter !== paymentStatus) return false;
-                }
-                
-                return true;
-            });
-            
+            // Reiniciar a página 1 y recargar con filtros
             currentStudentPage = 1;
-            renderStudentsTable();
-            updateStudentsPagination(); 
-            updateFilterSummary();
+            loadStudentsList(1);
         }
 
-        // 🎓 Determinar estado de pago del alumno
-        function getPaymentStatus(student) {
-            if (student.estatus === 'Baja') return 'inactive';
-            
-            const today = new Date();
-            const nextDueDate = getNextPaymentDate(student);
-            const daysDiff = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
-            
-            if (daysDiff < -5) return 'overdue';  // Vencido +5 días
-            if (daysDiff <= 3 && daysDiff >= 0) return 'upcoming'; // Próximo (3 días)
-            return 'current'; // Al corriente
-        }
-
-        // 🎓 Calcular próxima fecha de pago basada en fecha de inscripción
+        // Función para calcular próximo pago
         function getNextPaymentDate(student) {
-            const inscriptionDate = new Date(student.fechaInscripcion);
-            const dayOfMonth = inscriptionDate.getDate();
-            
-            const today = new Date();
-            let nextPayment = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
-            
-            // Si ya pasó este mes, calcular para el próximo
-            if (nextPayment < today) {
-                nextPayment.setMonth(nextPayment.getMonth() + 1);
+            try {
+                const inscripcion = new Date(student.fecha_inscripcion);
+                const today = new Date();
+                
+                // Calcular meses desde inscripción
+                const monthsDiff = Math.floor((today - inscripcion) / (1000 * 60 * 60 * 24 * 30));
+                
+                // Próximo pago = inscripción + (meses + 1)
+                const nextPayment = new Date(inscripcion);
+                nextPayment.setMonth(nextPayment.getMonth() + monthsDiff + 1);
+                
+                return nextPayment;
+            } catch (error) {
+                return new Date(); // Fallback
             }
-            
-            return nextPayment;
         }
 
         // 🎓 Renderizar tabla de alumnos

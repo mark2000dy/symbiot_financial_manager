@@ -743,21 +743,18 @@ export const transaccionesController = {
                     a.fecha_inscripcion,
                     a.fecha_ultimo_pago,
                     a.promocion,
-                    a.precio_mensual,
+                    COALESCE(a.precio_mensual, 0) as precio_mensual,
                     a.forma_pago,
                     a.domiciliado,
                     a.estatus,
-                    m.nombre as maestro,
-                    -- Calcular total pagado estimado (meses desde inscripción * precio)
-                    COALESCE(
-                        FLOOR(DATEDIFF(COALESCE(a.fecha_ultimo_pago, CURDATE()), a.fecha_inscripcion) / 30) * a.precio_mensual,
-                        0
-                    ) as total_pagado
+                    COALESCE(m.nombre, 'Sin asignar') as maestro,
+                    -- Calcular total pagado más simple
+                    COALESCE(a.precio_mensual, 0) * GREATEST(1, FLOOR(DATEDIFF(CURDATE(), a.fecha_inscripcion) / 30)) as total_pagado
                 FROM alumnos a
-                LEFT JOIN maestros m ON a.maestro_id = m.id
-                ${whereClause}
-                ORDER BY a.nombre
-                LIMIT ? OFFSET ?
+                LEFT JOIN maestros m ON a.maestro_id = m.idos m ON a.maestro_id = m.id
+                    ${whereClause}
+                    ORDER BY a.nombre
+                    LIMIT ? OFFSET ?
             `, [...params, parseInt(limit), offset]);
 
             // Query para contar total de registros
