@@ -1080,7 +1080,7 @@
                                     </label>
                                     <select class="form-select form-select-sm" id="teacherFilter" onchange="filterStudents()">
                                         <option value="">👨‍🏫 Todos los Maestros</option>
-                                        <option value="Hugo Vázquez">🎸 Hugo Vázquez</option>
+                                        <option value="Hugo Vazquez">🎸 Hugo Vazquez</option>
                                         <option value="Manuel Reyes">🎹 Manuel Reyes</option>
                                         <option value="Julio Olvera">🥁 Julio Olvera</option>
                                         <option value="Irwin Hernandez">🎵 Irwin Hernandez</option>
@@ -1142,7 +1142,7 @@
                             </div>
 
                             <!-- Students Table -->
-                            <div class="table-responsive">
+                            <div class="table-responsive" id="studentsTableContainer">
                                 <table class="table table-dark table-hover table-sm">
                                     <thead>
                                         <tr>
@@ -1166,28 +1166,37 @@
                                             </td>
                                         </tr>
                                     </tbody>
-                                    <!-- Paginación de alumnos -->
-                                    <div class="d-flex justify-content-between align-items-center mt-3">
-                                        <div>
-                                            <small class="text-white">
-                                                Mostrando <span id="studentsStart">1</span>-<span id="studentsEnd">10</span> 
-                                                de <span id="studentsTotal">0</span> alumnos
-                                            </small>
-                                        </div>
-                                        <nav>
-                                            <ul id="studentsPagination" class="pagination pagination-sm mb-0">
-                                                <!-- Se llena dinámicamente -->
-                                            </ul>
-                                        </nav>
-                                    </div>
                                 </table>
                             </div>
-                            
-                            <!-- Pagination -->
-                            <nav aria-label="Paginación de alumnos" class="mt-3">
-                                <ul class="pagination pagination-sm justify-content-center" id="studentsPagination">
-                                    <!-- Se genera dinámicamente -->
-                                </ul>
+
+                            <!-- Loading State -->
+                            <div id="studentsLoadingState" class="text-center py-4" style="display: none;">
+                                <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                                <p class="mt-2 mb-0">Cargando alumnos...</p>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div id="studentsEmptyState" class="text-center py-4" style="display: none;">
+                                <i class="fas fa-search fa-2x text-muted"></i>
+                                <p class="mt-2 mb-0 text-muted">No se encontraron alumnos con los filtros aplicados</p>
+                                <button class="btn btn-sm btn-outline-info mt-2" onclick="refreshStudentsList()">
+                                    <i class="fas fa-sync-alt me-1"></i>Actualizar
+                                </button>
+                            </div>
+
+                            <!-- Paginación CORRECTAMENTE UBICADA -->
+                            <nav aria-label="Paginación de alumnos" class="mt-3" id="studentsPaginationNav" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-white">
+                                            Mostrando <span id="studentsShowingFrom">1</span> - <span id="studentsShowingTo">10</span> 
+                                            de <span id="studentsTotalRecords">0</span> alumnos
+                                        </small>
+                                    </div>
+                                    <ul class="pagination pagination-sm mb-0" id="studentsPaginationList">
+                                        <!-- Se genera dinámicamente -->
+                                    </ul>
+                                </div>
                             </nav>
                         </div>
                     </div>
@@ -1428,7 +1437,25 @@
         // 🌐 Variables globales
         let currentUser = null;
         let currentPage = 1;
-        
+
+        // 🎓 Variables para gestión de alumnos
+        let studentsData = [];                    // Datos de la página actual desde el servidor
+        let currentStudentsPage = 1;              // Página actual
+        let studentsPerPage = 10;                 // Registros por página
+        let totalStudentsPages = 1;               // Total de páginas desde el servidor
+        let totalStudentsRecords = 0;             // Total de registros desde el servidor
+
+        // Variables para filtros actuales
+        let currentStudentFilters = {
+            teacherFilter: '',
+            statusFilter: '',
+            instrumentFilter: ''
+        };
+
+console.log('🎓 Variables globales de alumnos inicializadas');
+
+        let classDistributionData = [];
+
         const transactionsPerPage = 10;
 
         // ✅ CORREGIDO: Asegurar que el modal esté disponible
@@ -1533,125 +1560,6 @@
             }
         }
 
-        // 📊 Cargar datos del dashboard
-        async function loadDashboardData() {
-            try {
-                console.log('📊 Cargando estadísticas del dashboard...');
-                
-                // Obtener resumen de transacciones
-                const response = await fetch('/gastos/api/transacciones/resumen');
-                const data = await response.json();
-                
-                if (data.success) {
-                    const resumen = data.data;
-                    
-                    // Calcular totales
-                    const totalIngresos = resumen.ingresos || 0;
-                    const totalGastos = resumen.gastos || 0;
-                    const balance = totalIngresos - totalGastos;
-                    
-                    // Actualizar interfaz
-                    document.getElementById('totalIngresos').textContent = formatCurrency(totalIngresos);
-                    document.getElementById('totalGastos').textContent = formatCurrency(totalGastos);
-                    document.getElementById('balanceTotal').textContent = formatCurrency(balance);
-                    
-                    // Cambiar color del balance según si es positivo o negativo
-                    const balanceElement = document.getElementById('balanceTotal');
-                    if (balance >= 0) {
-                        balanceElement.className = 'text-success mb-0';
-                    } else {
-                        balanceElement.className = 'text-danger mb-0';
-                    }
-                    
-                    console.log('✅ Estadísticas cargadas - Balance:', formatCurrency(balance));
-                } else {
-                    console.warn('⚠️ No se pudieron cargar las estadísticas');
-                    showNoDataStats();
-                }
-                
-                // Cargar datos del mes actual
-                await loadCurrentMonthData();
-                
-            } catch (error) {
-                console.error('❌ Error cargando estadísticas:', error);
-                showNoDataStats();
-            }
-        }
-
-        // 📅 Cargar datos del mes actual
-        async function loadCurrentMonthData() {
-            try {
-                const currentDate = new Date();
-                const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-                const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-                
-                const fechaInicio = firstDay.toISOString().split('T')[0];
-                const fechaFin = lastDay.toISOString().split('T')[0];
-                
-                const response = await fetch(`/gastos/api/transacciones/resumen?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const resumen = data.data;
-                    const balanceMes = (resumen.ingresos || 0) - (resumen.gastos || 0);
-                    
-                    document.getElementById('esteMes').textContent = formatCurrency(balanceMes);
-                    
-                    // Cambiar color según el balance del mes
-                    const element = document.getElementById('esteMes');
-                    if (balanceMes >= 0) {
-                        element.className = 'text-success mb-0';
-                    } else {
-                        element.className = 'text-danger mb-0';
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error cargando datos del mes:', error);
-                document.getElementById('esteMes').textContent = '$0.00';
-            }
-        }
-
-        // 📋 Cargar transacciones recientes
-        async function loadRecentTransactions(page = 1) {
-            try {
-                console.log(`📋 Cargando transacciones - Página ${page}...`);
-                
-                // Mostrar loading
-                document.getElementById('transactionsLoading').style.display = 'block';
-                document.getElementById('transactionsTable').style.display = 'none';
-                document.getElementById('emptyState').style.display = 'none';
-                
-                const response = await fetch(`/gastos/api/transacciones?page=${page}&limit=${transactionsPerPage}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const transactions = data.data;
-                    
-                    if (transactions && transactions.length > 0) {
-                        renderTransactions(transactions);
-                        renderPagination(data.pagination || {});
-                        
-                        document.getElementById('transactionsTable').style.display = 'block';
-                        document.getElementById('emptyState').style.display = 'none';
-                        
-                        console.log(`✅ ${transactions.length} transacciones cargadas`);
-                    } else {
-                        document.getElementById('emptyState').style.display = 'block';
-                        document.getElementById('transactionsTable').style.display = 'none';
-                    }
-                } else {
-                    throw new Error(data.message || 'Error cargando transacciones');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error cargando transacciones:', error);
-                showAlert('danger', 'Error cargando las transacciones');
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('transactionsTable').style.display = 'none';
-            } finally {
-                document.getElementById('transactionsLoading').style.display = 'none';
-            }
-        }
 
         // 🎨 Renderizar transacciones en la tabla
         function renderTransactions(transactions) {
@@ -2181,78 +2089,327 @@
             }
         }
 
-        // 🎓 Función loadStudentsList() - NUEVA IMPLEMENTACIÓN
+        // ====================================================
+        // 🎓 FUNCIÓN PRINCIPAL: CARGAR ALUMNOS CON PAGINACIÓN DEL SERVIDOR
+        // Patrón basado en gastos.html (100% funcional)
+        // ====================================================
         async function loadStudentsList(page = 1) {
             try {
-                console.log(`Cargando página ${page} de alumnos...`);
+                console.log(`🎓 Cargando alumnos - Página ${page}...`);
+                console.log('🔍 Filtros actuales:', currentStudentFilters);
                 
-                // Obtener filtros actuales si existen
-                const statusFilter = document.getElementById('statusFilter')?.value || '';
-                const instrumentFilter = document.getElementById('instrumentFilter')?.value || '';
+                // Mostrar loading
+                showStudentsLoadingState(true);
                 
-                // Construir URL con parámetros
+                // Construir URL con parámetros (igual que gastos.html)
                 let url = `/gastos/api/alumnos?empresa_id=1&page=${page}&limit=${studentsPerPage}`;
-                if (statusFilter) url += `&estatus=${statusFilter}`;
-                if (instrumentFilter) url += `&clase=${instrumentFilter}`;
+                
+                // Agregar filtros si existen
+                if (currentStudentFilters.statusFilter) {
+                    url += `&estatus=${currentStudentFilters.statusFilter}`;
+                }
+                if (currentStudentFilters.instrumentFilter) {
+                    url += `&clase=${currentStudentFilters.instrumentFilter}`;
+                }
+                if (currentStudentFilters.teacherFilter) {
+                    url += `&maestro=${currentStudentFilters.teacherFilter}`;
+                }
+                
+                console.log('📡 URL de solicitud:', url);
                 
                 const response = await fetch(url);
                 const result = await response.json();
                 
+                console.log('📥 Respuesta del servidor:', result);
+                
                 if (result.success && result.data) {
+                    // Almacenar datos de la página actual
                     studentsData = result.data;
-                    filteredStudents = [...studentsData];
                     
-                    // Actualizar información de paginación global
-                    currentStudentPage = result.pagination.current_page;
-                    totalStudentPages = result.pagination.total_pages;
-                    totalStudentsCount = result.pagination.total_records;
+                    // Actualizar información de paginación desde el servidor
+                    if (result.pagination) {
+                        currentStudentsPage = result.pagination.current_page || page;
+                        totalStudentsPages = result.pagination.total_pages || 1;
+                        totalStudentsRecords = result.pagination.total_records || 0;
+                        
+                        console.log('📊 Paginación actualizada:', {
+                            currentStudentsPage,
+                            totalStudentsPages,
+                            totalStudentsRecords,
+                            datosRecibidos: studentsData.length
+                        });
+                    }
                     
-                    renderStudentsTable();
-                    updateStudentsPagination();
+                    // Renderizar tabla y paginación
+                    renderStudentsPage();
+                    updateStudentsPaginationControls();
                     
-                    console.log(`${studentsData.length} alumnos cargados (${totalStudentsCount} total)`);
+                    console.log(`✅ ${studentsData.length} alumnos cargados exitosamente`);
+                    
                 } else {
                     throw new Error(result.message || 'Error cargando alumnos');
                 }
                 
             } catch (error) {
-                console.error('Error cargando alumnos:', error);
-                // Mostrar error en la tabla
-                const tbody = document.getElementById('studentsTableBody');
-                if (tbody) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="10" class="text-center py-4 text-danger">
-                                Error cargando alumnos: ${error.message}
-                                <br><button class="btn btn-sm btn-outline-info mt-2" onclick="loadStudentsList(1)">
-                                    Reintentar
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }
+                console.error('❌ Error cargando alumnos:', error);
+                showStudentsEmptyState(`Error cargando alumnos: ${error.message}`);
+            } finally {
+                showStudentsLoadingState(false);
             }
         }
 
-        // 🎓 Función auxiliar para iconos de instrumentos
-        function getInstrumentIcon(instrument) {
-            const icons = {
-                'Guitarra': '🎸',
-                'Piano': '🎹', 
-                'Teclado': '🎹',
-                'Batería': '🥁',
-                'Bajo': '🎸',
-                'Canto': '🎤'
-            };
-            return icons[instrument] || '🎵';
+        // ====================================================
+        // 🎓 FUNCIÓN: RENDERIZAR PÁGINA ACTUAL DE ALUMNOS
+        // Patrón basado en renderCurrentPage() de gastos.html
+        // ====================================================
+        function renderStudentsPage() {
+            const tableBody = document.getElementById('studentsTableBody');
+            
+            console.log('🎨 Renderizando página de alumnos:', {
+                totalAlumnos: studentsData.length,
+                paginaActual: currentStudentsPage
+            });
+            
+            if (studentsData.length === 0) {
+                showStudentsEmptyState('No se encontraron alumnos con los filtros aplicados');
+                return;
+            }
+            
+            // Mostrar tabla
+            document.getElementById('studentsTableContainer').style.display = 'block';
+            
+            // Renderizar filas (usar datos directamente del servidor)
+            const html = studentsData.map((student, index) => {
+                // Estandarizar datos del backend
+                const studentData = {
+                    id: student.id,
+                    nombre: student.nombre || 'Sin nombre',
+                    edad: student.edad || 'N/A',
+                    maestro: student.maestro || 'Sin asignar',
+                    clase: student.clase || 'Sin clase',
+                    fechaInscripcion: student.fecha_inscripcion,
+                    precioMensual: student.precio_mensual || 0,
+                    estatus: student.estatus,
+                    formaPago: student.forma_pago || 'No especificado'
+                };
+                
+                const statusBadge = studentData.estatus === 'Activo' 
+                    ? '<span class="badge bg-success">✅ Activo</span>'
+                    : '<span class="badge bg-danger">❌ Baja</span>';
+                
+                const nextPaymentDate = getNextPaymentDate(studentData);
+                const paymentStatus = getPaymentStatus(studentData);
+                const alertBadge = getPaymentAlertBadge(paymentStatus);
+                
+                console.log(`👤 Renderizando alumno ${index + 1}:`, studentData.nombre);
+                
+                return `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-2">
+                                    <div class="avatar-title bg-primary rounded-circle">
+                                        ${studentData.nombre.charAt(0).toUpperCase()}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">${studentData.nombre}</h6>
+                                    <small class="text-muted">${studentData.formaPago}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${studentData.edad} años</td>
+                        <td>
+                            <span class="badge bg-info">${studentData.maestro}</span>
+                        </td>
+                        <td>
+                            ${getInstrumentIcon(studentData.clase)} ${studentData.clase}
+                        </td>
+                        <td>${formatDate(studentData.fechaInscripcion)}</td>
+                        <td class="text-success fw-bold">${formatCurrency(studentData.precioMensual)}</td>
+                        <td>${nextPaymentDate}</td>
+                        <td>${alertBadge}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary btn-sm" onclick="viewStudentDetail(${studentData.id})" title="Ver Detalles">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="editStudent(${studentData.id})" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            tableBody.innerHTML = html;
+            
+            console.log('✅ Tabla de alumnos renderizada exitosamente');
+        }
+
+        // ====================================================
+        // 🎓 FUNCIÓN: ACTUALIZAR CONTROLES DE PAGINACIÓN
+        // Patrón basado en updatePaginationControls() de gastos.html
+        // ====================================================
+        function updateStudentsPaginationControls() {
+            console.log('🔢 Actualizando controles de paginación:', {
+                currentStudentsPage,
+                totalStudentsPages,
+                totalStudentsRecords,
+                studentsPerPage
+            });
+            
+            const paginationNav = document.getElementById('studentsPaginationNav');
+            const paginationList = document.getElementById('studentsPaginationList');
+            
+            // Actualizar contadores de información
+            const startRecord = Math.min(((currentStudentsPage - 1) * studentsPerPage) + 1, totalStudentsRecords);
+            const endRecord = Math.min(currentStudentsPage * studentsPerPage, totalStudentsRecords);
+            
+            document.getElementById('studentsShowingFrom').textContent = startRecord;
+            document.getElementById('studentsShowingTo').textContent = endRecord;
+            document.getElementById('studentsTotalRecords').textContent = totalStudentsRecords;
+            
+            console.log('📊 Contadores actualizados:', { startRecord, endRecord, totalStudentsRecords });
+            
+            // Si no hay páginas múltiples, ocultar paginación
+            if (totalStudentsPages <= 1) {
+                paginationNav.style.display = 'none';
+                console.log('👁️ Paginación ocultada (solo 1 página)');
+                return;
+            }
+            
+            // Mostrar navegación de paginación
+            paginationNav.style.display = 'block';
+            
+            // Generar botones de paginación
+            let paginationHTML = '';
+            
+            // Botón Anterior
+            if (currentStudentsPage > 1) {
+                paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentsPage(${currentStudentsPage - 1})">
+                            <i class="fas fa-chevron-left me-1"></i>Anterior
+                        </a>
+                    </li>
+                `;
+            }
+            
+            // Páginas numeradas (máximo 5 páginas visibles)
+            const startPage = Math.max(1, currentStudentsPage - 2);
+            const endPage = Math.min(totalStudentsPages, currentStudentsPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === currentStudentsPage ? 'active' : '';
+                paginationHTML += `
+                    <li class="page-item ${isActive}">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentsPage(${i})">${i}</a>
+                    </li>
+                `;
+            }
+            
+            // Botón Siguiente
+            if (currentStudentsPage < totalStudentsPages) {
+                paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentsPage(${currentStudentsPage + 1})">
+                            Siguiente<i class="fas fa-chevron-right ms-1"></i>
+                        </a>
+                    </li>
+                `;
+            }
+            
+            paginationList.innerHTML = paginationHTML;
+            
+            console.log('✅ Controles de paginación actualizados:', {
+                paginasVisibles: `${startPage}-${endPage}`,
+                paginaActual: currentStudentsPage,
+                totalPaginas: totalStudentsPages
+            });
+        }
+
+        // ====================================================
+        // 🎓 FUNCIÓN: CAMBIAR PÁGINA DE ALUMNOS
+        // Patrón basado en changePage() de gastos.html
+        // ====================================================
+        function changeStudentsPage(page) {
+            console.log(`📄 Cambiando a página ${page} (actual: ${currentStudentsPage})`);
+            
+            if (page === currentStudentsPage) {
+                console.log('⚠️ Ya estás en la página solicitada');
+                return;
+            }
+            
+            if (page < 1 || page > totalStudentsPages) {
+                console.log('⚠️ Página fuera de rango:', { page, totalStudentsPages });
+                return;
+            }
+            
+            currentStudentsPage = page;
+            loadStudentsList(page);
+        }
+
+        // ====================================================
+        // 🎓 FUNCIONES DE MANEJO DE ESTADOS UI
+        // ====================================================
+
+        // Mostrar/ocultar loading
+        function showStudentsLoadingState(show) {
+            console.log(`🔄 Loading state: ${show ? 'Mostrar' : 'Ocultar'}`);
+            
+            document.getElementById('studentsLoadingState').style.display = show ? 'block' : 'none';
+            document.getElementById('studentsTableContainer').style.display = show ? 'none' : 'block';
+            document.getElementById('studentsEmptyState').style.display = 'none';
+            document.getElementById('studentsPaginationNav').style.display = show ? 'none' : 'block';
+        }
+
+        // Mostrar estado vacío
+        function showStudentsEmptyState(message = 'No se encontraron alumnos') {
+            console.log('📭 Mostrando estado vacío:', message);
+            
+            document.getElementById('studentsEmptyState').style.display = 'block';
+            document.getElementById('studentsTableContainer').style.display = 'none';
+            document.getElementById('studentsLoadingState').style.display = 'none';
+            document.getElementById('studentsPaginationNav').style.display = 'none';
+            
+            // Actualizar mensaje si es necesario
+            const emptyMessage = document.querySelector('#studentsEmptyState p');
+            if (emptyMessage) {
+                emptyMessage.textContent = message;
+            }
+        }
+
+        // 🎓 Actualizar contadores del widget header
+        function updateStudentCounters() {
+            const activeCount = studentsData.filter(s => s.estatus === 'Activo').length;
+            const inactiveCount = studentsData.filter(s => s.estatus === 'Baja').length;
+            const total = studentsData.length;
+            
+            // Actualizar badges en el header
+            const totalElement = document.getElementById('totalStudents');
+            const activeElement = document.getElementById('activeStudents');
+            const inactiveElement = document.getElementById('inactiveStudents');
+            
+            if (totalElement) totalElement.textContent = total;
+            if (activeElement) activeElement.textContent = activeCount;
+            if (inactiveElement) inactiveElement.textContent = inactiveCount;
+            
+            console.log(`📊 Contadores actualizados: ${total} total, ${activeCount} activos, ${inactiveCount} bajas`);
         }
 
         // ✅ ACTUALIZACIÓN: Modificar funciones existentes para usar filtro
 
         // Modificar loadDashboardData para incluir filtro de empresa
-        async function loadDashboardDataWithFilter() {
+        async function loadDashboardData() {
             try {
                 console.log('📊 Cargando estadísticas con filtro de empresa...');
+                
+                // Inicializar widget de alumnos
+                console.log('🎓 Inicializando widget de gestión de alumnos...');
+                loadStudentsList(1);
                 
                 // Construir query con filtro si existe
                 let queryParam = '';
@@ -2292,7 +2449,7 @@
                 }
                 
                 // Cargar datos del mes actual con filtro
-                await loadCurrentMonthDataWithFilter();
+                await loadCurrentMonthData();
                 
             } catch (error) {
                 console.error('❌ Error cargando estadísticas:', error);
@@ -2301,7 +2458,8 @@
         }
 
         // Modificar loadCurrentMonthData para incluir filtro
-        async function loadCurrentMonthDataWithFilter() {
+        async function loadCurrentMonthData
+        () {
             try {
                 const currentDate = new Date();
                 const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -2339,7 +2497,7 @@
         }
 
         // Modificar loadRecentTransactions para incluir filtro
-        async function loadRecentTransactionsWithFilter(page = 1) {
+        async function loadRecentTransactions(page = 1) {
             try {
                 console.log(`📋 Cargando transacciones con filtro - Página ${page}...`);
                 
@@ -2387,23 +2545,14 @@
         }
 
         // ✅ ACTUALIZAR: Reemplazar las funciones originales
-        window.loadDashboardData = loadDashboardDataWithFilter;
-        window.loadCurrentMonthData = loadCurrentMonthDataWithFilter;
-        window.loadRecentTransactions = loadRecentTransactionsWithFilter;
 
         console.log('✅ Selector de empresas configurado');
 
         // 🎯 CAMBIO 6: Variables para filtros interactivos
         let currentStudentFilter = 'all'; // 'all', 'active', 'inactive'
         
-        // ====================================================
-        // FUNCIÓN CORREGIDA: filterStudentsByStatus CON FILTRADO REAL
-        // REEMPLAZAR EN DASHBOARD.HTML
-        // ====================================================
 
-        // 🎯 VARIABLE GLOBAL PARA ALMACENAR DATOS DE CLASES REALES
-        let classDistributionData = [];
-
+        
         // 🎯 FUNCIÓN CORREGIDA: filterStudentsByStatus
         function filterStudentsByStatus(status) {
             console.log(`👥 Filtrando distribución de clases por estatus: ${status}`);
@@ -2718,14 +2867,7 @@
                 console.error('❌ Error cargando stats de empresa:', error);
             }
         }
-        // 🎓 Variables para gestión de alumnos
-        let studentsData = [];
-        let filteredStudents = [];
-        let currentStudentPage = 1;
-        let totalStudentPages = 1;
-        let totalStudentsCount = 0;
-        const studentsPerPage = 10;
-
+        
         // 🎓 Cargar lista de alumnos real
         async function loadStudentsList() {
             try {
@@ -2754,16 +2896,36 @@
             }
         }
 
+        // ====================================================
+        // 🎓 FUNCIÓN: APLICAR FILTROS DE ALUMNOS
+        // Patrón basado en filtros de gastos.html
+        // ====================================================
         function filterStudents() {
-            const teacherFilter = document.getElementById('teacherFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            const instrumentFilter = document.getElementById('instrumentFilter').value;
+            console.log('🔍 Aplicando filtros de alumnos...');
             
-            console.log('🔍 Aplicando filtros del servidor:', { teacherFilter, statusFilter, instrumentFilter });
+            // Obtener valores actuales de filtros
+            const teacherFilter = document.getElementById('teacherFilter')?.value || '';
+            const statusFilter = document.getElementById('statusFilter')?.value || '';
+            const instrumentFilter = document.getElementById('instrumentFilter')?.value || '';
+            
+            // Actualizar filtros globales
+            currentStudentFilters = {
+                teacherFilter,
+                statusFilter,
+                instrumentFilter
+            };
+            
+            console.log('🔍 Filtros aplicados:', currentStudentFilters);
             
             // Reiniciar a página 1 y recargar con filtros
-            currentStudentPage = 1;
+            currentStudentsPage = 1;
             loadStudentsList(1);
+            
+            // Mostrar mensaje informativo
+            const activeFilters = Object.values(currentStudentFilters).filter(f => f !== '').length;
+            if (activeFilters > 0) {
+                showAlert('info', `🔍 Filtros aplicados (${activeFilters} activos)`);
+            }
         }
 
         // Función para calcular próximo pago
@@ -2926,42 +3088,52 @@
             return icons[instrument] || '🎵';
         }
 
-        // Actualizar UI de paginación
+        // 🎓 Función actualizar paginación - VERSIÓN UNIFICADA
         function updateStudentsPagination() {
             const pagination = document.getElementById('studentsPagination');
             if (!pagination) return;
             
-            const totalPages = Math.ceil(totalStudentsCount / studentsPerPage) || 1;
-            const currentPage = currentStudentPage;
+            const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
             
-            // Actualizar contadores
-            const start = Math.min((currentPage - 1) * studentsPerPage + 1, totalStudentsCount);
-            const end = Math.min(currentPage * studentsPerPage, totalStudentsCount);
+            // Actualizar contadores de registros
+            const start = filteredStudents.length === 0 ? 0 : (currentStudentPage - 1) * studentsPerPage + 1;
+            const end = Math.min(currentStudentPage * studentsPerPage, filteredStudents.length);
+            const total = filteredStudents.length;
             
-            document.getElementById('studentsStart').textContent = start;
-            document.getElementById('studentsEnd').textContent = end;
-            document.getElementById('studentsTotal').textContent = totalStudentsCount;
+            const startElement = document.getElementById('studentsStart');
+            const endElement = document.getElementById('studentsEnd');
+            const totalElement = document.getElementById('studentsTotal');
+            
+            if (startElement) startElement.textContent = start;
+            if (endElement) endElement.textContent = end;
+            if (totalElement) totalElement.textContent = total;
+            
+            // Si no hay páginas múltiples, ocultar paginación
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
             
             // Generar botones de paginación
             let paginationHTML = '';
             
-            // Botón anterior
-            if (currentPage > 1) {
+            // Botón Anterior
+            if (currentStudentPage > 1) {
                 paginationHTML += `
                     <li class="page-item">
-                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentPage - 1})">
-                            Anterior
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentStudentPage - 1})">
+                            <i class="fas fa-chevron-left me-1"></i>Anterior
                         </a>
                     </li>
                 `;
             }
             
             // Páginas numeradas (máximo 5)
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, currentPage + 2);
+            const startPage = Math.max(1, currentStudentPage - 2);
+            const endPage = Math.min(totalPages, currentStudentPage + 2);
             
             for (let i = startPage; i <= endPage; i++) {
-                const isActive = i === currentPage ? 'active' : '';
+                const isActive = i === currentStudentPage ? 'active' : '';
                 paginationHTML += `
                     <li class="page-item ${isActive}">
                         <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${i})">${i}</a>
@@ -2969,24 +3141,20 @@
                 `;
             }
             
-            // Botón siguiente
-            if (currentPage < totalPages) {
+            // Botón Siguiente
+            if (currentStudentPage < totalPages) {
                 paginationHTML += `
                     <li class="page-item">
-                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentPage + 1})">
-                            Siguiente
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentStudentPage + 1})">
+                            Siguiente<i class="fas fa-chevron-right ms-1"></i>
                         </a>
                     </li>
                 `;
             }
             
             pagination.innerHTML = paginationHTML;
-        }
-
-        // Cambiar página de alumnos
-        function changeStudentPage(page) {
-            currentStudentPage = page;
-            loadStudentsList(page);
+            
+            console.log(`🔢 Paginación actualizada: página ${currentStudentPage} de ${totalPages} (${total} alumnos)`);
         }
 
         // 🎓 Cambiar página de alumnos
@@ -2994,15 +3162,22 @@
             currentStudentPage = page;
             renderStudentsTable();
             updateStudentsPagination();
+
+            console.log(`📄 Cambiando a página ${page}`);
         }
 
         // 🎓 Actualizar resumen de filtros
+        // 🎓 Actualizar resumen de filtros - CORREGIDO
         function updateFilterSummary() {
             const total = studentsData.length;
             const filtered = filteredStudents.length;
             
-            document.getElementById('totalCount').textContent = total;
-            document.getElementById('filteredCount').textContent = filtered;
+            // Actualizar contadores (usar los elementos que SÍ existen)
+            const filteredCountElement = document.getElementById('filteredCount');
+            const totalCountElement = document.getElementById('totalCount');
+            
+            if (filteredCountElement) filteredCountElement.textContent = filtered;
+            if (totalCountElement) totalCountElement.textContent = total;
             
             // Construir descripción de filtros
             const filters = [];
@@ -3063,11 +3238,33 @@
             modal.show();
         }
 
-        // 🎓 Funciones de acciones
+        // ====================================================
+        // 🎓 FUNCIÓN: REFRESCAR LISTA DE ALUMNOS
+        // ====================================================
         function refreshStudentsList() {
-            console.log('🔄 Actualizando lista de alumnos...');
-            showAlert('info', 'Lista de alumnos actualizada');
-            loadStudentsList();
+            console.log('🔄 Refrescando lista de alumnos...');
+            
+            // Limpiar filtros
+            const teacherFilter = document.getElementById('teacherFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            const instrumentFilter = document.getElementById('instrumentFilter');
+            
+            if (teacherFilter) teacherFilter.value = '';
+            if (statusFilter) statusFilter.value = '';
+            if (instrumentFilter) instrumentFilter.value = '';
+            
+            // Resetear filtros globales
+            currentStudentFilters = {
+                teacherFilter: '',
+                statusFilter: '',
+                instrumentFilter: ''
+            };
+            
+            // Recargar desde la página 1
+            currentStudentsPage = 1;
+            loadStudentsList(1);
+            
+            showAlert('success', '🔄 Lista de alumnos actualizada');
         }
 
         function exportStudentsList() {
