@@ -717,13 +717,17 @@
 
     /* Widget Maestros - Mejoras visuales */
     .teachers-grid {
-        max-height: 400px;
-        overflow-y: auto;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+        gap: 15px !important;
+        padding: 5px !important;
     }
 
     .teacher-card {
         transition: all 0.3s ease;
         position: relative;
+        min-height: 140px;
+        margin-bottom: 0 !important;
     }
 
     .teacher-card:hover {
@@ -1080,13 +1084,14 @@
                                     </label>
                                     <select class="form-select form-select-sm" id="teacherFilter" onchange="filterStudents()">
                                         <option value="">👨‍🏫 Todos los Maestros</option>
-                                        <option value="Hugo Vazquez">🎸 Hugo Vazquez</option>
-                                        <option value="Manuel Reyes">🎹 Manuel Reyes</option>
-                                        <option value="Julio Olvera">🥁 Julio Olvera</option>
-                                        <option value="Irwin Hernandez">🎵 Irwin Hernandez</option>
-                                        <option value="Luis Blanquet">🎸 Luis Blanquet</option>
-                                        <option value="Nahomy Perez">🎤 Nahomy Perez</option>
-                                        <option value="Demian Andrade">🎸 Demian Andrade</option>
+                                        <!-- ✅ USAR IDs EN LUGAR DE NOMBRES -->
+                                        <option value="1">🎸 Hugo Vazquez</option>
+                                        <option value="2">🎹 Manuel Reyes</option>
+                                        <option value="3">🥁 Julio Olvera</option>
+                                        <option value="4">🎵 Irwin Hernandez</option>
+                                        <option value="5">🎸 Luis Blanquet</option>
+                                        <option value="6">🎤 Nahomy Perez</option>
+                                        <option value="7">🎸 Demian Andrade</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
@@ -1121,6 +1126,7 @@
                                         <option value="current">✅ Al Corriente</option>
                                         <option value="upcoming">⚠️ Próximos (3 días)</option>
                                         <option value="overdue">🚨 Vencidos (+5 días)</option>
+                                        <option value="inactive">❌ Alumnos Inactivos</option>
                                     </select>
                                 </div>
                             </div>
@@ -1449,10 +1455,11 @@
         let currentStudentFilters = {
             teacherFilter: '',
             statusFilter: '',
-            instrumentFilter: ''
+            instrumentFilter: '',
+            paymentFilter: ''
         };
 
-console.log('🎓 Variables globales de alumnos inicializadas');
+        console.log('🎓 Variables globales de alumnos inicializadas');
 
         let classDistributionData = [];
 
@@ -2046,6 +2053,24 @@ console.log('🎓 Variables globales de alumnos inicializadas');
                 
                 if (data.success) {
                     const { proximos_vencer, vencidos } = data.data;
+
+                    console.log('📥 Respuesta alertas detallada:', {
+                        proximos_vencer: proximos_vencer,
+                        vencidos: vencidos,
+                        fecha_referencia: new Date().toISOString().split('T')[0],
+                        total_proximos: proximos_vencer.length,
+                        total_vencidos: vencidos.length
+                    });
+
+                    // Verificar cada alumno próximo a vencer
+                    proximos_vencer.forEach(alumno => {
+                        console.log(`🔍 Próximo: ${alumno.nombre} - días=${alumno.dias_restantes} (tipo: ${typeof alumno.dias_restantes})`);
+                    });
+
+                    // Verificar cada alumno vencido
+                    vencidos.forEach(alumno => {
+                        console.log(`🔍 Vencido: ${alumno.nombre} - días=${alumno.dias_vencido} (tipo: ${typeof alumno.dias_vencido})`);
+                    });
                     
                     // Actualizar próximos a vencer
                     const proximosHTML = proximos_vencer.length > 0 
@@ -2071,7 +2096,7 @@ console.log('🎓 Variables globales de alumnos inicializadas');
                     document.getElementById('upcomingPayments').innerHTML = proximosHTML;
                     document.getElementById('overduePayments').innerHTML = vencidosHTML;
                     
-                    showAlert('success', `✅ Alertas actualizadas: ${data.data.total_alertas} alertas activas`);
+                    showAlert('success', `✅ Alertas actualizadas: ${data.data.total_alertas || (proximos_vencer.length + vencidos.length)} alertas activas`);
                     
                 } else {
                     throw new Error(data.error || 'Error obteniendo alertas');
@@ -2112,19 +2137,94 @@ console.log('🎓 Variables globales de alumnos inicializadas');
                     url += `&clase=${currentStudentFilters.instrumentFilter}`;
                 }
                 if (currentStudentFilters.teacherFilter) {
-                    url += `&maestro=${currentStudentFilters.teacherFilter}`;
+                    url += `&maestro_id=${currentStudentFilters.teacherFilter}`;
+                }
+                if (currentStudentFilters.paymentFilter) {
+                    url += `&pago=${currentStudentFilters.paymentFilter}`;
+                    console.log(`🔍 Aplicando filtro de pago: ${currentStudentFilters.paymentFilter}`);
                 }
                 
                 console.log('📡 URL de solicitud:', url);
-                
+                console.log('🔍 Parámetros enviados:', { teacherFilter: currentStudentFilters.teacherFilter, paymentFilter: currentStudentFilters.paymentFilter });
+
                 const response = await fetch(url);
                 const result = await response.json();
                 
                 console.log('📥 Respuesta del servidor:', result);
+                console.log('🔍 Filtro de pago aplicado:', currentStudentFilters.paymentFilter);
+                console.log('📊 Registros recibidos:', result.data?.length || 0);
+                console.log('📊 Total registros:', result.pagination?.total_records || 0);
+
+                // Debugging específico para filtro de pagos
+                if (currentStudentFilters.paymentFilter) {
+                    console.log('🔍 DEBUGGING FILTRO PAGOS:', {
+                        filtroAplicado: currentStudentFilters.paymentFilter,
+                        urlEnviada: url,
+                        alumnosRecibidos: result.data.length,
+                        primerosAlumnos: result.data.slice(0, 3).map(s => ({
+                            nombre: s.nombre,
+                            estatus: s.estatus,
+                            fechaInscripcion: s.fecha_inscripcion
+                        }))
+                    });
+                    
+                    // Verificar si el backend respeta el filtro
+                    const estadosCalculados = result.data.map(student => ({
+                        nombre: student.nombre,
+                        estatusBackend: student.estatus,
+                        estadoPagoCalculado: student.estatus === 'Baja' ? 'inactive' : 'current'
+                    }));
+                    
+                    console.log('🎯 Estados calculados vs filtro:', {
+                        filtroSolicitado: currentStudentFilters.paymentFilter,
+                        estadosEncontrados: estadosCalculados
+                    });
+                }
                 
                 if (result.success && result.data) {
                     // Almacenar datos de la página actual
-                    studentsData = result.data;
+                    let rawData = result.data;
+
+                    // Si el backend no aplicó el filtro de pagos, aplicarlo en frontend
+                    if (currentStudentFilters.paymentFilter && rawData.length > 0) {
+                        console.log('🔧 Aplicando filtro de pagos en frontend como respaldo');
+                        
+                        rawData = rawData.filter(student => {
+                            const paymentStatus = getPaymentStatus(student);
+                            const matches = paymentStatus === currentStudentFilters.paymentFilter;
+                            
+                            if (matches) {
+                                console.log(`✅ ${student.nombre}: ${paymentStatus} coincide con filtro ${currentStudentFilters.paymentFilter}`);
+                            }
+                            
+                            return matches;
+                        });
+                        
+                        console.log(`🎯 Filtro frontend aplicado: ${rawData.length} de ${result.data.length} alumnos`);
+                        
+                        // Actualizar paginación manualmente
+                        totalStudentsRecords = rawData.length;
+                        totalStudentsPages = Math.ceil(totalStudentsRecords / studentsPerPage);
+                        
+                        // Aplicar paginación manual
+                        const startIndex = (currentStudentsPage - 1) * studentsPerPage;
+                        const endIndex = startIndex + studentsPerPage;
+                        studentsData = rawData.slice(startIndex, endIndex);
+                        
+                        showAlert('info', `Filtro aplicado en frontend: ${rawData.length} alumnos encontrados`);
+                    } else {
+                        studentsData = rawData;
+                    }
+
+                    // Log final para debugging
+                    console.log('📊 Datos finales después del procesamiento:', {
+                        alumnosOriginales: result.data.length,
+                        alumnosDespuesFiltro: studentsData.length,
+                        filtroAplicado: currentStudentFilters.paymentFilter,
+                        paginaActual: currentStudentsPage,
+                        totalPaginas: totalStudentsPages,
+                        totalRegistros: totalStudentsRecords
+                    });
                     
                     // Actualizar información de paginación desde el servidor
                     if (result.pagination) {
@@ -2142,8 +2242,23 @@ console.log('🎓 Variables globales de alumnos inicializadas');
                     
                     // Renderizar tabla y paginación
                     renderStudentsPage();
+                    updateFilterSummary()
                     updateStudentsPaginationControls();
                     
+                    // Validar si el filtro de pagos funcionó correctamente
+                    if (currentStudentFilters.paymentFilter) {
+                        const expectedFilter = currentStudentFilters.paymentFilter;
+                        const actualStates = studentsData.map(s => s.estatus === 'Baja' ? 'inactive' : 'current');
+                        const matchesFilter = actualStates.every(state => state === expectedFilter || expectedFilter === '');
+                        
+                        if (!matchesFilter && studentsData.length > 0) {
+                            console.warn('⚠️ FILTRO DE PAGOS NO FUNCIONA - Backend no respeta el filtro');
+                            showAlert('warning', `Filtro de pagos "${expectedFilter}" no aplicado correctamente por el backend`);
+                        } else if (matchesFilter && studentsData.length === 0) {
+                            console.log('✅ Filtro aplicado correctamente - sin resultados');
+                        }
+                    }
+
                     console.log(`✅ ${studentsData.length} alumnos cargados exitosamente`);
                     
                 } else {
@@ -2156,6 +2271,42 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             } finally {
                 showStudentsLoadingState(false);
             }
+        }
+
+        function updateFilterSummary() {
+            document.getElementById('filteredCount').textContent = totalStudentsRecords;
+            document.getElementById('totalCount').textContent = totalStudentsRecords;
+            
+            // Construir descripción de filtros activos
+            const activeFilters = Object.entries(currentStudentFilters)
+                .filter(([key, value]) => value !== '')
+                .map(([key, value]) => `${key}: ${value}`)
+                .join(', ');
+            
+            let summary = 'Mostrando todos los alumnos';
+            if (activeFilters) {
+                const filterDescriptions = Object.entries(currentStudentFilters)
+                    .filter(([key, value]) => value !== '')
+                    .map(([key, value]) => {
+                        switch(key) {
+                            case 'teacherFilter': return `Maestro: ${value}`;
+                            case 'statusFilter': return `Estatus: ${value}`;
+                            case 'instrumentFilter': return `Instrumento: ${value}`;
+                            case 'paymentFilter': 
+                                const paymentLabels = {
+                                    'current': 'Al Corriente',
+                                    'upcoming': 'Próximos a Vencer',
+                                    'overdue': 'Vencidos',
+                                    'inactive': 'Inactivos'
+                                };
+                                return `Pagos: ${paymentLabels[value] || value}`;
+                            default: return `${key}: ${value}`;
+                        }
+                    })
+                    .join(' | ');
+                summary = `Filtros: ${filterDescriptions}`;
+            }
+            document.getElementById('filterSummary').textContent = summary;
         }
 
         // ====================================================
@@ -2197,7 +2348,7 @@ console.log('🎓 Variables globales de alumnos inicializadas');
                     ? '<span class="badge bg-success">✅ Activo</span>'
                     : '<span class="badge bg-danger">❌ Baja</span>';
                 
-                const nextPaymentDate = getNextPaymentDate(studentData);
+                const nextPayment = getFormattedNextPaymentDate(studentData);
                 const paymentStatus = getPaymentStatus(studentData);
                 const alertBadge = getPaymentAlertBadge(paymentStatus);
                 
@@ -2227,7 +2378,7 @@ console.log('🎓 Variables globales de alumnos inicializadas');
                         </td>
                         <td>${formatDate(studentData.fechaInscripcion)}</td>
                         <td class="text-success fw-bold">${formatCurrency(studentData.precioMensual)}</td>
-                        <td>${nextPaymentDate}</td>
+                        <td>${nextPayment}</td>
                         <td>${alertBadge}</td>
                         <td>${statusBadge}</td>
                         <td>
@@ -2249,10 +2400,6 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             console.log('✅ Tabla de alumnos renderizada exitosamente');
         }
 
-        // ====================================================
-        // 🎓 FUNCIÓN: ACTUALIZAR CONTROLES DE PAGINACIÓN
-        // Patrón basado en updatePaginationControls() de gastos.html
-        // ====================================================
         function updateStudentsPaginationControls() {
             console.log('🔢 Actualizando controles de paginación:', {
                 currentStudentsPage,
@@ -2264,7 +2411,7 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             const paginationNav = document.getElementById('studentsPaginationNav');
             const paginationList = document.getElementById('studentsPaginationList');
             
-            // Actualizar contadores de información
+            // Actualizar contadores
             const startRecord = Math.min(((currentStudentsPage - 1) * studentsPerPage) + 1, totalStudentsRecords);
             const endRecord = Math.min(currentStudentsPage * studentsPerPage, totalStudentsRecords);
             
@@ -2272,63 +2419,50 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             document.getElementById('studentsShowingTo').textContent = endRecord;
             document.getElementById('studentsTotalRecords').textContent = totalStudentsRecords;
             
-            console.log('📊 Contadores actualizados:', { startRecord, endRecord, totalStudentsRecords });
-            
-            // Si no hay páginas múltiples, ocultar paginación
+            // Si solo 1 página, ocultar navegación
             if (totalStudentsPages <= 1) {
                 paginationNav.style.display = 'none';
-                console.log('👁️ Paginación ocultada (solo 1 página)');
                 return;
             }
             
-            // Mostrar navegación de paginación
             paginationNav.style.display = 'block';
             
-            // Generar botones de paginación
-            let paginationHTML = '';
+            // Generar botones
+            let html = '';
             
-            // Botón Anterior
             if (currentStudentsPage > 1) {
-                paginationHTML += `
+                html += `
                     <li class="page-item">
                         <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentsPage(${currentStudentsPage - 1})">
-                            <i class="fas fa-chevron-left me-1"></i>Anterior
+                            Anterior
                         </a>
                     </li>
                 `;
             }
             
-            // Páginas numeradas (máximo 5 páginas visibles)
             const startPage = Math.max(1, currentStudentsPage - 2);
             const endPage = Math.min(totalStudentsPages, currentStudentsPage + 2);
             
             for (let i = startPage; i <= endPage; i++) {
-                const isActive = i === currentStudentsPage ? 'active' : '';
-                paginationHTML += `
-                    <li class="page-item ${isActive}">
+                const active = i === currentStudentsPage ? 'active' : '';
+                html += `
+                    <li class="page-item ${active}">
                         <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentsPage(${i})">${i}</a>
                     </li>
                 `;
             }
             
-            // Botón Siguiente
             if (currentStudentsPage < totalStudentsPages) {
-                paginationHTML += `
+                html += `
                     <li class="page-item">
                         <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentsPage(${currentStudentsPage + 1})">
-                            Siguiente<i class="fas fa-chevron-right ms-1"></i>
+                            Siguiente
                         </a>
                     </li>
                 `;
             }
             
-            paginationList.innerHTML = paginationHTML;
-            
-            console.log('✅ Controles de paginación actualizados:', {
-                paginasVisibles: `${startPage}-${endPage}`,
-                paginaActual: currentStudentsPage,
-                totalPaginas: totalStudentsPages
-            });
+            paginationList.innerHTML = html;
         }
 
         // ====================================================
@@ -2352,11 +2486,6 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             loadStudentsList(page);
         }
 
-        // ====================================================
-        // 🎓 FUNCIONES DE MANEJO DE ESTADOS UI
-        // ====================================================
-
-        // Mostrar/ocultar loading
         function showStudentsLoadingState(show) {
             console.log(`🔄 Loading state: ${show ? 'Mostrar' : 'Ocultar'}`);
             
@@ -2382,24 +2511,6 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             }
         }
 
-        // 🎓 Actualizar contadores del widget header
-        function updateStudentCounters() {
-            const activeCount = studentsData.filter(s => s.estatus === 'Activo').length;
-            const inactiveCount = studentsData.filter(s => s.estatus === 'Baja').length;
-            const total = studentsData.length;
-            
-            // Actualizar badges en el header
-            const totalElement = document.getElementById('totalStudents');
-            const activeElement = document.getElementById('activeStudents');
-            const inactiveElement = document.getElementById('inactiveStudents');
-            
-            if (totalElement) totalElement.textContent = total;
-            if (activeElement) activeElement.textContent = activeCount;
-            if (inactiveElement) inactiveElement.textContent = inactiveCount;
-            
-            console.log(`📊 Contadores actualizados: ${total} total, ${activeCount} activos, ${inactiveCount} bajas`);
-        }
-
         // ✅ ACTUALIZACIÓN: Modificar funciones existentes para usar filtro
 
         // Modificar loadDashboardData para incluir filtro de empresa
@@ -2410,7 +2521,7 @@ console.log('🎓 Variables globales de alumnos inicializadas');
                 // Inicializar widget de alumnos
                 console.log('🎓 Inicializando widget de gestión de alumnos...');
                 loadStudentsList(1);
-                
+
                 // Construir query con filtro si existe
                 let queryParam = '';
                 if (currentCompanyFilter) {
@@ -2627,7 +2738,13 @@ console.log('🎓 Variables globales de alumnos inicializadas');
                 'inactive': 'Alumnos con Baja',
                 'all': 'Todos los Alumnos'
             };
+
+            console.log('🔍 Filtro de pago aplicado:', currentStudentFilters.paymentFilter);
+            console.log('📊 Registros recibidos:', result.data?.length || 0);
+            console.log('📊 Total registros:', result.pagination?.total_records || 0);
             
+            loadStudentsList(1)
+
             const statusLabel = statusLabels[status] || 'Alumnos';
             showAlert('success', `📊 Mostrando: ${statusLabel} (${totalStudents} estudiantes en ${filteredClasses.length} clases)`);
             
@@ -2724,7 +2841,7 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             }
 
             const teachersHTML = `
-                <div class="teachers-grid" style="max-height: 350px; overflow-y: auto;">
+                <div class="teachers-grid">
                     ${maestros.map(maestro => {
                         // 🔍 DEBUGGING: Verificar valores individuales
                         const ingresosActivos = parseFloat(maestro.ingresos_activos) || 0;
@@ -2786,12 +2903,6 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             document.getElementById('pendingStudentsIndicator').style.display = 'none';
         }
 
-        // 🎯 CAMBIO 11: Funciones utilitarias
-        function getStudentCountByStatus(status) {
-            const counts = { active: 35, inactive: 65, all: 100 };
-            return counts[status] || 0;
-        }
-
         function getClassColor(clase) {
             const colors = {
                 'Guitarra': 'primary',
@@ -2814,108 +2925,45 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             return icons[clase] || 'fas fa-music';
         }
 
-        // ✅ CORRECCIÓN: Agregar async a la función
-        async function handleCompanyChange() {
-            const companySelect = document.getElementById('companyFilter');
-            const selectedCompany = companySelect.value;
-            currentCompanyFilter = selectedCompany;
-            
-            console.log(`🏢 Filtro de empresa cambiado a: ${selectedCompany || 'Todas'}`);
-            
-            try {
-                await loadDashboardData();
-                await loadRecentTransactions(1);
-                await loadCompanyStats(selectedCompany);
-                
-                const rockstarWidgets = document.getElementById('rockstarSkullWidgets');
-                if (selectedCompany === '1') { 
-                    rockstarWidgets.style.display = 'block';
-                    await loadRockstarSkullData();
-                    showRockstarSkullIndicators();
-                    loadStudentsList();
-                } else {
-                    rockstarWidgets.style.display = 'none';
-                    hideRockstarSkullIndicators();
-                }
-                
-            } catch (error) {
-                console.error('❌ Error cambiando filtro de empresa:', error);
-                showAlert('danger', 'Error aplicando filtro de empresa');
-            }
-        }
-        // 📊 Cargar estadísticas específicas de empresa
-        async function loadCompanyStats(companyId) {
-            try {
-                let queryParam = companyId ? `?empresa_id=${companyId}` : '';
-                const response = await fetch(`/gastos/api/transacciones/resumen${queryParam}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const resumen = data.data;
-                    
-                    // Actualizar stats del selector
-                    document.getElementById('companyTransactions').textContent = resumen.total_transacciones || 0;
-                    
-                    // Solo mostrar ingresos/gastos/balance si NO es RockstarSkull
-                    if (companyId !== '1') {
-                        document.getElementById('companyIncome').textContent = formatCurrency(resumen.ingresos || 0);
-                        document.getElementById('companyExpenses').textContent = formatCurrency(resumen.gastos || 0);
-                        document.getElementById('companyBalance').textContent = formatCurrency(resumen.balance || 0);
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error cargando stats de empresa:', error);
-            }
-        }
-        
-        // 🎓 Cargar lista de alumnos real
-        async function loadStudentsList() {
-            try {
-                console.log('🎓 Cargando lista real de alumnos...');
-                
-                const response = await fetch('/gastos/api/alumnos?empresa_id=1');
-                const result = await response.json();
-                
-                if (result.success && result.data) {
-                    studentsData = result.data;
-                    filteredStudents = [...studentsData];
-                    
-                    renderStudentsTable();
-                    updateStudentsPagination();
-                    
-                    console.log(`✅ ${studentsData.length} alumnos cargados desde API`);
-                } else {
-                    throw new Error(result.message || 'Error cargando alumnos');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error cargando alumnos reales:', error);
-                
-                renderStudentsTable();
-                updateStudentsPagination();
-            }
-        }
-
         // ====================================================
         // 🎓 FUNCIÓN: APLICAR FILTROS DE ALUMNOS
         // Patrón basado en filtros de gastos.html
         // ====================================================
         function filterStudents() {
             console.log('🔍 Aplicando filtros de alumnos...');
+
+            // AGREGAR después de línea 3210:
+            console.log('🔍 Debugging filtros detallado:', {
+                teacherFilter: currentStudentFilters.teacherFilter,
+                statusFilter: currentStudentFilters.statusFilter, 
+                instrumentFilter: currentStudentFilters.instrumentFilter,
+                paymentFilter: currentStudentFilters.paymentFilter,
+                totalFiltrosActivos: Object.values(currentStudentFilters).filter(f => f !== '').length
+            });
             
             // Obtener valores actuales de filtros
             const teacherFilter = document.getElementById('teacherFilter')?.value || '';
             const statusFilter = document.getElementById('statusFilter')?.value || '';
             const instrumentFilter = document.getElementById('instrumentFilter')?.value || '';
+            const paymentFilter = document.getElementById('paymentFilter')?.value || '';
             
             // Actualizar filtros globales
             currentStudentFilters = {
                 teacherFilter,
                 statusFilter,
-                instrumentFilter
+                instrumentFilter,
+                paymentFilter
             };
             
             console.log('🔍 Filtros aplicados:', currentStudentFilters);
+
+            console.log('🔍 Filtros antes de recargar:', {
+                teacherFilter: currentStudentFilters.teacherFilter,
+                statusFilter: currentStudentFilters.statusFilter,
+                instrumentFilter: currentStudentFilters.instrumentFilter,
+                paymentFilter: currentStudentFilters.paymentFilter,
+                paymentFilterEsValido: ['', 'current', 'upcoming', 'overdue', 'inactive'].includes(currentStudentFilters.paymentFilter)
+            });
             
             // Reiniciar a página 1 y recargar con filtros
             currentStudentsPage = 1;
@@ -2934,30 +2982,75 @@ console.log('🎓 Variables globales de alumnos inicializadas');
                 const inscripcion = new Date(student.fechaInscripcion || student.fecha_inscripcion);
                 const today = new Date();
                 
-                // Calcular meses desde inscripción
-                const monthsDiff = Math.floor((today - inscripcion) / (1000 * 60 * 60 * 24 * 30));
+                console.log(`🗓️ Calculando próximo pago para ${student.nombre}: inscripción=${inscripcion.toISOString()}, hoy=${today.toISOString()}`);
                 
-                // Próximo pago = inscripción + (meses + 1)
-                const nextPayment = new Date(inscripcion);
-                nextPayment.setMonth(nextPayment.getMonth() + monthsDiff + 1);
+                // Obtener el día de corte (día de inscripción)
+                const dayOfMonth = inscripcion.getDate();
                 
-                return nextPayment;
+                // Crear fecha de vencimiento para el mes actual
+                const currentMonth = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
+                
+                // Si ya pasó el día de corte este mes, usar el siguiente mes
+                let nextPaymentDate;
+                if (today.getDate() > dayOfMonth) {
+                    // Ya pasó el día de corte, usar siguiente mes
+                    nextPaymentDate = new Date(today.getFullYear(), today.getMonth() + 1, dayOfMonth);
+                } else {
+                    // Aún no llega el día de corte este mes
+                    nextPaymentDate = currentMonth;
+                }
+                
+                console.log(`💰 ${student.nombre}: próximo pago=${nextPaymentDate.toISOString()}, día corte=${dayOfMonth}`);
+                
+                return nextPaymentDate; // ← RETORNA DATE OBJECT, NO STRING
+                
             } catch (error) {
-                console.log('Error calculando fecha:', error);
-                return new Date(); // Fallback
+                console.error(`❌ Error calculando fecha para ${student.nombre}:`, error);
+                return new Date(); // Fallback a hoy
             }
         }
 
         // Función para determinar estado de pago del alumno
+        // REEMPLAZAR FUNCIÓN COMPLETA
         function getPaymentStatus(student) {
-            if (student.estatus === 'Baja') return 'inactive';
+            // Para alumnos inactivos, retornar estado especial pero filtrable
+            if (student.estatus === 'Baja') {
+                console.log(`👤 ${student.nombre}: estatus=Baja, retornando 'inactive'`);
+                return 'inactive';
+            }
             
             const today = new Date();
-            const nextDueDate = getNextPaymentDate(student);
+            const nextDueDate = getNextPaymentDate(student); // ← AHORA RECIBE DATE OBJECT
             const daysDiff = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
             
-            if (daysDiff < -5) return 'overdue';  // Vencido +5 días
-            if (daysDiff <= 3 && daysDiff >= 0) return 'upcoming'; // Próximo (3 días)
+            console.log(`🔍 ${student.nombre}: días diferencia=${daysDiff} (próximo=${nextDueDate.toDateString()}, hoy=${today.toDateString()})`);
+
+            // Debugging detallado de la lógica de estados
+            console.log(`📊 ${student.nombre} - Análisis detallado:`, {
+                fechaInscripcion: student.fechaInscripcion || student.fecha_inscripcion,
+                estatus: student.estatus,
+                proximoPago: nextDueDate.toLocaleDateString('es-ES'),
+                diasDiferencia: daysDiff,
+                categoriaCalculada: daysDiff < -5 ? 'VENCIDO' : 
+                                (daysDiff <= 3 && daysDiff >= 0) ? 'PRÓXIMO' : 
+                                (daysDiff < 0 && daysDiff >= -5) ? 'PRÓXIMO_VENCIDO' : 'CORRIENTE'
+            });
+            
+            // Lógica de estados para alumnos ACTIVOS solamente
+            if (daysDiff < -5) {
+                console.log(`🚨 ${student.nombre}: VENCIDO (${Math.abs(daysDiff)} días)`);
+                return 'overdue';  // Vencido +5 días
+            }
+            if (daysDiff <= 3 && daysDiff >= 0) {
+                console.log(`⚠️ ${student.nombre}: PRÓXIMO (${daysDiff} días)`);
+                return 'upcoming'; // Próximo (3 días)
+            }
+            if (daysDiff < 0 && daysDiff >= -5) {
+                console.log(`⚠️ ${student.nombre}: PRÓXIMO VENCIDO (${Math.abs(daysDiff)} días)`);
+                return 'upcoming'; // Recién vencido pero dentro de rango próximo
+            }
+            
+            console.log(`✅ ${student.nombre}: AL CORRIENTE (${daysDiff} días hasta vencimiento)`);
             return 'current'; // Al corriente
         }
 
@@ -2972,82 +3065,35 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             return badges[paymentStatus] || badges['current'];
         }
 
-        // 🎓 Renderizar tabla de alumnos
-        function renderStudentsTable() {
-            const tbody = document.getElementById('studentsTableBody');
-            
-            if (filteredStudents.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="10" class="text-center py-4">
-                            <i class="fas fa-search fa-2x text-muted"></i>
-                            <p class="mt-2 mb-0 text-muted">No se encontraron alumnos con los filtros aplicados</p>
-                        </td>
-                    </tr>
-                `;
+        // Funciones placeholder para acciones de alumnos
+       function viewStudentDetail(id) {
+            const student = studentsData.find(s => s.id === id);
+            if (!student) {
+                showAlert('warning', 'Alumno no encontrado en los datos actuales');
                 return;
             }
             
-            const startIndex = (currentStudentPage - 1) * studentsPerPage;
-            const endIndex = Math.min(startIndex + studentsPerPage, filteredStudents.length);
-            const pageStudents = filteredStudents.slice(startIndex, endIndex);
+            // Llenar modal con datos
+            document.getElementById('studentModalName').textContent = student.nombre;
+            document.getElementById('modalStudentName').textContent = student.nombre;
+            document.getElementById('modalStudentAge').textContent = student.edad + ' años';
+            document.getElementById('modalStudentClass').textContent = student.clase;
+            document.getElementById('modalStudentTeacher').textContent = student.maestro;
+            document.getElementById('modalStudentSchedule').textContent = student.horario || 'No especificado';
+            document.getElementById('modalStudentStatus').innerHTML = student.estatus === 'Activo' 
+                ? '<span class="badge bg-success">✅ Activo</span>'
+                : '<span class="badge bg-danger">❌ Baja</span>';
             
-            tbody.innerHTML = pageStudents.map((student, index) => {
-                // Estandarizar y limpiar datos del backend
-                const studentData = {
-                    id: student.id,
-                    nombre: student.nombre || 'Sin nombre',
-                    edad: student.edad || 'N/A',
-                    maestro: student.maestro || 'Sin asignar',
-                    fechaInscripcion: student.fecha_inscripcion,
-                    precioMensual: student.precio_mensual || 0,
-                    totalPagado: student.total_pagado || 0,
-                    estatus: student.estatus,
-                    clase: student.clase || 'Sin clase',
-                    formaPago: student.forma_pago || 'No especificado'
-                };
-                
-                const paymentStatus = getPaymentStatus(studentData);
-                const nextPaymentDate = getNextPaymentDate(studentData);
-                
-                const alertBadge = getPaymentAlertBadge(paymentStatus);
-                const statusBadge = studentData.estatus === 'Activo' 
-                    ? '<span class="badge bg-success">Activo</span>'
-                    : '<span class="badge bg-danger">Baja</span>';
-                
-                return `
-                    <tr>
-                        <td class="text-white">${studentData.nombre}</td>
-                        <td class="text-light">${studentData.edad}</td>
-                        <td class="text-light">${studentData.maestro}</td>
-                        <td class="text-light">${studentData.clase}</td>
-                        <td class="text-light">${formatDate(studentData.fechaInscripcion)}</td>
-                        <td class="text-light">${formatCurrency(studentData.precioMensual)}</td>
-                        <td class="text-light">${formatDate(nextPaymentDate)}</td>
-                        <td>${alertBadge}</td>
-                        <td>${statusBadge}</td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-info" onclick="viewStudentDetail(${studentData.id})" title="Ver detalles">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-outline-warning" onclick="editStudent(${studentData.id})" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-outline-danger" onclick="deleteStudent(${studentData.id})" title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        // Funciones placeholder para acciones de alumnos
-        function viewStudentDetail(id) {
-            console.log('Ver detalle del alumno:', id);
-            showAlert('info', 'Funcionalidad de detalles - En desarrollo');
+            document.getElementById('modalStudentEnrollment').textContent = formatDate(student.fecha_inscripcion);
+            document.getElementById('modalStudentLastPayment').textContent = 'No disponible';
+            document.getElementById('modalStudentNextDue').textContent = formatDate(getNextPaymentDate(student));
+            document.getElementById('modalStudentMonthlyFee').textContent = formatCurrency(student.precio_mensual);
+            document.getElementById('modalStudentPaymentMethod').textContent = student.forma_pago;
+            document.getElementById('modalStudentTotalPaid').textContent = 'No disponible';
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('studentDetailModal'));
+            modal.show();
         }
 
         function editStudent(id) {
@@ -3062,20 +3108,6 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             }
         }
 
-        // 🎓 Obtener badge de alerta de pago
-        function getPaymentAlertBadge(status) {
-            switch (status) {
-                case 'overdue':
-                    return '<span class="badge bg-danger">🚨 Vencido</span>';
-                case 'upcoming':
-                    return '<span class="badge bg-warning">⚠️ Próximo</span>';
-                case 'current':
-                    return '<span class="badge bg-success">✅ Al día</span>';
-                default:
-                    return '<span class="badge bg-secondary">-</span>';
-            }
-        }
-
         // 🎓 Obtener icono del instrumento
         function getInstrumentIcon(instrument) {
             const icons = {
@@ -3086,116 +3118,6 @@ console.log('🎓 Variables globales de alumnos inicializadas');
                 'Canto': '🎤'
             };
             return icons[instrument] || '🎵';
-        }
-
-        // 🎓 Función actualizar paginación - VERSIÓN UNIFICADA
-        function updateStudentsPagination() {
-            const pagination = document.getElementById('studentsPagination');
-            if (!pagination) return;
-            
-            const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
-            
-            // Actualizar contadores de registros
-            const start = filteredStudents.length === 0 ? 0 : (currentStudentPage - 1) * studentsPerPage + 1;
-            const end = Math.min(currentStudentPage * studentsPerPage, filteredStudents.length);
-            const total = filteredStudents.length;
-            
-            const startElement = document.getElementById('studentsStart');
-            const endElement = document.getElementById('studentsEnd');
-            const totalElement = document.getElementById('studentsTotal');
-            
-            if (startElement) startElement.textContent = start;
-            if (endElement) endElement.textContent = end;
-            if (totalElement) totalElement.textContent = total;
-            
-            // Si no hay páginas múltiples, ocultar paginación
-            if (totalPages <= 1) {
-                pagination.innerHTML = '';
-                return;
-            }
-            
-            // Generar botones de paginación
-            let paginationHTML = '';
-            
-            // Botón Anterior
-            if (currentStudentPage > 1) {
-                paginationHTML += `
-                    <li class="page-item">
-                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentStudentPage - 1})">
-                            <i class="fas fa-chevron-left me-1"></i>Anterior
-                        </a>
-                    </li>
-                `;
-            }
-            
-            // Páginas numeradas (máximo 5)
-            const startPage = Math.max(1, currentStudentPage - 2);
-            const endPage = Math.min(totalPages, currentStudentPage + 2);
-            
-            for (let i = startPage; i <= endPage; i++) {
-                const isActive = i === currentStudentPage ? 'active' : '';
-                paginationHTML += `
-                    <li class="page-item ${isActive}">
-                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${i})">${i}</a>
-                    </li>
-                `;
-            }
-            
-            // Botón Siguiente
-            if (currentStudentPage < totalPages) {
-                paginationHTML += `
-                    <li class="page-item">
-                        <a class="page-link" href="#" onclick="event.preventDefault(); changeStudentPage(${currentStudentPage + 1})">
-                            Siguiente<i class="fas fa-chevron-right ms-1"></i>
-                        </a>
-                    </li>
-                `;
-            }
-            
-            pagination.innerHTML = paginationHTML;
-            
-            console.log(`🔢 Paginación actualizada: página ${currentStudentPage} de ${totalPages} (${total} alumnos)`);
-        }
-
-        // 🎓 Cambiar página de alumnos
-        function changeStudentPage(page) {
-            currentStudentPage = page;
-            renderStudentsTable();
-            updateStudentsPagination();
-
-            console.log(`📄 Cambiando a página ${page}`);
-        }
-
-        // 🎓 Actualizar resumen de filtros
-        // 🎓 Actualizar resumen de filtros - CORREGIDO
-        function updateFilterSummary() {
-            const total = studentsData.length;
-            const filtered = filteredStudents.length;
-            
-            // Actualizar contadores (usar los elementos que SÍ existen)
-            const filteredCountElement = document.getElementById('filteredCount');
-            const totalCountElement = document.getElementById('totalCount');
-            
-            if (filteredCountElement) filteredCountElement.textContent = filtered;
-            if (totalCountElement) totalCountElement.textContent = total;
-            
-            // Construir descripción de filtros
-            const filters = [];
-            const teacherFilter = document.getElementById('teacherFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            const instrumentFilter = document.getElementById('instrumentFilter').value;
-            const paymentFilter = document.getElementById('paymentFilter').value;
-            
-            if (teacherFilter) filters.push(`Maestro: ${teacherFilter}`);
-            if (statusFilter) filters.push(`Estatus: ${statusFilter}`);
-            if (instrumentFilter) filters.push(`Instrumento: ${instrumentFilter}`);
-            if (paymentFilter) filters.push(`Pagos: ${getPaymentFilterLabel(paymentFilter)}`);
-            
-            const summary = filters.length > 0 
-                ? `Filtros activos: ${filters.join(', ')}`
-                : 'Mostrando todos los alumnos';
-                
-            document.getElementById('filterSummary').textContent = summary;
         }
 
         // 🎓 Obtener etiqueta del filtro de pagos
@@ -3248,16 +3170,19 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             const teacherFilter = document.getElementById('teacherFilter');
             const statusFilter = document.getElementById('statusFilter');
             const instrumentFilter = document.getElementById('instrumentFilter');
+            const paymentFilter = document.getElementById('paymentFilter');
             
             if (teacherFilter) teacherFilter.value = '';
             if (statusFilter) statusFilter.value = '';
             if (instrumentFilter) instrumentFilter.value = '';
+            if (paymentFilter) paymentFilter.value = '';
             
             // Resetear filtros globales
             currentStudentFilters = {
                 teacherFilter: '',
                 statusFilter: '',
-                instrumentFilter: ''
+                instrumentFilter: '',  // ← Agregar coma aquí
+                paymentFilter: ''
             };
             
             // Recargar desde la página 1
@@ -3268,8 +3193,38 @@ console.log('🎓 Variables globales de alumnos inicializadas');
         }
 
         function exportStudentsList() {
-            console.log('💾 Exportando lista de alumnos...');
-            showAlert('info', 'Funcionalidad de exportación - Próximamente implementada');
+            if (!studentsData || studentsData.length === 0) {
+                showAlert('warning', 'No hay datos de alumnos para exportar');
+                return;
+            }
+            
+            const csvContent = [
+                // Header
+                ['Nombre', 'Edad', 'Maestro', 'Clase', 'Inscripción', 'Mensualidad', 'Estatus', 'Forma de Pago'].join(','),
+                // Data rows
+                ...studentsData.map(student => [
+                    `"${student.nombre}"`,
+                    student.edad,
+                    `"${student.maestro}"`,
+                    `"${student.clase}"`,
+                    formatDate(student.fecha_inscripcion),
+                    student.precio_mensual,
+                    student.estatus,
+                    `"${student.forma_pago}"`
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `alumnos_rockstarskull_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showAlert('success', 'Lista de alumnos exportada exitosamente');
         }
 
         function markPaymentReceived() {
@@ -3543,6 +3498,38 @@ console.log('🎓 Variables globales de alumnos inicializadas');
             
             console.log('⚠️ Fallback activado - manteniendo datos reales de maestros');
             console.log('✅ Datos simulados cargados para filtros');
+        }
+
+        // 🆕 NUEVA FUNCIÓN: Formatear fecha de próximo pago para mostrar en tabla
+        function getFormattedNextPaymentDate(student) {
+            try {
+                // Para alumnos inactivos, no mostrar fecha de próximo pago
+                if (student.estatus === 'Baja') {
+                    return '<span class="text-muted">No aplica</span>';
+                }
+                
+                const nextPaymentDate = getNextPaymentDate(student);
+                const today = new Date();
+                const daysDiff = Math.ceil((nextPaymentDate - today) / (1000 * 60 * 60 * 24));
+                
+                const formattedDate = nextPaymentDate.toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit'
+                });
+                
+                // Agregar contexto de días
+                if (daysDiff === 0) {
+                    return `${formattedDate} <small class="text-warning">(HOY)</small>`;
+                } else if (daysDiff > 0) {
+                    return `${formattedDate} <small class="text-info">(en ${daysDiff} días)</small>`;
+                } else {
+                    return `${formattedDate} <small class="text-danger">(hace ${Math.abs(daysDiff)} días)</small>`;
+                }
+            } catch (error) {
+                console.error('Error formateando fecha:', error);
+                return 'Error en fecha';
+            }
         }
 
         console.log('✅ Sistema de gestión de alumnos configurado');
