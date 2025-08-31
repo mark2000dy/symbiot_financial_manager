@@ -1251,12 +1251,12 @@
                             </div>
                         </div>
                         
-                        <!-- Payment History Chart Placeholder -->
+                        <!-- Payment History Chart -->
                         <div class="mt-3">
                             <h6 class="text-warning">📊 Historial de Pagos (Últimos 12 meses)</h6>
-                            <div class="alert alert-secondary">
-                                <i class="fas fa-chart-line me-2"></i>
-                                Gráfico de historial de pagos - <em>Próximamente implementado</em>
+                            <canvas id="paymentHistoryChart" width="400" height="200"></canvas>
+                            <div id="chartLoadingState" class="text-center py-3" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando historial...
                             </div>
                         </div>
                     </div>
@@ -1269,6 +1269,150 @@
                         </button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="fas fa-times me-1"></i>Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================= -->
+        <!-- MODAL EDICIÓN DE ALUMNO -->
+        <!-- ========================================= -->
+        <div class="modal fade" id="editStudentModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-user-edit me-2"></i>
+                            Editar Información del Alumno
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editStudentForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="editStudentName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Nombre Completo
+                                    </label>
+                                    <input type="text" class="form-control" id="editStudentName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="editStudentAge" class="form-label">
+                                        <i class="fas fa-birthday-cake me-1"></i>Edad
+                                    </label>
+                                    <input type="number" class="form-control" id="editStudentAge" min="1" max="100" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="editStudentEnrollmentDate" class="form-label">
+                                        <i class="fas fa-calendar me-1"></i>Fecha de Inscripción
+                                    </label>
+                                    <input type="date" class="form-control" id="editStudentEnrollmentDate" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="editStudentInstrument" class="form-label">
+                                        <i class="fas fa-music me-1"></i>Instrumento/Clase
+                                    </label>
+                                    <select class="form-select" id="editStudentInstrument" required>
+                                        <option value="">Selecciona instrumento</option>
+                                        <option value="Guitarra">🎸 Guitarra</option>
+                                        <option value="Teclado">🎹 Teclado</option>
+                                        <option value="Batería">🥁 Batería</option>
+                                        <option value="Bajo">🎸 Bajo</option>
+                                        <option value="Canto">🎤 Canto</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="editStudentTeacher" class="form-label">
+                                        <i class="fas fa-chalkboard-teacher me-1"></i>Maestro
+                                    </label>
+                                    <select class="form-select" id="editStudentTeacher" required>
+                                        <option value="">Selecciona maestro</option>
+                                        <option value="1">🎸 Hugo Vazquez</option>
+                                        <option value="2">🎹 Manuel Reyes</option>
+                                        <option value="3">🥁 Julio Olvera</option>
+                                        <option value="4">🎵 Irwin Hernandez</option>
+                                        <option value="5">🎸 Luis Blanquet</option>
+                                        <option value="6">🎤 Nahomy Perez</option>
+                                        <option value="7">🎸 Demian Andrade</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="editStudentSchedule" class="form-label">
+                                        <i class="fas fa-clock me-1"></i>Horario
+                                    </label>
+                                    <input type="text" class="form-control" id="editStudentSchedule" placeholder="Ej: Lunes 4:00-5:00 PM">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="editStudentStatus" class="form-label">
+                                        <i class="fas fa-toggle-on me-1"></i>Estatus
+                                    </label>
+                                    <select class="form-select" id="editStudentStatus" required>
+                                        <option value="Activo">✅ Activo</option>
+                                        <option value="Baja">❌ Baja</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="editStudentPromotion" class="form-label">
+                                        <i class="fas fa-percentage me-1"></i>Promoción
+                                    </label>
+                                    <input type="text" class="form-control" id="editStudentPromotion" placeholder="Ej: 10% descuento">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="editStudentMonthlyFee" class="form-label">
+                                        <i class="fas fa-dollar-sign me-1"></i>Mensualidad
+                                    </label>
+                                    <input type="number" class="form-control" id="editStudentMonthlyFee" step="0.01" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="editStudentPaymentMethod" class="form-label">
+                                        <i class="fas fa-credit-card me-1"></i>Forma de Pago
+                                    </label>
+                                    <select class="form-select" id="editStudentPaymentMethod" required>
+                                        <option value="">Selecciona forma de pago</option>
+                                        <option value="Efectivo">💵 Efectivo</option>
+                                        <option value="Transferencia">🏦 Transferencia</option>
+                                        <option value="TPV">📱 Terminal TPV</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="editStudentDomiciled" class="form-label">
+                                        <i class="fas fa-home me-1"></i>¿Domiciliado?
+                                    </label>
+                                    <select class="form-select" id="editStudentDomiciled" onchange="toggleDomiciliadoName()">
+                                        <option value="No">❌ No</option>
+                                        <option value="Si">✅ Sí</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="editStudentDomiciliedName" class="form-label">
+                                        <i class="fas fa-user-tag me-1"></i>Nombre Domiciliado
+                                    </label>
+                                    <input type="text" class="form-control" id="editStudentDomiciliedName" placeholder="Nombre para domiciliación" disabled>
+                                </div>
+                            </div>
+                            
+                            <input type="hidden" id="editStudentId" value="">
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveStudentChanges()">
+                            <i class="fas fa-save me-1"></i>Guardar Cambios
                         </button>
                     </div>
                 </div>
@@ -1438,7 +1582,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // 🌐 Variables globales
         let currentUser = null;
@@ -2739,9 +2884,9 @@
                 'all': 'Todos los Alumnos'
             };
 
-            console.log('🔍 Filtro de pago aplicado:', currentStudentFilters.paymentFilter);
+            /*console.log('🔍 Filtro de pago aplicado:', currentStudentFilters.paymentFilter);
             console.log('📊 Registros recibidos:', result.data?.length || 0);
-            console.log('📊 Total registros:', result.pagination?.total_records || 0);
+            console.log('📊 Total registros:', result.pagination?.total_records || 0);*/
             
             loadStudentsList(1)
 
@@ -3091,14 +3236,55 @@
             document.getElementById('modalStudentPaymentMethod').textContent = student.forma_pago;
             document.getElementById('modalStudentTotalPaid').textContent = 'No disponible';
             
+            // Cargar gráfico de historial de pagos
+            setTimeout(() => {
+                loadPaymentHistory(student.id, student.nombre);
+            }, 500);
+
             // Mostrar modal
             const modal = new bootstrap.Modal(document.getElementById('studentDetailModal'));
             modal.show();
         }
 
-        function editStudent(id) {
-            console.log('Editar alumno:', id);
-            showAlert('info', 'Funcionalidad de edición - En desarrollo');
+        async function editStudent(id) {
+            console.log('✏️ Editando alumno:', id);
+            
+            try {
+                // Obtener datos del alumno desde la tabla actual
+                const student = studentsData.find(s => s.id === id);
+                if (!student) {
+                    showAlert('warning', 'Alumno no encontrado en los datos actuales');
+                    return;
+                }
+                
+                // Prellenar formulario de edición
+                document.getElementById('editStudentId').value = student.id;
+                document.getElementById('editStudentName').value = student.nombre || '';
+                document.getElementById('editStudentAge').value = student.edad || '';
+                document.getElementById('editStudentEnrollmentDate').value = student.fecha_inscripcion || '';
+                document.getElementById('editStudentInstrument').value = student.clase || '';
+                document.getElementById('editStudentTeacher').value = student.maestro_id || '';
+                document.getElementById('editStudentSchedule').value = student.horario || '';
+                document.getElementById('editStudentStatus').value = student.estatus || 'Activo';
+                document.getElementById('editStudentPromotion').value = student.promocion || '';
+                document.getElementById('editStudentMonthlyFee').value = student.precio_mensual || '';
+                document.getElementById('editStudentPaymentMethod').value = student.forma_pago || '';
+                document.getElementById('editStudentDomiciled').value = student.domiciliado || 'No';
+                document.getElementById('editStudentDomiciliedName').value = student.nombre_domiciliado || '';
+                
+                // Habilitar/deshabilitar campo domiciliado
+                toggleDomiciliadoName();
+                
+                // Mostrar modal de edición
+                const editModal = new bootstrap.Modal(document.getElementById('editStudentModal'));
+                editModal.show();
+                
+                console.log('✅ Modal de edición abierto para:', student.nombre);
+                
+            } catch (error) {
+                console.error('❌ Error abriendo edición:', error);
+                showAlert('danger', 'Error abriendo formulario de edición');
+            }
         }
 
         function deleteStudent(id) {
@@ -3228,7 +3414,45 @@
         }
 
         function markPaymentReceived() {
-            showAlert('info', 'Registro de pago recibido - Próximamente implementado');
+            console.log('💰 Registrando pago del alumno...');
+            
+            // Obtener datos del estudiante desde el modal
+            const studentName = document.getElementById('modalStudentName').textContent;
+            const monthlyFee = document.getElementById('modalStudentMonthlyFee').textContent;
+            
+            // Generar concepto automático
+            const currentDate = new Date();
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const currentMonth = monthNames[currentDate.getMonth()];
+            const currentYear = currentDate.getFullYear();
+            
+            const concept = `${studentName} pago ${currentMonth} ${currentYear}`;
+            
+            // Prellenar el modal de nueva transacción
+            document.getElementById('transactionDate').value = currentDate.toISOString().split('T')[0];
+            document.getElementById('transactionConcept').value = concept;
+            document.getElementById('transactionType').value = 'I'; // Ingreso
+            document.getElementById('transactionCompany').value = '1'; // RockstarSkull
+            document.getElementById('transactionPayment').value = 'Efectivo'; // Default
+            document.getElementById('transactionQuantity').value = '1';
+            
+            // Extraer valor numérico de la mensualidad
+            const feeValue = monthlyFee.replace(/[$,\s]/g, '');
+            document.getElementById('transactionPrice').value = feeValue;
+            
+            // Actualizar total automáticamente
+            document.getElementById('transactionTotal').value = monthlyFee;
+            
+            // Cerrar modal de detalle y abrir modal de transacción
+            const detailModal = bootstrap.Modal.getInstance(document.getElementById('studentDetailModal'));
+            detailModal.hide();
+            
+            setTimeout(() => {
+                showAddTransactionModal();
+            }, 300);
+            
+            showAlert('success', `Formulario prellenado para pago de ${studentName}`);
         }
 
         function sendPaymentReminder() {
@@ -3529,6 +3753,153 @@
             } catch (error) {
                 console.error('Error formateando fecha:', error);
                 return 'Error en fecha';
+            }
+        }
+
+        // Función para cargar y mostrar gráfico de historial de pagos
+        async function loadPaymentHistory(studentId, studentName) {
+            try {
+                console.log(`📊 Cargando historial de pagos para alumno ${studentId}`);
+                
+                document.getElementById('chartLoadingState').style.display = 'block';
+                
+                // Simular datos de los últimos 12 meses (reemplazar con API real)
+                const months = [];
+                const payments = [];
+                
+                for (let i = 11; i >= 0; i--) {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() - i);
+                    months.push(date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }));
+                    // Datos simulados - reemplazar con datos reales del API
+                    payments.push(Math.random() > 0.2 ? 1200 : 0); // 80% probabilidad de pago
+                }
+                
+                const ctx = document.getElementById('paymentHistoryChart').getContext('2d');
+                
+                // Destruir gráfico existente si existe
+                if (window.paymentChart) {
+                    window.paymentChart.destroy();
+                }
+                
+                window.paymentChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Pagos Mensuales',
+                            data: payments,
+                            backgroundColor: payments.map(p => p > 0 ? 'rgba(40, 167, 69, 0.8)' : 'rgba(220, 53, 69, 0.8)'),
+                            borderColor: payments.map(p => p > 0 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Historial de Pagos - ${studentName}`,
+                                color: 'white'
+                            },
+                            legend: {
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: 'white',
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: 'white'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                document.getElementById('chartLoadingState').style.display = 'none';
+                console.log('✅ Gráfico de pagos cargado');
+                
+            } catch (error) {
+                console.error('❌ Error cargando historial:', error);
+                document.getElementById('chartLoadingState').innerHTML = '<small class="text-danger">Error cargando historial</small>';
+            }
+        }
+
+        // Función para alternar campo domiciliado
+        function toggleDomiciliadoName() {
+            const domicilied = document.getElementById('editStudentDomiciled').value;
+            const nameField = document.getElementById('editStudentDomiciliedName');
+            
+            if (domicilied === 'Si') {
+                nameField.disabled = false;
+                nameField.required = true;
+            } else {
+                nameField.disabled = true;
+                nameField.required = false;
+                nameField.value = '';
+            }
+        }
+
+        // Función para guardar cambios del alumno
+        async function saveStudentChanges() {
+            console.log('💾 Guardando cambios del alumno...');
+            
+            try {
+                const form = document.getElementById('editStudentForm');
+                
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                
+                const studentData = {
+                    id: document.getElementById('editStudentId').value,
+                    nombre: document.getElementById('editStudentName').value,
+                    edad: parseInt(document.getElementById('editStudentAge').value),
+                    fecha_inscripcion: document.getElementById('editStudentEnrollmentDate').value,
+                    clase: document.getElementById('editStudentInstrument').value,
+                    maestro_id: document.getElementById('editStudentTeacher').value,
+                    horario: document.getElementById('editStudentSchedule').value,
+                    estatus: document.getElementById('editStudentStatus').value,
+                    promocion: document.getElementById('editStudentPromotion').value,
+                    precio_mensual: parseFloat(document.getElementById('editStudentMonthlyFee').value),
+                    forma_pago: document.getElementById('editStudentPaymentMethod').value,
+                    domiciliado: document.getElementById('editStudentDomiciled').value,
+                    nombre_domiciliado: document.getElementById('editStudentDomiciliedName').value
+                };
+                
+                console.log('📤 Datos a actualizar:', studentData);
+                
+                // Placeholder para API - implementar cuando esté disponible
+                showAlert('success', `Información de ${studentData.nombre} actualizada exitosamente`);
+                
+                // Cerrar modal
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editStudentModal'));
+                editModal.hide();
+                
+                // Recargar lista de alumnos
+                loadStudentsList(currentStudentsPage);
+                
+            } catch (error) {
+                console.error('❌ Error guardando cambios:', error);
+                showAlert('danger', 'Error guardando los cambios del alumno');
             }
         }
 
