@@ -1021,7 +1021,7 @@
                             <h6 class="text-white mb-0">
                                 <i class="fas fa-exclamation-triangle me-2"></i>Alertas de Pagos
                             </h6>
-                            <button class="btn btn-sm btn-outline-warning" onclick="refreshPaymentAlerts()">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="refreshTransactions()" title="Actualizar">
                                 <i class="fas fa-sync-alt me-1"></i>Actualizar
                             </button>
                         </div>
@@ -1609,6 +1609,10 @@
         let classDistributionData = [];
 
         const transactionsPerPage = 10;
+        // Añadir: estado para edición desde dashboard y cache temporal de transacciones
+        window.editingTransactionId = null;
+        window.recentTransactionsCache = [];
+
 
         // ✅ CORREGIDO: Asegurar que el modal esté disponible
         let addTransactionModalInstance = null;
@@ -1734,7 +1738,7 @@
                     <td><span class="badge ${tipoBadge}"><i class="${tipoIcon} me-1"></i>${tipoLabel}</span></td>
                     <td class="${transaction.tipo === 'I' ? 'text-success' : 'text-danger'}">${formatCurrency(transaction.total)}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editTransaction(${transaction.id})" title="Editar">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editTransactionFromDashboard(${transaction.id})" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteTransaction(${transaction.id})" title="Eliminar">
@@ -1748,37 +1752,126 @@
         }
 
         // ✅ NUEVA: Función para editar transacciones desde dashboard
-        function editTransactionFromDashboard(transactionId) {
+        async function editTransactionFromDashboard(transactionId) {
             console.log(`✏️ Editando transacción ${transactionId} desde dashboard`);
-            
-            // Redirigir a la página apropiada según el tipo de transacción
-            fetch(`/gastos/api/transacciones/${transactionId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.data) {
-                        const transaction = data.data;
-                        
-                        // Determinar página de destino según el tipo
-                        const targetPage = transaction.tipo === 'G' ? 'gastos.html' : 'ingresos.html';
-                        
-                        // Guardar datos en sessionStorage para cargar en el modal
-                        sessionStorage.setItem('editTransaction', JSON.stringify({
-                            id: transaction.id,
-                            ...transaction
-                        }));
-                        
-                        // Redirigir a la página correspondiente
-                        window.location.href = targetPage;
-                        
-                    } else {
-                        showAlert('error', 'No se pudo cargar la transacción para editar');
+
+            try {
+                // 1) Intentar obtener transacción desde cache local (seteada cuando se cargan recientes)
+                let transaction = (window.recentTransactionsCache || []).find(t => String(t.id) === String(transactionId));
+
+                // 2) Si no está en cache, intentar pedir al backend (si el endpoint existe)
+                if (!transaction) {
+                    try {
+                        const resp = await fetch(`/gastos/api/transacciones/${transactionId}`);
+                        if (resp.ok) {
+                            const json = await resp.json();
+                            if (json && json.success && json.data) {
+                                transaction = json.data;
+                            } else {
+                                console.warn('⚠️ API devolvió sin datos completos para la transacción', transactionId);
+                            }
+                        } else {
+                            console.warn(`⚠️ GET /transacciones/${transactionId} -> status ${resp.status}`);
+                        }
+                    } catch (errFetch) {
+                        console.warn('⚠️ Error al fetch transacción (fallback a DOM/cache):', errFetch);
                     }
-                })
-                .catch(error => {
-                    console.error('❌ Error cargando transacción:', error);
-                    showAlert('error', 'Error cargando la transacción');
-                });
+                }
+
+                // 3) Si no hay datos, intentar extraer datos mínimos desde la fila de la tabla (DOM) como último recurso
+                if (!transaction) {
+                    const tbody = document.getElementById('transactionsBody');
+                    if (tbody) {
+                        const btn = tbody.querySelector(`button[onclick*="(${transactionId})"], button[onclick*="${transactionId}"]`);
+                        const row = btn ? btn.closest('tr') : null;
+                        if (row) {
+                            const cells = row.querySelectorAll('td');
+                            const possibleDate = cells[0]?.textContent?.trim();
+                            const possibleConcept = cells[1]?.textContent?.trim();
+                            const possibleSocio = cells[2]?.textContent?.trim();
+                            const possibleCompany = cells[3]?.textContent?.trim();
+                            const possibleTotal = cells[5]?.textContent?.trim();
+
+                            transaction = {
+                                id: transactionId,
+                                fecha: possibleDate ? new Date(possibleDate).toISOString() : new Date().toISOString(),
+                                concepto: possibleConcept || '',
+                                socio: possibleSocio || '',
+                                nombre_empresa: possibleCompany || '',
+                                cantidad: 1,
+                                precio_unitario: parseFloat((possibleTotal || '').replace(/[$, ]/g, '')) || 0,
+                                total: parseFloat((possibleTotal || '').replace(/[$, ]/g, '')) || 0,
+                                tipo: 'I'
+                            };
+                            console.log('ℹ️ Transacción reconstruida desde DOM:', transaction);
+                        }
+                    }
+                }
+
+                if (!transaction) {
+                    showAlert('warning', 'No se pudo obtener la transacción. Actualiza la lista y vuelve a intentar.');
+                    return;
+                }
+
+                // 4) Marcar que estamos editando (para que submitTransaction haga PUT)
+                window.editingTransactionId = transaction.id;
+
+                // 5) Prellenar modal de transacción con valores encontrados
+                // Fecha (input type=date) -> yyyy-mm-dd
+                try {
+                    const dt = new Date(transaction.fecha);
+                    document.getElementById('transactionDate').value = !isNaN(dt.getTime()) ? dt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                } catch (e) {
+                    document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+                }
+
+                document.getElementById('transactionConcept').value = transaction.concepto || '';
+                // empresa: preferir empresa_id si existe, si no tratar de casar por nombre
+                if (transaction.empresa_id) {
+                    document.getElementById('transactionCompany').value = transaction.empresa_id;
+                } else if (transaction.nombre_empresa) {
+                    const options = Array.from(document.getElementById('transactionCompany').options || []);
+                    const match = options.find(o => o.textContent.trim() === transaction.nombre_empresa);
+                    if (match) document.getElementById('transactionCompany').value = match.value;
+                }
+                document.getElementById('transactionPayment').value = transaction.forma_pago || transaction.formaPago || '';
+                document.getElementById('transactionQuantity').value = transaction.cantidad || 1;
+
+                // precio_unitario preferido, si no calcular a partir de total/cantidad
+                let unitPrice = 0;
+                if (transaction.precio_unitario && !isNaN(parseFloat(transaction.precio_unitario))) {
+                    unitPrice = parseFloat(transaction.precio_unitario);
+                } else if (transaction.total && transaction.cantidad) {
+                    unitPrice = parseFloat(transaction.total) / parseFloat(transaction.cantidad);
+                    unitPrice = Math.round(unitPrice * 100) / 100;
+                } else {
+                    unitPrice = transaction.precio_unitario || 0;
+                }
+                document.getElementById('transactionPrice').value = unitPrice;
+                document.getElementById('transactionType').value = transaction.tipo || 'I';
+
+                // total (read-only visual)
+                const qty = parseFloat(document.getElementById('transactionQuantity').value || 1);
+                const computedTotal = Math.round((unitPrice * qty) * 100) / 100;
+                document.getElementById('transactionTotal').value = formatCurrency(transaction.total || computedTotal);
+
+                // 6) Mostrar modal (crear instancia si es necesario)
+                if (!addTransactionModalInstance) {
+                    addTransactionModalInstance = new bootstrap.Modal(document.getElementById('addTransactionModal'));
+                }
+                addTransactionModalInstance.show();
+
+                // Cambiar texto del botón a "Actualizar Transacción" para feedback visual
+                const saveBtn = document.querySelector('#addTransactionModal .modal-footer .btn-primary');
+                if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save me-1"></i>Actualizar Transacción';
+
+                console.log('✅ Modal prellenado para editar transacción', transaction.id);
+            } catch (error) {
+                console.error('❌ Error en editTransactionFromDashboard:', error);
+                showAlert('error', 'Error cargando datos para editar la transacción');
+            }
         }
+
 
         // 📄 Renderizar paginación
         function renderPagination(pagination) {
@@ -1841,26 +1934,33 @@
 
         // ✅ CORREGIDO: Mostrar modal nueva transacción
         function showAddTransactionModal() {
-            console.log('🆕 Abriendo modal nueva transacción...');
-            
+            console.log('🆕 Abriendo modal nueva transacción.');
+
             try {
+                // Reset estado de edición (abrimos como NUEVA transacción)
+                window.editingTransactionId = null;
+
                 // Limpiar formulario
                 document.getElementById('addTransactionForm').reset();
-                
+
                 // Establecer fecha actual
                 const today = new Date();
                 const todayString = today.toISOString().split('T')[0];
                 document.getElementById('transactionDate').value = todayString;
-                
-                // Limpiar total
+
+                // Limpiar total y precio
                 document.getElementById('transactionTotal').value = '$0.00';
-                
+                document.getElementById('transactionPrice').value = '';
+
+                // Asegurar el texto del botón Save a "Guardar Transacción"
+                const saveBtn = document.querySelector('#addTransactionModal .modal-footer .btn-primary');
+                if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save me-1"></i>Guardar Transacción';
+
                 // Mostrar modal
                 if (addTransactionModalInstance) {
                     addTransactionModalInstance.show();
                     console.log('✅ Modal abierto correctamente');
                 } else {
-                    // Fallback: crear modal dinámicamente
                     const modalElement = document.getElementById('addTransactionModal');
                     if (modalElement) {
                         addTransactionModalInstance = new bootstrap.Modal(modalElement);
@@ -1870,12 +1970,13 @@
                         throw new Error('Modal element not found');
                     }
                 }
-                
+
             } catch (error) {
                 console.error('❌ Error abriendo modal:', error);
                 showAlert('danger', 'Error abriendo el formulario de nueva transacción');
             }
         }
+
 
         // ✅ CORREGIDO: Enviar transacción
         async function submitTransaction() {
@@ -1995,12 +2096,6 @@
         function refreshTransactions() {
             console.log('🔄 Actualizando transacciones...');
             loadRecentTransactions(currentPage);
-        }
-
-        // ✅ CORREGIDO: Placeholder functions con mensajes
-        function editTransaction(id) {
-            console.log(`✏️ Editando transacción ${id}...`);
-            showAlert('info', `Editar transacción #${id} - Próximamente implementado`);
         }
 
         async function deleteTransaction(id) {
@@ -2193,56 +2288,112 @@
             try {
                 console.log('🔄 Actualizando alertas de pagos...');
                 
-                const response = await fetch('/gastos/api/alertas-pagos');
+                // Añadir empresa_id para respetar selector de empresa y filtrar alumnos en baja en frontend
+                // Usar empresa seleccionada y evitar cache del navegador
+                const empresaParam = currentCompanyFilter ? currentCompanyFilter : 1;
+                const response = await fetch(`/gastos/api/alertas-pagos?empresa_id=${empresaParam}`, { cache: 'no-store' });
                 const data = await response.json();
                 
                 if (data.success) {
-                    const { proximos_vencer, vencidos } = data.data;
+                    // Asegurar arrays
+                    let proximos_vencer = Array.isArray(data.data.proximos_vencer) ? data.data.proximos_vencer : [];
+                    let vencidos = Array.isArray(data.data.vencidos) ? data.data.vencidos : [];
 
-                    console.log('📥 Respuesta alertas detallada:', {
-                        proximos_vencer: proximos_vencer,
-                        vencidos: vencidos,
-                        fecha_referencia: new Date().toISOString().split('T')[0],
-                        total_proximos: proximos_vencer.length,
-                        total_vencidos: vencidos.length
-                    });
+                    // Debug: inspeccionar la respuesta cruda (revisa console.log en DevTools)
+                    console.log('📥 Respuesta alertas detallada:', { proximos_vencer, vencidos });
 
-                    // Verificar cada alumno próximo a vencer
-                    proximos_vencer.forEach(alumno => {
-                        console.log(`🔍 Próximo: ${alumno.nombre} - días=${alumno.dias_restantes} (tipo: ${typeof alumno.dias_restantes})`);
-                    });
+                    // Filtrar alumnos dados de baja (por si el backend los devuelve)
+                    proximos_vencer = proximos_vencer.filter(a => String(a.estatus || '').toLowerCase() !== 'baja');
+                    vencidos = vencidos.filter(a => String(a.estatus || '').toLowerCase() !== 'baja');
 
-                    // Verificar cada alumno vencido
-                    vencidos.forEach(alumno => {
-                        console.log(`🔍 Vencido: ${alumno.nombre} - días=${alumno.dias_vencido} (tipo: ${typeof alumno.dias_vencido})`);
-                    });
-                    
-                    // Actualizar próximos a vencer
-                    const proximosHTML = proximos_vencer.length > 0 
-                        ? proximos_vencer.map(alumno => `
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <small><strong>${alumno.nombre}</strong> - ${alumno.clase}</small>
-                                <small class="text-warning">${alumno.dias_restantes} días</small>
-                            </div>
-                        `).join('')
+                    // Helper: calcular días entre dos fechas usando UTC midnight (evita off-by-one por zonas horarias)
+                    function daysBetweenDates(toDate, fromDate = new Date()) {
+                        const a = Date.UTC(toDate.getFullYear(), toDate.getMonth(), toDate.getDate());
+                        const b = Date.UTC(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
+                        return Math.round((a - b) / (24 * 60 * 60 * 1000));
+                    }
+
+                    // =========================
+                    // 1) Próximos a vencer (≤ 3 días antes de la fecha de corte)
+                    // =========================
+                    const proximosHTML = proximos_vencer.length > 0
+                        ? proximos_vencer
+                            .filter(alumno => {
+                                if (String(alumno.estatus || '').toLowerCase() === 'baja') return false;
+
+                                const fechaProxRaw = alumno.proximo_pago || alumno.next_payment_date || alumno.proximoPago || alumno.next_due;
+                                let nextDate = fechaProxRaw ? new Date(fechaProxRaw) : null;
+
+                                if (!nextDate && (alumno.fecha_inscripcion || alumno.fechaInscripcion)) {
+                                    const stub = Object.assign({}, alumno);
+                                    stub.fechaInscripcion = alumno.fechaInscripcion || alumno.fecha_inscripcion;
+                                    nextDate = getNextPaymentDate(stub);
+                                }
+
+                                if (!(nextDate instanceof Date) || isNaN(nextDate)) return false;
+
+                                const daysDiff = daysBetweenDates(nextDate, new Date());
+                                return daysDiff >= 0 && daysDiff <= 3; // Solo mostrar si faltan ≤ 3 días
+                            })
+                            .map(alumno => {
+                                const fechaProxRaw = alumno.proximo_pago || alumno.next_payment_date || alumno.proximoPago || alumno.next_due;
+                                const nextDate = fechaProxRaw ? new Date(fechaProxRaw) : getNextPaymentDate(alumno);
+                                const daysDiff = daysBetweenDates(nextDate, new Date());
+
+                                const labelHtml = daysDiff === 0
+                                    ? '<small class="text-warning">HOY</small>'
+                                    : `<small class="text-info">en ${daysDiff} días</small>`;
+
+                                return `
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small><strong>${alumno.nombre}</strong> - ${alumno.clase || ''}</small>
+                                        ${labelHtml}
+                                    </div>
+                                `;
+                            }).join('')
                         : '<small class="text-muted">✅ No hay pagos próximos a vencer</small>';
-                    
-                    // Actualizar vencidos
-                    const vencidosHTML = vencidos.length > 0 
-                        ? vencidos.map(alumno => `
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <small><strong>${alumno.nombre}</strong> - ${alumno.clase}</small>
-                                <small class="text-danger">🚨 ${alumno.dias_vencido} días</small>
-                            </div>
-                        `).join('')
+
+                    // =========================
+                    // 2) Pagos vencidos (> 5 días después de fecha de corte)
+                    // =========================
+                    const vencidosHTML = vencidos.length > 0
+                        ? vencidos
+                            .filter(alumno => {
+                                if (String(alumno.estatus || '').toLowerCase() === 'baja') return false;
+
+                                const fechaProxRaw = alumno.proximo_pago || alumno.next_payment_date || alumno.proximoPago || alumno.next_due;
+                                let nextDate = fechaProxRaw ? new Date(fechaProxRaw) : null;
+
+                                if (!nextDate && (alumno.fecha_inscripcion || alumno.fechaInscripcion)) {
+                                    const stub = Object.assign({}, alumno);
+                                    stub.fechaInscripcion = alumno.fechaInscripcion || alumno.fecha_inscripcion;
+                                    nextDate = getNextPaymentDate(stub);
+                                }
+
+                                if (!(nextDate instanceof Date) || isNaN(nextDate)) return false;
+
+                                const daysDiff = daysBetweenDates(new Date(), nextDate); // días desde corte hasta hoy
+                                return daysDiff > 5; // Solo mostrar si ya pasaron más de 5 días después de corte
+                            })
+                            .map(alumno => {
+                                const fechaProxRaw = alumno.proximo_pago || alumno.next_payment_date || alumno.proximoPago || alumno.next_due;
+                                const nextDate = fechaProxRaw ? new Date(fechaProxRaw) : getNextPaymentDate(alumno);
+                                const daysOverdue = daysBetweenDates(new Date(), nextDate);
+
+                                return `
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small><strong>${alumno.nombre}</strong> - ${alumno.clase || ''}</small>
+                                        <small class="text-danger">🚨 ${daysOverdue} días</small>
+                                    </div>
+                                `;
+                            }).join('')
                         : '<small class="text-muted">✅ No hay pagos vencidos</small>';
-                    
-                    // Actualizar elementos HTML existentes
+
+                    // Actualizar DOM
                     document.getElementById('upcomingPayments').innerHTML = proximosHTML;
                     document.getElementById('overduePayments').innerHTML = vencidosHTML;
-                    
-                    showAlert('success', `✅ Alertas actualizadas: ${data.data.total_alertas || (proximos_vencer.length + vencidos.length)} alertas activas`);
-                    
+
+                    showAlert('success', `✅ Alertas actualizadas: ${proximos_vencer.length + vencidos.length} alertas activas`);
                 } else {
                     throw new Error(data.error || 'Error obteniendo alertas');
                 }
@@ -2272,7 +2423,9 @@
                 showStudentsLoadingState(true);
                 
                 // Construir URL con parámetros (igual que gastos.html)
-                let url = `/gastos/api/alumnos?empresa_id=1&page=${page}&limit=${studentsPerPage}`;
+                // Usar el filtro de empresa actual (si no existe, fallback a 1 para compatibilidad)
+                const empresaIdParam = currentCompanyFilter ? currentCompanyFilter : 1;
+                let url = `/gastos/api/alumnos?empresa_id=${empresaIdParam}&page=${page}&limit=${studentsPerPage}`;
                 
                 // Agregar filtros si existen
                 if (currentStudentFilters.statusFilter) {
@@ -3156,47 +3309,50 @@
         }
 
         // Función para determinar estado de pago del alumno
-        // REEMPLAZAR FUNCIÓN COMPLETA
         function getPaymentStatus(student) {
-            // Para alumnos inactivos, retornar estado especial pero filtrable
-            if (student.estatus === 'Baja') {
-                console.log(`👤 ${student.nombre}: estatus=Baja, retornando 'inactive'`);
-                return 'inactive';
-            }
-            
-            const today = new Date();
-            const nextDueDate = getNextPaymentDate(student); // ← AHORA RECIBE DATE OBJECT
-            const daysDiff = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
-            
-            console.log(`🔍 ${student.nombre}: días diferencia=${daysDiff} (próximo=${nextDueDate.toDateString()}, hoy=${today.toDateString()})`);
+            try {
+                // Alumnos dados de baja no generan alertas
+                if (student.estatus === 'Baja') {
+                    console.log(`👤 ${student.nombre}: estatus=Baja, retornando 'inactive'`);
+                    return 'inactive';
+                }
 
-            // Debugging detallado de la lógica de estados
-            console.log(`📊 ${student.nombre} - Análisis detallado:`, {
-                fechaInscripcion: student.fechaInscripcion || student.fecha_inscripcion,
-                estatus: student.estatus,
-                proximoPago: nextDueDate.toLocaleDateString('es-ES'),
-                diasDiferencia: daysDiff,
-                categoriaCalculada: daysDiff < -5 ? 'VENCIDO' : 
-                                (daysDiff <= 3 && daysDiff >= 0) ? 'PRÓXIMO' : 
-                                (daysDiff < 0 && daysDiff >= -5) ? 'PRÓXIMO_VENCIDO' : 'CORRIENTE'
-            });
-            
-            // Lógica de estados para alumnos ACTIVOS solamente
-            if (daysDiff < -5) {
-                console.log(`🚨 ${student.nombre}: VENCIDO (${Math.abs(daysDiff)} días)`);
-                return 'overdue';  // Vencido +5 días
+                const today = new Date();
+                const nextDueDate = getNextPaymentDate(student); // devuelve Date
+                const msPerDay = 24 * 60 * 60 * 1000;
+                // días hasta vencimiento: positivo => queda X días; negativo => ya pasó
+                const daysUntilDue = Math.floor((nextDueDate.getTime() - today.getTime()) / msPerDay);
+
+                console.log(`🔍 ${student.nombre}: díasHastaVencimiento=${daysUntilDue} (próximo=${nextDueDate.toDateString()}, hoy=${today.toDateString()})`);
+
+                // Próximos: en los próximos 0..3 días (incluye hoy)
+                if (daysUntilDue >= 0 && daysUntilDue <= 3) {
+                    console.log(`⚠️ ${student.nombre}: PRÓXIMO (${daysUntilDue} días)`);
+                    return 'upcoming';
+                }
+
+                // Si ya pasó la fecha de corte:
+                if (daysUntilDue < 0) {
+                    const daysPast = Math.abs(daysUntilDue);
+
+                    // Periodo de gracia: desde la fecha de corte y hasta 5 días después => sigue considerándose 'current'
+                    if (daysPast <= 5) {
+                        console.log(`⏳ ${student.nombre}: Dentro de periodo de gracia (${daysPast} días desde corte) → 'current'`);
+                        return 'current';
+                    }
+
+                    // Más de 5 días desde la fecha de corte => VENCIDO
+                    console.log(`🚨 ${student.nombre}: VENCIDO (${daysPast} días desde corte)`);
+                    return 'overdue';
+                }
+
+                // Por defecto: al corriente
+                console.log(`✅ ${student.nombre}: AL CORRIENTE`);
+                return 'current';
+            } catch (error) {
+                console.error('❌ Error en getPaymentStatus:', error);
+                return 'current';
             }
-            if (daysDiff <= 3 && daysDiff >= 0) {
-                console.log(`⚠️ ${student.nombre}: PRÓXIMO (${daysDiff} días)`);
-                return 'upcoming'; // Próximo (3 días)
-            }
-            if (daysDiff < 0 && daysDiff >= -5) {
-                console.log(`⚠️ ${student.nombre}: PRÓXIMO VENCIDO (${Math.abs(daysDiff)} días)`);
-                return 'upcoming'; // Recién vencido pero dentro de rango próximo
-            }
-            
-            console.log(`✅ ${student.nombre}: AL CORRIENTE (${daysDiff} días hasta vencimiento)`);
-            return 'current'; // Al corriente
         }
 
         // Función para generar badge de alerta de pago
@@ -3383,23 +3539,34 @@
                 showAlert('warning', 'No hay datos de alumnos para exportar');
                 return;
             }
-            
-            const csvContent = [
-                // Header
-                ['Nombre', 'Edad', 'Maestro', 'Clase', 'Inscripción', 'Mensualidad', 'Estatus', 'Forma de Pago'].join(','),
-                // Data rows
-                ...studentsData.map(student => [
-                    `"${student.nombre}"`,
-                    student.edad,
-                    `"${student.maestro}"`,
-                    `"${student.clase}"`,
-                    formatDate(student.fecha_inscripcion),
-                    student.precio_mensual,
-                    student.estatus,
-                    `"${student.forma_pago}"`
-                ].join(','))
-            ].join('\n');
-            
+
+            // Cabecera CSV
+            const header = ['Nombre', 'Edad', 'Maestro', 'Clase', 'Inscripción', 'Mensualidad', 'Estatus', 'Forma de Pago'].join(',');
+
+            // Filas: normalizar/proteger comillas
+            const rows = studentsData.map(student => {
+                const nombre = (student.nombre || '').toString().replace(/"/g, '""');
+                const maestro = (student.maestro || '').toString().replace(/"/g, '""');
+                const clase = (student.clase || '').toString().replace(/"/g, '""');
+                const fechaIns = student.fecha_inscripcion || student.fechaInscripcion || '';
+                const precio = (student.precio_mensual != null) ? student.precio_mensual : '';
+                const status = student.estatus || '';
+                const formaPago = (student.forma_pago || student.formaPago || '').toString().replace(/"/g, '""');
+
+                return [
+                    `"${nombre}"`,
+                    precioify(student.edad),
+                    `"${maestro}"`,
+                    `"${clase}"`,
+                    formatDate(fechaIns),
+                    precio,
+                    status,
+                    `"${formaPago}"`
+                ].join(',');
+            }).join('\n');
+
+            const csvContent = [header, rows].join('\n');
+
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
@@ -3409,8 +3576,14 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             showAlert('success', 'Lista de alumnos exportada exitosamente');
+
+            // Helper local
+            function precioify(v) {
+                if (v === null || v === undefined || v === '') return '';
+                return v;
+            }
         }
 
         function markPaymentReceived() {

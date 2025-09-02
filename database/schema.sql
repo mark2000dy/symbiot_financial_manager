@@ -18,7 +18,7 @@ CREATE TABLE empresas (
 );
 
 -- ============================================================
--- 2. TABLA DE USUARIOS (Sistema)
+-- 2. TABLA DE USUARIOS
 -- ============================================================
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,7 +33,7 @@ CREATE TABLE usuarios (
 );
 
 -- ============================================================
--- 3. TABLA DE MAESTROS (Academia RockstarSkull)
+-- 3. TABLA DE MAESTROS
 -- ============================================================
 CREATE TABLE maestros (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -50,7 +50,7 @@ CREATE TABLE maestros (
 );
 
 -- ============================================================
--- 4. TABLA DE STAFF (Personal administrativo)
+-- 4. TABLA DE STAFF
 -- ============================================================
 CREATE TABLE staff (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -67,7 +67,7 @@ CREATE TABLE staff (
 );
 
 -- ============================================================
--- 5. TABLA DE ALUMNOS (RockstarSkull)
+-- 5. TABLA DE ALUMNOS
 -- ============================================================
 CREATE TABLE alumnos (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -75,22 +75,23 @@ CREATE TABLE alumnos (
     edad INT,
     telefono VARCHAR(20),
     email VARCHAR(100),
-    
+
     -- INFORMACIÓN ACADÉMICA
-    clase VARCHAR(50) NOT NULL COMMENT 'Guitarra, Piano, Batería, Bajo, Canto',
-    tipo_clase ENUM('Individual', 'Grupal', 'Intensivo') DEFAULT 'Grupal',
+    clase VARCHAR(50) NOT NULL COMMENT 'Guitarra Eléctrica, Piano/Teclado, Batería, Bajo Eléctrico, Canto',
+    tipo_clase ENUM('Individual', 'Grupal') DEFAULT 'Individual',
     maestro_id INT,
     horario VARCHAR(100),
-    
+
     -- INFORMACIÓN ADMINISTRATIVA  
     fecha_inscripcion DATE NOT NULL,
     promocion VARCHAR(100),
     precio_mensual DECIMAL(8,2) NOT NULL,
     forma_pago VARCHAR(50),
     domiciliado BOOLEAN DEFAULT FALSE,
+    titular_domicilado VARCHAR(150) NULL,
     estatus ENUM('Activo', 'Baja') DEFAULT 'Activo',
     fecha_ultimo_pago DATE,
-    
+
     -- METADATA
     empresa_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -106,7 +107,26 @@ CREATE TABLE alumnos (
 );
 
 -- ============================================================
--- 6. TABLA DE PAGOS MENSUALES (Histórico julio 2023 - julio 2025)
+-- 6. TABLA DE CLIENTES (NUEVA)
+-- ============================================================
+CREATE TABLE clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    telefono VARCHAR(20),
+    email VARCHAR(100),
+    empresa_id INT NOT NULL,
+    tipo ENUM('alumno', 'externo') DEFAULT 'externo',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE RESTRICT,
+    INDEX idx_clientes_empresa (empresa_id),
+    INDEX idx_clientes_tipo (tipo),
+    INDEX idx_clientes_nombre (nombre)
+);
+
+-- ============================================================
+-- 7. TABLA DE PAGOS MENSUALES
 -- ============================================================
 CREATE TABLE pagos_mensuales (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -127,13 +147,14 @@ CREATE TABLE pagos_mensuales (
 );
 
 -- ============================================================
--- 7. TABLA DE TRANSACCIONES (Gastos e Ingresos generales)
+-- 8. TABLA DE TRANSACCIONES (ACTUALIZADA)
 -- ============================================================
 CREATE TABLE transacciones (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     fecha DATE NOT NULL,
     concepto VARCHAR(500) NOT NULL,
     socio VARCHAR(50) NOT NULL,
+    cliente_id INT NULL,
     empresa_id INT NOT NULL,
     forma_pago VARCHAR(50) NOT NULL,
     cantidad DECIMAL(10,2) NOT NULL CHECK (cantidad > 0),
@@ -146,23 +167,25 @@ CREATE TABLE transacciones (
     
     FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE RESTRICT,
     FOREIGN KEY (created_by) REFERENCES usuarios(id) ON DELETE RESTRICT,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL,
     
     INDEX idx_transacciones_fecha (fecha),
     INDEX idx_transacciones_socio (socio),
     INDEX idx_transacciones_empresa (empresa_id),
     INDEX idx_transacciones_tipo (tipo),
-    INDEX idx_transacciones_created_by (created_by)
+    INDEX idx_transacciones_created_by (created_by),
+    INDEX idx_transacciones_cliente (cliente_id)
 );
 
 -- ============================================================
--- 8. DATOS INICIALES - EMPRESAS
+-- 9. DATOS INICIALES - EMPRESAS
 -- ============================================================
 INSERT INTO empresas (nombre, tipo_negocio) VALUES 
 ('Rockstar Skull', 'Academia de Música'),
 ('Symbiot Technologies', 'Desarrollo IoT y Aplicaciones');
 
 -- ============================================================
--- 9. DATOS INICIALES - USUARIOS DEL SISTEMA
+-- 10. DATOS INICIALES - USUARIOS
 -- ============================================================
 INSERT INTO usuarios (nombre, email, password_hash, rol, empresa) VALUES 
 ('Marco Delgado', 'marco.delgado@symbiot.com.mx', '$2b$10$TEMP_HASH_TO_UPDATE', 'admin', 'Symbiot Technologies'),
@@ -171,7 +194,7 @@ INSERT INTO usuarios (nombre, email, password_hash, rol, empresa) VALUES
 ('Escuela', 'escuela@rockstarskull.com', '$2b$10$TEMP_HASH_TO_UPDATE', 'user', 'Rockstar Skull');
 
 -- ============================================================
--- 10. DATOS INICIALES - MAESTROS DE ROCKSTAR SKULL
+-- 11. DATOS INICIALES - MAESTROS
 -- ============================================================
 INSERT INTO maestros (nombre, email, telefono, especialidad, empresa_id) VALUES 
 ('Hugo Vazquez', 'hugo.vazquez@rockstarskull.com', NULL, 'Director y Guitarra Eléctrica', 1),
@@ -182,16 +205,3 @@ INSERT INTO maestros (nombre, email, telefono, especialidad, empresa_id) VALUES
 ('Luis Blanquet', 'luis@rockstarskull.com', NULL, 'Bajo Eléctrico', 1),
 ('Manuel Reyes', 'manuel@rockstarskull.com', NULL, 'Piano/Teclado', 1),
 ('Harim López', 'harim.lopez@rockstarskull.com', NULL, 'Piano/Teclado', 1);
-
--- ============================================================
--- 11. DATOS INICIALES - STAFF ADMINISTRATIVO
--- ============================================================
-INSERT INTO staff (nombre, email, telefono, puesto, empresa_id) VALUES 
--- SYMBIOT TECHNOLOGIES
-('Marco Delgado', 'marco.delgado@symbiot.com.mx', NULL, 'Financial Manager', 2),
-('Antonio Razo', 'antonio.razo@symbiot.com.mx', NULL, 'Marketing Manager', 2),
-
--- ROCKSTAR SKULL  
-('Santiago Rosas', 'santiago.rosas@rockstarskull.com', NULL, 'Staff Leader', 1),
-('Emiliano Rosas', 'emiliano.rosas@rockstarskull.com', NULL, 'MKT Leader', 1),
-('Maria de la Luz Nava', 'maria.nava@rockstarskull.com', NULL, 'Cleaning Concierge', 1);
