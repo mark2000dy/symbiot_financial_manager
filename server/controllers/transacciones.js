@@ -182,10 +182,16 @@ export const transaccionesController = {
             } = req.body;
 
             // Verificar que la transacción existe y pertenece al usuario
-            const existeTransaccion = await executeQuery(
-                'SELECT * FROM transacciones WHERE id = ? AND created_by = ?',
-                [id, req.session.user.id]
-            );
+            const isAdmin = req.session.user.rol === 'admin';
+            const queryCheck = isAdmin 
+                ? 'SELECT * FROM transacciones WHERE id = ?'
+                : 'SELECT * FROM transacciones WHERE id = ? AND created_by = ?';
+            const paramsCheck = isAdmin 
+                ? [id] 
+                : [id, req.session.user.id];
+
+            const existeTransaccion = await executeQuery(queryCheck, paramsCheck);
+
 
             if (existeTransaccion.length === 0) {
                 return res.status(404).json({
@@ -194,17 +200,22 @@ export const transaccionesController = {
                 });
             }
 
-            const query = `
-                UPDATE transacciones SET 
+            const query = isAdmin
+                ? `UPDATE transacciones SET 
                     fecha = ?, concepto = ?, empresa_id = ?, forma_pago = ?,
                     cantidad = ?, precio_unitario = ?, tipo = ?
-                WHERE id = ? AND created_by = ?
-            `;
+                WHERE id = ?`
+                : `UPDATE transacciones SET 
+                    fecha = ?, concepto = ?, empresa_id = ?, forma_pago = ?,
+                    cantidad = ?, precio_unitario = ?, tipo = ?
+                WHERE id = ? AND created_by = ?`;
 
-            await executeQuery(query, [
-                fecha, concepto, empresa_id, forma_pago,
-                cantidad, precio_unitario, tipo, id, req.session.user.id
-            ]);
+            const queryParams = isAdmin
+                ? [fecha, concepto, empresa_id, forma_pago, cantidad, precio_unitario, tipo, id]
+                : [fecha, concepto, empresa_id, forma_pago, cantidad, precio_unitario, tipo, id, req.session.user.id];
+
+            await executeQuery(query, queryParams);
+
 
             console.log(`✅ Transacción ${id} actualizada por ${req.session.user.nombre}`);
 
@@ -228,10 +239,15 @@ export const transaccionesController = {
             const { id } = req.params;
 
             // Verificar que la transacción existe y pertenece al usuario
-            const existeTransaccion = await executeQuery(
-                'SELECT concepto, tipo FROM transacciones WHERE id = ? AND created_by = ?',
-                [id, req.session.user.id]
-            );
+           const isAdmin = req.session.user.rol === 'admin';
+            const queryCheck = isAdmin 
+                ? 'SELECT concepto, tipo FROM transacciones WHERE id = ?'
+                : 'SELECT concepto, tipo FROM transacciones WHERE id = ? AND created_by = ?';
+            const paramsCheck = isAdmin 
+                ? [id] 
+                : [id, req.session.user.id];
+
+            const existeTransaccion = await executeQuery(queryCheck, paramsCheck);
 
             if (existeTransaccion.length === 0) {
                 return res.status(404).json({
@@ -240,10 +256,15 @@ export const transaccionesController = {
                 });
             }
 
-            await executeQuery(
-                'DELETE FROM transacciones WHERE id = ? AND created_by = ?',
-                [id, req.session.user.id]
-            );
+            //DELETE con permisos de admin
+            const deleteQuery = isAdmin
+                ? 'DELETE FROM transacciones WHERE id = ?'
+                : 'DELETE FROM transacciones WHERE id = ? AND created_by = ?';
+            const deleteParams = isAdmin
+                ? [id]
+                : [id, req.session.user.id];
+
+            await executeQuery(deleteQuery, deleteParams);
 
             console.log(`✅ Transacción eliminada: ${existeTransaccion[0].concepto} (${existeTransaccion[0].tipo})`);
 
@@ -365,6 +386,262 @@ export const transaccionesController = {
                 success: false, 
                 message: 'Error interno del servidor',
                 error: error.message
+            });
+        }
+    },
+
+    // ✅ NUEVO: Obtener historial de pagos de un alumno específico
+    getHistorialPagosAlumno: async (req, res) => {
+        try {
+            const { alumnoNombre } = req.params;
+            const { meses = 12 } = req.query;
+            
+            console.log(`📊 Obteniendo historial de pagos para: ${alumnoNombre}`);
+            
+            // Buscar transacciones que sean ingresos (pagos) y contengan el nombre del alumno
+            const transacciones = await executeQuery(`
+                SELECT fecha, total, concepto
+                FROM transacciones 
+                WHERE tipo = 'I' 
+                    AND empresa_id = 1 
+                    AND concepto LIKE ?
+                    AND fecha >= DATE_SUB(NOW(), INTERVAL ? MONTH)
+                ORDER BY fecha DESC
+            `, [`%${alumnoNombre}%`, meses]);
+            
+            // Procesar datos por mes
+            const pagosPorMes = {};
+            const fechaInicio = new Date();
+            fechaInicio.setMonth(fechaInicio.getMonth() - meses);
+            
+            // Inicializar todos los meses con 0
+            for (let i = 0; i < meses; i++) {
+                const fecha = new Date();
+                fecha.setMonth(fecha.getMonth() - i);
+                const clave = `${fecha.getFullYear()}-${fecha.getMonth() + 1}`;
+                pagosPorMes[clave] = 0;
+            }
+            
+            // Sumar pagos por mes
+            transacciones.forEach(transaccion => {
+                const fecha = new Date(transaccion.fecha);
+                const clave = `${fecha.getFullYear()}-${fecha.getMonth() + 1}`;
+                if (pagosPorMes.hasOwnProperty(clave)) {
+                    pagosPorMes[clave] += transaccion.total;
+                }
+            });
+            
+            // Calcular estadísticas
+            const ultimoPago = transacciones.length > 0 ? transacciones[0].fecha : null;
+            const totalPagado = transacciones.reduce((sum, t) => sum + t.total, 0);
+            
+            res.json({
+                success: true,
+                data: {
+                    pagosPorMes,
+                    ultimoPago,
+                    totalPagado,
+                    totalTransacciones: transacciones.length,
+                    alumno: alumnoNombre
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error obteniendo historial de pagos:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error interno del servidor'
+            });
+        }
+    },
+
+    // ✅ NUEVO: Crear alumno
+    createAlumno: async (req, res) => {
+        try {
+            const {
+                nombre,
+                edad,
+                telefono,
+                email,
+                clase,
+                tipo_clase = 'Individual',
+                maestro_id,
+                horario,
+                fecha_inscripcion,
+                promocion,
+                precio_mensual,
+                forma_pago,
+                domiciliado = false,
+                nombre_domiciliado, // Usar nombre_domiciliado como en frontend
+                estatus = 'Activo',
+                empresa_id = 1 // RockstarSkull por defecto
+            } = req.body;
+
+            // Validaciones básicas
+            if (!nombre || !clase || !fecha_inscripcion || !precio_mensual || !forma_pago) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Campos requeridos: nombre, clase, fecha_inscripcion, precio_mensual, forma_pago'
+                });
+            }
+
+            console.log('👤 Datos recibidos para crear alumno:', req.body);
+            console.log('🔍 Nombre:', nombre);
+            console.log('🔍 Clase:', clase);
+            console.log('🔍 Fecha inscripción:', fecha_inscripcion);
+            console.log('🔍 Precio mensual:', precio_mensual);
+            console.log('🔍 Forma pago:', forma_pago);
+
+            console.log('👤 Creando nuevo alumno:', nombre);
+
+            // ✅ SANITIZAR: Convertir undefined a null para MySQL
+            const datosLimpios = {
+                nombre: nombre || null,
+                edad: edad || null,
+                telefono: telefono || null,
+                email: email || null,
+                clase: clase || null,
+                tipo_clase: tipo_clase || 'Individual',
+                maestro_id: maestro_id || null,
+                horario: horario || null,
+                fecha_inscripcion: fecha_inscripcion || null,
+                promocion: promocion || null,
+                precio_mensual: precio_mensual || null,
+                forma_pago: forma_pago || null,
+                domiciliado: domiciliado === true || domiciliado === 'true' || domiciliado === 1 || domiciliado === '1',
+                titular_domicilado: nombre_domiciliado || null,
+                estatus: estatus || 'Activo',
+                empresa_id: empresa_id || 1
+            };
+
+            console.log('🔍 Datos sanitizados para crear:', datosLimpios);
+
+            // ✅ EJECUTAR INSERT
+            const result = await executeQuery(`
+                INSERT INTO alumnos (
+                    nombre, edad, telefono, email, clase, tipo_clase, maestro_id, 
+                    horario, fecha_inscripcion, promocion, precio_mensual, 
+                    forma_pago, domiciliado, titular_domicilado, estatus, empresa_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                datosLimpios.nombre, datosLimpios.edad, datosLimpios.telefono, datosLimpios.email, 
+                datosLimpios.clase, datosLimpios.tipo_clase, datosLimpios.maestro_id, datosLimpios.horario, 
+                datosLimpios.fecha_inscripcion, datosLimpios.promocion, datosLimpios.precio_mensual, 
+                datosLimpios.forma_pago, datosLimpios.domiciliado, datosLimpios.titular_domicilado, 
+                datosLimpios.estatus, datosLimpios.empresa_id
+            ]);
+
+            console.log(`✅ Alumno creado: ${nombre} - ID: ${result.insertId}`);
+
+            // ✅ OBTENER datos del alumno recién creado
+            const nuevoAlumno = await executeQuery(`
+                SELECT 
+                    a.*, 
+                    COALESCE(m.nombre, 'Sin asignar') as maestro
+                FROM alumnos a
+                LEFT JOIN maestros m ON a.maestro_id = m.id
+                WHERE a.id = ?
+            `, [result.insertId]);
+
+            res.status(201).json({
+                success: true,
+                message: 'Alumno registrado exitosamente',
+                data: nuevoAlumno[0]
+            });
+
+        } catch (error) {
+            console.error('Error creando alumno:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error interno del servidor'
+            });
+        }
+    },
+
+    // ✅ NUEVO: Actualizar alumno completo
+    updateAlumno: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const {
+                nombre,
+                edad,
+                telefono,
+                email,
+                clase,
+                tipo_clase,
+                maestro_id,
+                horario,
+                promocion,
+                precio_mensual,
+                forma_pago,
+                domiciliado,
+                nombre_domiciliado, // Usar nombre_domiciliado como en frontend
+                estatus
+            } = req.body;
+
+            // Verificar que el alumno existe
+            const existeAlumno = await executeQuery(
+                'SELECT id, nombre FROM alumnos WHERE id = ?',
+                [id]
+            );
+
+            if (existeAlumno.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Alumno no encontrado'
+                });
+            }
+
+            console.log(`👤 Actualizando alumno ID: ${id} (${existeAlumno[0].nombre})`);
+
+            // ✅ SANITIZAR: Convertir undefined a null para MySQL
+            const datosLimpios = {
+                nombre: nombre || null,
+                edad: edad || null,
+                telefono: telefono || null,
+                email: email || null,
+                clase: clase || null,
+                tipo_clase: tipo_clase || 'Individual',
+                maestro_id: maestro_id || null,
+                horario: horario || null,
+                promocion: promocion || null,
+                precio_mensual: precio_mensual || null,
+                forma_pago: forma_pago || null,
+                domiciliado: domiciliado === true || domiciliado === 'true' || domiciliado === 1 || domiciliado === '1',
+                titular_domicilado: nombre_domiciliado || null,
+                estatus: estatus || 'Activo'
+            };
+
+            console.log('🔍 Datos sanitizados para actualizar:', datosLimpios);
+
+            await executeQuery(`
+                UPDATE alumnos SET 
+                    nombre = ?, edad = ?, telefono = ?, email = ?, clase = ?, 
+                    tipo_clase = ?, maestro_id = ?, horario = ?, promocion = ?, 
+                    precio_mensual = ?, forma_pago = ?, domiciliado = ?, 
+                    titular_domicilado = ?, estatus = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `, [
+                datosLimpios.nombre, datosLimpios.edad, datosLimpios.telefono, datosLimpios.email, 
+                datosLimpios.clase, datosLimpios.tipo_clase, datosLimpios.maestro_id, datosLimpios.horario, 
+                datosLimpios.promocion, datosLimpios.precio_mensual, datosLimpios.forma_pago, 
+                datosLimpios.domiciliado, datosLimpios.titular_domicilado, datosLimpios.estatus, id
+            ]);
+
+            console.log(`✅ Alumno actualizado: ${nombre}`);
+
+            res.json({
+                success: true,
+                message: 'Alumno actualizado exitosamente',
+                data: { id: id, nombre: nombre }
+            });
+
+        } catch (error) {
+            console.error('Error actualizando alumno:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error interno del servidor'
             });
         }
     },

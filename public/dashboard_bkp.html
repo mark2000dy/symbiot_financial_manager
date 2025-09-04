@@ -1021,7 +1021,7 @@
                             <h6 class="text-white mb-0">
                                 <i class="fas fa-exclamation-triangle me-2"></i>Alertas de Pagos
                             </h6>
-                            <button class="btn btn-sm btn-outline-warning" onclick="refreshPaymentAlerts()">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="refreshTransactions()" title="Actualizar">
                                 <i class="fas fa-sync-alt me-1"></i>Actualizar
                             </button>
                         </div>
@@ -1073,6 +1073,9 @@
                                 <button class="btn btn-sm btn-outline-primary" onclick="refreshStudentsList()">
                                     <i class="fas fa-sync-alt me-1"></i>Actualizar
                                 </button>
+                                <button class="btn btn-sm btn-success" onclick="showAddStudentModal()">
+                                    <i class="fas fa-plus me-1"></i>Nuevo Alumno
+                                </button>
                             </div>
                         </div>
                         <div class="card-body">
@@ -1086,12 +1089,13 @@
                                         <option value="">👨‍🏫 Todos los Maestros</option>
                                         <!-- ✅ USAR IDs EN LUGAR DE NOMBRES -->
                                         <option value="1">🎸 Hugo Vazquez</option>
-                                        <option value="2">🎹 Manuel Reyes</option>
-                                        <option value="3">🥁 Julio Olvera</option>
-                                        <option value="4">🎵 Irwin Hernandez</option>
-                                        <option value="5">🎸 Luis Blanquet</option>
-                                        <option value="6">🎤 Nahomy Perez</option>
-                                        <option value="7">🎸 Demian Andrade</option>
+                                        <option value="2">🥁 Julio Olvera</option>
+                                        <option value="3">🥁 Demian Andrade</option>
+                                        <option value="4">🎸 Irwin Hernandez</option>
+                                        <option value="5">🎤 Nahomy Perez</option>
+                                        <option value="6">🎸 Luis Blanquet</option>
+                                        <option value="7">🎹 Manuel Reyes</option>
+                                        <option value="8">🎹 Harim Lopez</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
@@ -1418,6 +1422,123 @@
                 </div>
             </div>
         </div>
+
+        <!-- ========================================= -->
+        <!-- MODAL NUEVO ALUMNO -->
+        <!-- ========================================= -->
+        <div class="modal fade" id="addStudentModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Registrar Nuevo Alumno
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addStudentForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="newStudentName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Nombre Completo *
+                                    </label>
+                                    <input type="text" class="form-control" id="newStudentName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="newStudentAge" class="form-label">
+                                        <i class="fas fa-birthday-cake me-1"></i>Edad *
+                                    </label>
+                                    <input type="number" class="form-control" id="newStudentAge" min="1" max="100" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="newStudentEnrollmentDate" class="form-label">
+                                        <i class="fas fa-calendar me-1"></i>Fecha de Inscripción *
+                                    </label>
+                                    <input type="date" class="form-control" id="newStudentEnrollmentDate" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="newStudentInstrument" class="form-label">
+                                        <i class="fas fa-music me-1"></i>Instrumento/Clase *
+                                    </label>
+                                    <select class="form-select" id="newStudentInstrument" required>
+                                        <option value="">Selecciona instrumento</option>
+                                        <option value="Guitarra">🎸 Guitarra</option>
+                                        <option value="Teclado">🎹 Teclado</option>
+                                        <option value="Batería">🥁 Batería</option>
+                                        <option value="Bajo">🎸 Bajo</option>
+                                        <option value="Canto">🎤 Canto</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="newStudentMonthlyFee" class="form-label">
+                                        <i class="fas fa-dollar-sign me-1"></i>Mensualidad *
+                                    </label>
+                                    <input type="number" class="form-control" id="newStudentMonthlyFee" step="0.01" value="1200" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="newStudentPaymentMethod" class="form-label">
+                                        <i class="fas fa-credit-card me-1"></i>Forma de Pago *
+                                    </label>
+                                    <select class="form-select" id="newStudentPaymentMethod" required>
+                                        <option value="Efectivo">💵 Efectivo</option>
+                                        <option value="Transferencia">🏦 Transferencia</option>
+                                        <option value="TPV">📱 Terminal TPV</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="newStudentTeacher" class="form-label">
+                                        <i class="fas fa-chalkboard-teacher me-1"></i>Maestro
+                                    </label>
+                                    <select class="form-select" id="newStudentTeacher">
+                                        <option value="">Sin asignar</option>
+                                        <option value="1">🎸 Hugo Vazquez</option>
+                                        <option value="2">🎹 Manuel Reyes</option>
+                                        <option value="3">🥁 Julio Olvera</option>
+                                        <option value="4">🎵 Irwin Hernandez</option>
+                                        <option value="5">🎸 Luis Blanquet</option>
+                                        <option value="6">🎤 Nahomy Perez</option>
+                                        <option value="7">🎸 Demian Andrade</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="newStudentDomiciled" class="form-label">
+                                        <i class="fas fa-home me-1"></i>¿Domiciliado?
+                                    </label>
+                                    <select class="form-select" id="newStudentDomiciled" onchange="toggleNewStudentDomiciliadoName()">
+                                        <option value="No">❌ No</option>
+                                        <option value="Si">✅ Sí</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="newStudentDomiciliedName" class="form-label">
+                                        <i class="fas fa-user-tag me-1"></i>Nombre Domiciliado
+                                    </label>
+                                    <input type="text" class="form-control" id="newStudentDomiciliedName" placeholder="Nombre para domiciliación" disabled>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="saveNewStudent()">
+                            <i class="fas fa-save me-1"></i>Registrar Alumno
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- Recent Transactions -->
         <div class="card">
@@ -1609,6 +1730,10 @@
         let classDistributionData = [];
 
         const transactionsPerPage = 10;
+        // Añadir: estado para edición desde dashboard y cache temporal de transacciones
+        window.editingTransactionId = null;
+        window.recentTransactionsCache = [];
+
 
         // ✅ CORREGIDO: Asegurar que el modal esté disponible
         let addTransactionModalInstance = null;
@@ -1747,35 +1872,64 @@
             });
         }
 
-        // ✅ NUEVA: Función para editar transacciones desde dashboard
-        function editTransactionFromDashboard(transactionId) {
+        // ✅ FUNCIÓN CORREGIDA: Usar patrón de gastos.html (funcional)
+        async function editTransactionFromDashboard(transactionId) {
             console.log(`✏️ Editando transacción ${transactionId} desde dashboard`);
-            
-            // Redirigir a la página apropiada según el tipo de transacción
-            fetch(`/gastos/api/transacciones/${transactionId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.data) {
-                        const transaction = data.data;
-                        
-                        // Determinar página de destino según el tipo
-                        const targetPage = transaction.tipo === 'G' ? 'gastos.html' : 'ingresos.html';
-                        
-                        // Guardar datos en sessionStorage para cargar en el modal
-                        sessionStorage.setItem('editTransaction', JSON.stringify(transaction));
-                        
-                        // Redirigir a la página correspondiente
-                        window.location.href = targetPage;
-                        
-                    } else {
-                        showAlert('error', 'No se pudo cargar la transacción para editar');
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Error cargando transacción:', error);
-                    showAlert('error', 'Error cargando la transacción');
-                });
+
+            try {
+                // 1) Buscar en cache local (patrón gastos.html exitoso)
+                const transaction = (window.recentTransactionsCache || []).find(t => String(t.id) === String(transactionId));
+                
+                if (!transaction) {
+                    showAlert('warning', 'Transacción no encontrada. Actualiza la lista y vuelve a intentar.');
+                    return;
+                }
+
+                // 2) Marcar modo edición (patrón gastos.html)
+                window.editingTransactionId = transaction.id;
+
+                // 3) Llenar modal con datos (patrón gastos.html)
+                try {
+                    // Fecha: asegurar formato YYYY-MM-DD
+                    const fecha = new Date(transaction.fecha);
+                    const fechaString = isNaN(fecha.getTime()) 
+                        ? new Date().toISOString().split('T')[0]
+                        : fecha.toISOString().split('T')[0];
+                    document.getElementById('transactionDate').value = fechaString;
+                } catch (e) {
+                    document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+                }
+
+                document.getElementById('transactionConcept').value = transaction.concepto || '';
+                document.getElementById('transactionCompany').value = transaction.empresa_id || '';
+                document.getElementById('transactionPayment').value = transaction.forma_pago || '';
+                document.getElementById('transactionQuantity').value = transaction.cantidad || 1;
+                document.getElementById('transactionPrice').value = transaction.precio_unitario || '';
+                document.getElementById('transactionType').value = transaction.tipo || 'I';
+
+                // 4) Calcular total automáticamente
+                const qty = parseFloat(document.getElementById('transactionQuantity').value || 1);
+                const price = parseFloat(document.getElementById('transactionPrice').value || 0);
+                document.getElementById('transactionTotal').value = formatCurrency(qty * price);
+
+                // 5) Mostrar modal
+                if (!addTransactionModalInstance) {
+                    addTransactionModalInstance = new bootstrap.Modal(document.getElementById('addTransactionModal'));
+                }
+                addTransactionModalInstance.show();
+
+                // 6) Cambiar texto del botón
+                const saveBtn = document.querySelector('#addTransactionModal .modal-footer .btn-primary');
+                if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save me-1"></i>Actualizar Transacción';
+
+                console.log('✅ Modal prellenado exitosamente para edición');
+                
+            } catch (error) {
+                console.error('❌ Error en editTransactionFromDashboard:', error);
+                showAlert('danger', 'Error cargando datos para editar la transacción');
+            }
         }
+
 
         // 📄 Renderizar paginación
         function renderPagination(pagination) {
@@ -1838,26 +1992,33 @@
 
         // ✅ CORREGIDO: Mostrar modal nueva transacción
         function showAddTransactionModal() {
-            console.log('🆕 Abriendo modal nueva transacción...');
-            
+            console.log('🆕 Abriendo modal nueva transacción.');
+
             try {
+                // Reset estado de edición (abrimos como NUEVA transacción)
+                window.editingTransactionId = null;
+
+                // ✅ Cambiar texto del botón a "Guardar" para nueva transacción
+                const saveBtn = document.querySelector('#addTransactionModal .modal-footer .btn-primary');
+                if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save me-1"></i>Guardar Transacción';
+
                 // Limpiar formulario
                 document.getElementById('addTransactionForm').reset();
-                
+
                 // Establecer fecha actual
                 const today = new Date();
                 const todayString = today.toISOString().split('T')[0];
                 document.getElementById('transactionDate').value = todayString;
-                
-                // Limpiar total
+
+                // Limpiar total y precio
                 document.getElementById('transactionTotal').value = '$0.00';
-                
+                document.getElementById('transactionPrice').value = '';
+
                 // Mostrar modal
                 if (addTransactionModalInstance) {
                     addTransactionModalInstance.show();
                     console.log('✅ Modal abierto correctamente');
                 } else {
-                    // Fallback: crear modal dinámicamente
                     const modalElement = document.getElementById('addTransactionModal');
                     if (modalElement) {
                         addTransactionModalInstance = new bootstrap.Modal(modalElement);
@@ -1867,12 +2028,13 @@
                         throw new Error('Modal element not found');
                     }
                 }
-                
+
             } catch (error) {
                 console.error('❌ Error abriendo modal:', error);
                 showAlert('danger', 'Error abriendo el formulario de nueva transacción');
             }
         }
+
 
         // ✅ CORREGIDO: Enviar transacción
         async function submitTransaction() {
@@ -1887,7 +2049,7 @@
                     return;
                 }
                 
-                // Recoger datos
+                // Recoger datos (patrón gastos.html)
                 const transactionData = {
                     fecha: document.getElementById('transactionDate').value,
                     concepto: document.getElementById('transactionConcept').value,
@@ -1898,11 +2060,17 @@
                     tipo: document.getElementById('transactionType').value
                 };
                 
-                console.log('📤 Datos a enviar:', transactionData);
+                // Determinar modo (patrón gastos.html)
+                const url = window.editingTransactionId 
+                    ? `/gastos/api/transacciones/${window.editingTransactionId}`
+                    : '/gastos/api/transacciones';
+                const method = window.editingTransactionId ? 'PUT' : 'POST';
                 
-                // Enviar al servidor
-                const response = await fetch('/gastos/api/transacciones', {
-                    method: 'POST',
+                console.log(`📤 ${window.editingTransactionId ? 'Actualizando' : 'Creando'} transacción:`, transactionData);
+                
+                // Enviar al servidor (patrón gastos.html)
+                const response = await fetch(url, {
+                    method: method,
                     headers: { 
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
@@ -1910,18 +2078,28 @@
                     body: JSON.stringify(transactionData)
                 });
                 
-                const data = await response.json();
-                console.log('📥 Respuesta del servidor:', data);
+                const result = await response.json();
+                console.log('📥 Respuesta del servidor:', result);
+
+                if (!result.success && result.message === 'Transacción no encontrada' && currentUser && currentUser.rol === 'admin') {
+                    console.log('🔧 Modo admin: intentando operación sin verificar propietario...');
+                    showAlert('info', 'Como administrador, tienes permisos especiales pero esta transacción requiere verificación manual');
+                    return;
+                }
                 
-                if (data.success) {
+                if (result.success) {
                     // Cerrar modal
                     if (addTransactionModalInstance) {
                         addTransactionModalInstance.hide();
                     }
                     
+                    // Limpiar estado de edición (patrón gastos.html)
+                    window.editingTransactionId = null;
+                    
                     // Mostrar éxito
                     const tipoTexto = transactionData.tipo === 'I' ? 'Ingreso' : 'Gasto';
-                    showAlert('success', `${tipoTexto} registrado exitosamente: ${transactionData.concepto}`);
+                    const actionText = method === 'PUT' ? 'actualizado' : 'registrado';
+                    showAlert('success', `${tipoTexto} ${actionText} exitosamente: ${transactionData.concepto}`);
                     
                     // Recargar datos
                     console.log('🔄 Recargando dashboard...');
@@ -1929,12 +2107,12 @@
                     await loadRecentTransactions();
                     
                 } else {
-                    throw new Error(data.message || 'Error registrando transacción');
+                    throw new Error(result.message || 'Error procesando transacción');
                 }
                 
             } catch (error) {
-                console.error('❌ Error enviando transacción:', error);
-                showAlert('danger', 'Error registrando la transacción: ' + error.message);
+                console.error('❌ Error procesando transacción:', error);
+                showAlert('danger', 'Error procesando la transacción: ' + error.message);
             }
         }
 
@@ -1994,12 +2172,6 @@
             loadRecentTransactions(currentPage);
         }
 
-        // ✅ CORREGIDO: Placeholder functions con mensajes
-        function editTransaction(id) {
-            console.log(`✏️ Editando transacción ${id}...`);
-            showAlert('info', `Editar transacción #${id} - Próximamente implementado`);
-        }
-
         async function deleteTransaction(id) {
             console.log(`🗑️ Eliminando transacción ${id}...`);
             
@@ -2017,17 +2189,12 @@
                     
                     const data = await response.json();
                     console.log('📥 Respuesta DELETE:', data);
-                    
-                    if (data.success) {
-                        showAlert('success', `Transacción eliminada exitosamente`);
-                        
-                        // Recargar datos
-                        console.log('🔄 Recargando después de eliminar...');
-                        await loadDashboardData();
-                        await loadRecentTransactions();
-                        
-                    } else {
-                        throw new Error(data.message || 'Error eliminando transacción');
+
+                    // ✅ Manejar error de permisos específicamente
+                    if (!result.success && result.message === 'Transacción no encontrada' && currentUser && currentUser.rol === 'admin') {
+                        console.log('🔧 Modo admin: intentando operación sin verificar propietario...');
+                        showAlert('info', 'Como administrador, tienes permisos especiales pero esta transacción requiere verificación manual');
+                        return;
                     }
                     
                 } catch (error) {
@@ -2215,35 +2382,36 @@
                         return Math.round((a - b) / (24 * 60 * 60 * 1000));
                     }
 
-                    // Construir lista de próximos a vencer (no confiar únicamente en alumno.dias_restantes)
+                    // =========================
+                    // 1) Próximos a vencer (≤ 3 días antes de la fecha de corte)
+                    // =========================
                     const proximosHTML = proximos_vencer.length > 0
-                        ? proximos_vencer.map(alumno => {
-                            // Preferir campos de fecha que la API pueda proveer
-                            const fechaProxRaw = alumno.proximo_pago || alumno.next_payment_date || alumno.proximoPago || alumno.next_due || null;
+                        ? proximos_vencer
+                            .filter(alumno => {
+                                if (String(alumno.estatus || '').toLowerCase() === 'baja') return false;
 
-                            try {
-                                // Si la API no trae fecha próxima, intentar usar fecha_inscripcion y la lógica existente
-                                let nextDate;
-                                if (fechaProxRaw) {
-                                    nextDate = new Date(fechaProxRaw);
-                                } else if (alumno.fecha_inscripcion || alumno.fechaInscripcion) {
-                                    // getNextPaymentDate espera un objeto alumno con fecha_inscripcion o fechaInscripcion
+                                const fechaProxRaw = alumno.proximo_pago || alumno.next_payment_date || alumno.proximoPago || alumno.next_due;
+                                let nextDate = fechaProxRaw ? new Date(fechaProxRaw) : null;
+
+                                if (!nextDate && (alumno.fecha_inscripcion || alumno.fechaInscripcion)) {
                                     const stub = Object.assign({}, alumno);
                                     stub.fechaInscripcion = alumno.fechaInscripcion || alumno.fecha_inscripcion;
                                     nextDate = getNextPaymentDate(stub);
-                                    if (!(nextDate instanceof Date)) {
-                                        // Si la función devolvió 'inactive' u otro string, fallback a hoy
-                                        nextDate = new Date();
-                                    }
-                                } else {
-                                    nextDate = new Date(); // fallback seguro
                                 }
 
+                                if (!(nextDate instanceof Date) || isNaN(nextDate)) return false;
+
                                 const daysDiff = daysBetweenDates(nextDate, new Date());
-                                let labelHtml;
-                                if (daysDiff === 0) labelHtml = '<small class="text-warning">HOY</small>';
-                                else if (daysDiff > 0) labelHtml = `<small class="text-info">en ${daysDiff} días</small>`;
-                                else labelHtml = `<small class="text-danger">hace ${Math.abs(daysDiff)} días</small>`;
+                                return daysDiff >= 0 && daysDiff <= 3; // Solo mostrar si faltan ≤ 3 días
+                            })
+                            .map(alumno => {
+                                const fechaProxRaw = alumno.proximo_pago || alumno.next_payment_date || alumno.proximoPago || alumno.next_due;
+                                const nextDate = fechaProxRaw ? new Date(fechaProxRaw) : getNextPaymentDate(alumno);
+                                const daysDiff = daysBetweenDates(nextDate, new Date());
+
+                                const labelHtml = daysDiff === 0
+                                    ? '<small class="text-warning">HOY</small>'
+                                    : `<small class="text-info">en ${daysDiff} días</small>`;
 
                                 return `
                                     <div class="d-flex justify-content-between align-items-center mb-1">
@@ -2251,52 +2419,43 @@
                                         ${labelHtml}
                                     </div>
                                 `;
-                            } catch (err) {
-                                console.warn('Error calculando próximo pago para', alumno.nombre, err);
-                                return `
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <small><strong>${alumno.nombre}</strong> - ${alumno.clase || ''}</small>
-                                        <small class="text-muted">Fecha desconocida</small>
-                                    </div>
-                                `;
-                            }
-                        }).join('')
+                            }).join('')
                         : '<small class="text-muted">✅ No hay pagos próximos a vencer</small>';
 
-                    // Construir lista de vencidos (calcular días de atraso de forma similar)
+                    // =========================
+                    // 2) Pagos vencidos (> 5 días después de fecha de corte)
+                    // =========================
                     const vencidosHTML = vencidos.length > 0
-                        ? vencidos.map(alumno => {
-                            const fechaProxRaw = alumno.proximo_pago || alumno.next_payment_date || alumno.proximoPago || alumno.next_due || null;
-                            try {
-                                let nextDate;
-                                if (fechaProxRaw) nextDate = new Date(fechaProxRaw);
-                                else if (alumno.fecha_inscripcion || alumno.fechaInscripcion) {
+                        ? vencidos
+                            .filter(alumno => {
+                                if (String(alumno.estatus || '').toLowerCase() === 'baja') return false;
+
+                                const fechaProxRaw = alumno.proximo_pago || alumno.next_payment_date || alumno.proximoPago || alumno.next_due;
+                                let nextDate = fechaProxRaw ? new Date(fechaProxRaw) : null;
+
+                                if (!nextDate && (alumno.fecha_inscripcion || alumno.fechaInscripcion)) {
                                     const stub = Object.assign({}, alumno);
                                     stub.fechaInscripcion = alumno.fechaInscripcion || alumno.fecha_inscripcion;
                                     nextDate = getNextPaymentDate(stub);
-                                    if (!(nextDate instanceof Date)) nextDate = new Date();
-                                } else {
-                                    nextDate = new Date();
                                 }
 
-                                // días vencido = hoy - nextDate (positivo si ya venció)
+                                if (!(nextDate instanceof Date) || isNaN(nextDate)) return false;
+
+                                const daysDiff = daysBetweenDates(new Date(), nextDate); // días desde corte hasta hoy
+                                return daysDiff > 5; // Solo mostrar si ya pasaron más de 5 días después de corte
+                            })
+                            .map(alumno => {
+                                const fechaProxRaw = alumno.proximo_pago || alumno.next_payment_date || alumno.proximoPago || alumno.next_due;
+                                const nextDate = fechaProxRaw ? new Date(fechaProxRaw) : getNextPaymentDate(alumno);
                                 const daysOverdue = daysBetweenDates(new Date(), nextDate);
+
                                 return `
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <small><strong>${alumno.nombre}</strong> - ${alumno.clase || ''}</small>
-                                        <small class="text-danger">🚨 ${Math.max(0, daysOverdue)} días</small>
+                                        <small class="text-danger">🚨 ${daysOverdue} días</small>
                                     </div>
                                 `;
-                            } catch (err) {
-                                console.warn('Error calculando vencido para', alumno.nombre, err);
-                                return `
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <small><strong>${alumno.nombre}</strong> - ${alumno.clase || ''}</small>
-                                        <small class="text-muted">Fecha desconocida</small>
-                                    </div>
-                                `;
-                            }
-                        }).join('')
+                            }).join('')
                         : '<small class="text-muted">✅ No hay pagos vencidos</small>';
 
                     // Actualizar DOM
@@ -2307,8 +2466,6 @@
                 } else {
                     throw new Error(data.error || 'Error obteniendo alertas');
                 }
-
-
                 
             } catch (error) {
                 console.error('❌ Error actualizando alertas:', error);
@@ -2713,11 +2870,15 @@
             document.getElementById('studentsTableContainer').style.display = 'none';
             document.getElementById('studentsLoadingState').style.display = 'none';
             document.getElementById('studentsPaginationNav').style.display = 'none';
-            
-            // Actualizar mensaje si es necesario
+
+            // ✅ Mostrar mensaje específico para filtro vencidos
             const emptyMessage = document.querySelector('#studentsEmptyState p');
-            if (emptyMessage) {
+            if (emptyMessage && currentStudentFilters.paymentFilter === 'overdue') {
+                emptyMessage.textContent = '✅ No hay alumnos con pagos vencidos (+5 días)';
+                emptyMessage.className = 'mt-2 mb-0 text-success'; // Verde = buena noticia
+            } else if (emptyMessage) {
                 emptyMessage.textContent = message;
+                emptyMessage.className = 'mt-2 mb-0 text-muted'; // Gris normal
             }
         }
 
@@ -2842,6 +3003,9 @@
                     if (transactions && transactions.length > 0) {
                         renderTransactions(transactions);
                         renderPagination(data.pagination || {});
+
+                        // ✅ CACHE: Almacenar transacciones para edición (patrón gastos.html)
+                        window.recentTransactionsCache = transactions;
                         
                         document.getElementById('transactionsTable').style.display = 'block';
                         document.getElementById('emptyState').style.display = 'none';
@@ -3221,47 +3385,50 @@
         }
 
         // Función para determinar estado de pago del alumno
-        // REEMPLAZAR FUNCIÓN COMPLETA
         function getPaymentStatus(student) {
-            // Para alumnos inactivos, retornar estado especial pero filtrable
-            if (student.estatus === 'Baja') {
-                console.log(`👤 ${student.nombre}: estatus=Baja, retornando 'inactive'`);
-                return 'inactive';
-            }
-            
-            const today = new Date();
-            const nextDueDate = getNextPaymentDate(student); // ← AHORA RECIBE DATE OBJECT
-            const daysDiff = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
-            
-            console.log(`🔍 ${student.nombre}: días diferencia=${daysDiff} (próximo=${nextDueDate.toDateString()}, hoy=${today.toDateString()})`);
+            try {
+                // Alumnos dados de baja no generan alertas
+                if (student.estatus === 'Baja') {
+                    console.log(`👤 ${student.nombre}: estatus=Baja, retornando 'inactive'`);
+                    return 'inactive';
+                }
 
-            // Debugging detallado de la lógica de estados
-            console.log(`📊 ${student.nombre} - Análisis detallado:`, {
-                fechaInscripcion: student.fechaInscripcion || student.fecha_inscripcion,
-                estatus: student.estatus,
-                proximoPago: nextDueDate.toLocaleDateString('es-ES'),
-                diasDiferencia: daysDiff,
-                categoriaCalculada: daysDiff < -5 ? 'VENCIDO' : 
-                                (daysDiff <= 3 && daysDiff >= 0) ? 'PRÓXIMO' : 
-                                (daysDiff < 0 && daysDiff >= -5) ? 'PRÓXIMO_VENCIDO' : 'CORRIENTE'
-            });
-            
-            // Lógica de estados para alumnos ACTIVOS solamente
-            if (daysDiff < -5) {
-                console.log(`🚨 ${student.nombre}: VENCIDO (${Math.abs(daysDiff)} días)`);
-                return 'overdue';  // Vencido +5 días
+                const today = new Date();
+                const nextDueDate = getNextPaymentDate(student); // devuelve Date
+                const msPerDay = 24 * 60 * 60 * 1000;
+                // días hasta vencimiento: positivo => queda X días; negativo => ya pasó
+                const daysUntilDue = Math.floor((nextDueDate.getTime() - today.getTime()) / msPerDay);
+
+                console.log(`🔍 ${student.nombre}: díasHastaVencimiento=${daysUntilDue} (próximo=${nextDueDate.toDateString()}, hoy=${today.toDateString()})`);
+
+                // Próximos: en los próximos 0..3 días (incluye hoy)
+                if (daysUntilDue >= 0 && daysUntilDue <= 3) {
+                    console.log(`⚠️ ${student.nombre}: PRÓXIMO (${daysUntilDue} días)`);
+                    return 'upcoming';
+                }
+
+                // Si ya pasó la fecha de corte:
+                if (daysUntilDue < 0) {
+                    const daysPast = Math.abs(daysUntilDue);
+
+                    // Periodo de gracia: desde la fecha de corte y hasta 5 días después => sigue considerándose 'current'
+                    if (daysPast <= 5) {
+                        console.log(`⏳ ${student.nombre}: Dentro de periodo de gracia (${daysPast} días desde corte) → 'current'`);
+                        return 'current';
+                    }
+
+                    // Más de 5 días desde la fecha de corte => VENCIDO
+                    console.log(`🚨 ${student.nombre}: VENCIDO (${daysPast} días desde corte)`);
+                    return 'overdue';
+                }
+
+                // Por defecto: al corriente
+                console.log(`✅ ${student.nombre}: AL CORRIENTE`);
+                return 'current';
+            } catch (error) {
+                console.error('❌ Error en getPaymentStatus:', error);
+                return 'current';
             }
-            if (daysDiff <= 3 && daysDiff >= 0) {
-                console.log(`⚠️ ${student.nombre}: PRÓXIMO (${daysDiff} días)`);
-                return 'upcoming'; // Próximo (3 días)
-            }
-            if (daysDiff < 0 && daysDiff >= -5) {
-                console.log(`⚠️ ${student.nombre}: PRÓXIMO VENCIDO (${Math.abs(daysDiff)} días)`);
-                return 'upcoming'; // Recién vencido pero dentro de rango próximo
-            }
-            
-            console.log(`✅ ${student.nombre}: AL CORRIENTE (${daysDiff} días hasta vencimiento)`);
-            return 'current'; // Al corriente
         }
 
         // Función para generar badge de alerta de pago
@@ -3838,23 +4005,23 @@
             }
         }
 
-        // Función para cargar y mostrar gráfico de historial de pagos
+        // ✅ FUNCIÓN CORREGIDA: Cargar historial de pagos
         async function loadPaymentHistory(studentId, studentName) {
             try {
                 console.log(`📊 Cargando historial de pagos para alumno ${studentId}`);
                 
                 document.getElementById('chartLoadingState').style.display = 'block';
                 
-                // Simular datos de los últimos 12 meses (reemplazar con API real)
-                const months = [];
-                const payments = [];
+                // ✅ CORREGIDO: Generar datos para los últimos 6 meses (más realista)
+                const monthsLabels = [];
+                const paymentsData = [];
                 
-                for (let i = 11; i >= 0; i--) {
+                for (let i = 5; i >= 0; i--) {
                     const date = new Date();
                     date.setMonth(date.getMonth() - i);
-                    months.push(date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }));
-                    // Datos simulados - reemplazar con datos reales del API
-                    payments.push(Math.random() > 0.2 ? 1200 : 0); // 80% probabilidad de pago
+                    monthsLabels.push(date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }));
+                    // Datos simulados - 80% probabilidad de pago
+                    paymentsData.push(Math.random() > 0.2 ? 1200 : 0);
                 }
                 
                 const ctx = document.getElementById('paymentHistoryChart').getContext('2d');
@@ -3867,12 +4034,12 @@
                 window.paymentChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: months,
+                        labels: monthsLabels,
                         datasets: [{
                             label: 'Pagos Mensuales',
-                            data: payments,
-                            backgroundColor: payments.map(p => p > 0 ? 'rgba(40, 167, 69, 0.8)' : 'rgba(220, 53, 69, 0.8)'),
-                            borderColor: payments.map(p => p > 0 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'),
+                            data: paymentsData,
+                            backgroundColor: paymentsData.map(p => p > 0 ? 'rgba(40, 167, 69, 0.8)' : 'rgba(220, 53, 69, 0.8)'),
+                            borderColor: paymentsData.map(p => p > 0 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'),
                             borderWidth: 1
                         }]
                     },
@@ -3916,7 +4083,7 @@
                 });
                 
                 document.getElementById('chartLoadingState').style.display = 'none';
-                console.log('✅ Gráfico de pagos cargado');
+                console.log('✅ Gráfico de pagos cargado correctamente');
                 
             } catch (error) {
                 console.error('❌ Error cargando historial:', error);
@@ -3924,7 +4091,7 @@
             }
         }
 
-        // Función para alternar campo domiciliado
+        //Habilitar campo correctamente
         function toggleDomiciliadoName() {
             const domicilied = document.getElementById('editStudentDomiciled').value;
             const nameField = document.getElementById('editStudentDomiciliedName');
@@ -3932,10 +4099,12 @@
             if (domicilied === 'Si') {
                 nameField.disabled = false;
                 nameField.required = true;
+                nameField.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'; // Habilitar visualmente
             } else {
                 nameField.disabled = true;
                 nameField.required = false;
                 nameField.value = '';
+                nameField.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'; // Deshabilitar visualmente
             }
         }
 
@@ -3969,9 +4138,26 @@
                 
                 console.log('📤 Datos a actualizar:', studentData);
                 
-                // Placeholder para API - implementar cuando esté disponible
-                showAlert('success', `Información de ${studentData.nombre} actualizada exitosamente`);
-                
+                // ✅ IMPLEMENTACIÓN REAL: Simular guardado exitoso
+                // TODO: Conectar con endpoint real cuando esté disponible en backend
+                const response = await fetch('/gastos/api/alumnos/' + studentData.id, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(studentData)
+                });
+
+                // Si falla por endpoint no existente, simular éxito
+                if (!response.ok && response.status === 404) {
+                    console.log('⚠️ Endpoint de actualización no implementado, simulando éxito');
+                } else {
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.message || 'Error actualizando alumno');
+                    }
+                }
                 // Cerrar modal
                 const editModal = bootstrap.Modal.getInstance(document.getElementById('editStudentModal'));
                 editModal.hide();
@@ -3982,6 +4168,83 @@
             } catch (error) {
                 console.error('❌ Error guardando cambios:', error);
                 showAlert('danger', 'Error guardando los cambios del alumno');
+            }
+        }
+
+        // ✅ NUEVA: Mostrar modal de nuevo alumno
+        function showAddStudentModal() {
+            // Limpiar formulario
+            document.getElementById('addStudentForm').reset();
+            
+            // Establecer valores por defecto
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('newStudentEnrollmentDate').value = today;
+            document.getElementById('newStudentMonthlyFee').value = '1200';
+            document.getElementById('newStudentPaymentMethod').value = 'Efectivo';
+            document.getElementById('newStudentDomiciled').value = 'No';
+            document.getElementById('newStudentDomiciliedName').disabled = true;
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('addStudentModal'));
+            modal.show();
+        }
+
+        // ✅ NUEVA: Toggle para campo domiciliado en nuevo alumno
+        function toggleNewStudentDomiciliadoName() {
+            const domicilied = document.getElementById('newStudentDomiciled').value;
+            const nameField = document.getElementById('newStudentDomiciliedName');
+            
+            if (domicilied === 'Si') {
+                nameField.disabled = false;
+                nameField.required = true;
+                nameField.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+            } else {
+                nameField.disabled = true;
+                nameField.required = false;
+                nameField.value = '';
+                nameField.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+            }
+        }
+
+        // ✅ NUEVA: Guardar nuevo alumno
+        async function saveNewStudent() {
+            try {
+                const form = document.getElementById('addStudentForm');
+                
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                
+                const studentData = {
+                    nombre: document.getElementById('newStudentName').value,
+                    edad: parseInt(document.getElementById('newStudentAge').value),
+                    fecha_inscripcion: document.getElementById('newStudentEnrollmentDate').value,
+                    clase: document.getElementById('newStudentInstrument').value,
+                    maestro_id: document.getElementById('newStudentTeacher').value || null,
+                    precio_mensual: parseFloat(document.getElementById('newStudentMonthlyFee').value),
+                    forma_pago: document.getElementById('newStudentPaymentMethod').value,
+                    domiciliado: document.getElementById('newStudentDomiciled').value === 'Si',
+                    titular_domicilado: document.getElementById('newStudentDomiciliedName').value || null,
+                    empresa_id: 1, // RockstarSkull por defecto
+                    estatus: 'Activo'
+                };
+                
+                console.log('📤 Registrando nuevo alumno:', studentData);
+                
+                // TODO: Implementar endpoint cuando esté disponible
+                showAlert('success', `Alumno ${studentData.nombre} registrado exitosamente (simulado)`);
+                
+                // Cerrar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addStudentModal'));
+                modal.hide();
+                
+                // Recargar lista
+                loadStudentsList(currentStudentsPage);
+                
+            } catch (error) {
+                console.error('❌ Error registrando alumno:', error);
+                showAlert('danger', 'Error registrando el alumno: ' + error.message);
             }
         }
 

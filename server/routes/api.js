@@ -58,6 +58,9 @@ router.post('/ingresos', transaccionesController.createIngreso);
 // GET /api/empresas - Lista de empresas
 router.get('/empresas', transaccionesController.getEmpresas);
 
+// ✅ NUEVO: Historial de pagos de alumno específico
+router.get('/alumnos/:alumnoNombre/historial-pagos', transaccionesController.getHistorialPagosAlumno);
+
 // ==================== RUTAS DE REPORTES DASHBOARD ====================
 // GET /api/dashboard - Datos para dashboard principal
 // GET /api/dashboard - Datos para dashboard principal COMPLETO
@@ -911,5 +914,9 @@ router.put('/alumnos/:id/estatus', async (req, res) => {
 // ==================== RUTAS DASHBOARD ====================
 router.get('/dashboard/alumnos', transaccionesController.getDashboardAlumnos);
 router.get('/alumnos', transaccionesController.getAlumnos);
+
+// ✅ NUEVO: CRUD completo de alumnos
+router.post('/alumnos', transaccionesController.createAlumno);
+router.put('/alumnos/:id', transaccionesController.updateAlumno);
 
 export default router;
