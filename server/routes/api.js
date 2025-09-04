@@ -740,7 +740,7 @@ router.get('/alertas-pagos', async (req, res) => {
         const [countResult] = await executeQuery(`
             SELECT COUNT(*) as total 
             FROM alumnos 
-            WHERE empresa_id = 1 AND estatus = 'Activo'
+            WHERE empresa_id = 1 AND estatus = 'Activo' AND nombre NOT LIKE '[ELIMINADO]%'
         `);
 
         console.log(`📊 Total alumnos activos: ${countResult.total}`);
@@ -781,7 +781,7 @@ router.get('/alertas-pagos', async (req, res) => {
                 fecha_ultimo_pago,
                 estatus
             FROM alumnos 
-            WHERE empresa_id = 1 AND estatus = 'Activo'
+            WHERE empresa_id = 1 AND estatus = 'Activo' AND nombre NOT LIKE '[ELIMINADO]%'
             ORDER BY nombre
         `);
 
@@ -918,5 +918,7 @@ router.get('/alumnos', transaccionesController.getAlumnos);
 // ✅ NUEVO: CRUD completo de alumnos
 router.post('/alumnos', transaccionesController.createAlumno);
 router.put('/alumnos/:id', transaccionesController.updateAlumno);
+// 🗑️ NUEVO: Eliminar alumno (solo administradores)
+router.delete('/alumnos/:id', transaccionesController.deleteAlumno);
 
 export default router;

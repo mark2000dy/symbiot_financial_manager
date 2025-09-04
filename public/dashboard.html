@@ -380,6 +380,26 @@
             padding: 0.25rem 0.5rem;
         }
 
+        /* 🔧 FIX: Modales con scroll interno para formularios largos */
+        .modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .modal-dialog.modal-xl .modal-body {
+            max-height: 75vh;
+        }
+
+        /* Asegurar que el footer siempre esté visible */
+        .modal-footer {
+            position: sticky;
+            bottom: 0;
+            background: rgba(25, 28, 36, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
     </style>
 
     <style>
@@ -1240,6 +1260,8 @@
                                     <tr><td><strong>Maestro:</strong></td><td id="modalStudentTeacher">-</td></tr>
                                     <tr><td><strong>Horario:</strong></td><td id="modalStudentSchedule">-</td></tr>
                                     <tr><td><strong>Estatus:</strong></td><td id="modalStudentStatus">-</td></tr>
+                                    <tr><td><strong>Teléfono:</strong></td><td id="modalStudentPhone">-</td></tr>
+                                    <tr><td><strong>Email:</strong></td><td id="modalStudentEmail">-</td></tr>
                                 </table>
                             </div>
                             <div class="col-md-6">
@@ -1306,6 +1328,22 @@
                                         <i class="fas fa-birthday-cake me-1"></i>Edad
                                     </label>
                                     <input type="number" class="form-control" id="editStudentAge" min="1" max="100" required>
+                                </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="editStudentPhone" class="form-label">
+                                            <i class="fas fa-mobile-alt me-1"></i>Celular / WhatsApp
+                                        </label>
+                                        <input type="tel" class="form-control" id="editStudentPhone" placeholder="Ej: 5551234567">
+                                        <small class="form-text">Incluir número de WhatsApp si aplica</small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="editStudentEmail" class="form-label">
+                                            <i class="fas fa-envelope me-1"></i>Email
+                                        </label>
+                                        <input type="email" class="form-control" id="editStudentEmail" placeholder="ejemplo@correo.com">
+                                    </div>
                                 </div>
                             </div>
                             
@@ -1413,6 +1451,9 @@
                         </form>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-danger me-auto" onclick="deleteStudent()" title="Solo administradores">
+                            <i class="fas fa-trash me-1"></i>Eliminar
+                        </button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="fas fa-times me-1"></i>Cancelar
                         </button>
@@ -1452,8 +1493,23 @@
                                     </label>
                                     <input type="number" class="form-control" id="newStudentAge" min="1" max="100" required>
                                 </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="newStudentPhone" class="form-label">
+                                            <i class="fas fa-mobile-alt me-1"></i>Celular / WhatsApp
+                                        </label>
+                                        <input type="tel" class="form-control" id="newStudentPhone" placeholder="Ej: 5551234567">
+                                        <small class="form-text">Incluir número de WhatsApp si aplica</small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="newStudentEmail" class="form-label">
+                                            <i class="fas fa-envelope me-1"></i>Email
+                                        </label>
+                                        <input type="email" class="form-control" id="newStudentEmail" placeholder="ejemplo@correo.com">
+                                    </div>
+                                </div>
                             </div>
-                            
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="newStudentEnrollmentDate" class="form-label">
@@ -3456,6 +3512,8 @@
             document.getElementById('studentModalName').textContent = student.nombre;
             document.getElementById('modalStudentName').textContent = student.nombre;
             document.getElementById('modalStudentAge').textContent = student.edad + ' años';
+            document.getElementById('modalStudentPhone').textContent = student.telefono || 'No especificado';
+            document.getElementById('modalStudentEmail').textContent = student.email || 'No especificado';
             document.getElementById('modalStudentClass').textContent = student.clase;
             document.getElementById('modalStudentTeacher').textContent = student.maestro;
             document.getElementById('modalStudentSchedule').textContent = student.horario || 'No especificado';
@@ -3495,6 +3553,8 @@
                 document.getElementById('editStudentId').value = student.id;
                 document.getElementById('editStudentName').value = student.nombre || '';
                 document.getElementById('editStudentAge').value = student.edad || '';
+                document.getElementById('editStudentPhone').value = student.telefono || '';
+                document.getElementById('editStudentEmail').value = student.email || '';
                 document.getElementById('editStudentEnrollmentDate').value = student.fecha_inscripcion || '';
                 document.getElementById('editStudentInstrument').value = student.clase || '';
                 document.getElementById('editStudentTeacher').value = student.maestro_id || '';
@@ -3505,6 +3565,17 @@
                 document.getElementById('editStudentPaymentMethod').value = student.forma_pago || '';
                 document.getElementById('editStudentDomiciled').value = student.domiciliado || 'No';
                 document.getElementById('editStudentDomiciliedName').value = student.nombre_domiciliado || '';
+
+                // Mostrar/ocultar botón eliminar según rol del usuario
+                const deleteBtn = document.querySelector('#editStudentModal .btn-danger');
+                if (deleteBtn) {
+                    if (currentUser && currentUser.rol === 'admin') {
+                        deleteBtn.style.display = 'inline-block';
+                        deleteBtn.title = 'Eliminar alumno (Solo administradores)';
+                    } else {
+                        deleteBtn.style.display = 'none';
+                    }
+                }
                 
                 // Habilitar/deshabilitar campo domiciliado
                 toggleDomiciliadoName();
@@ -4158,8 +4229,8 @@
                     id: document.getElementById('editStudentId').value,
                     nombre: document.getElementById('editStudentName').value.trim(),
                     edad: document.getElementById('editStudentAge').value ? parseInt(document.getElementById('editStudentAge').value) : null,
-                    telefono: null, // Agregar cuando esté en el formulario
-                    email: null, // Agregar cuando esté en el formulario  
+                    telefono: document.getElementById('editStudentPhone').value || null,
+                    email: document.getElementById('editStudentEmail').value || null,
                     fecha_inscripcion: document.getElementById('editStudentEnrollmentDate').value || null,
                     clase: document.getElementById('editStudentInstrument').value || null,
                     tipo_clase: 'Individual', // Por defecto
@@ -4208,10 +4279,97 @@
             }
         }
 
+        // 🗑️ NUEVA: Eliminar alumno (solo administradores)
+        async function deleteStudent() {
+            try {
+                // Verificar que hay un alumno seleccionado
+                const studentId = document.getElementById('editStudentId').value;
+                const studentName = document.getElementById('editStudentName').value;
+                
+                if (!studentId) {
+                    showAlert('warning', 'No hay alumno seleccionado para eliminar');
+                    return;
+                }
+                
+                // Confirmación doble para eliminación
+                const confirmMessage = `¿ELIMINAR PERMANENTEMENTE al alumno "${studentName}"?\n\n` +
+                                    `⚠️ ESTA ACCIÓN NO SE PUEDE DESHACER ⚠️\n\n` +
+                                    `Esto eliminará:\n` +
+                                    `- Todos los datos del alumno\n` +
+                                    `- Su historial de pagos\n` +
+                                    `- Toda información asociada\n\n` +
+                                    `Escriba "ELIMINAR" para confirmar:`;
+                
+                const userConfirmation = prompt(confirmMessage);
+                
+                if (userConfirmation !== 'ELIMINAR') {
+                    console.log('🚫 Eliminación cancelada por el usuario');
+                    showAlert('info', 'Eliminación cancelada');
+                    return;
+                }
+                
+                console.log(`🗑️ Eliminando alumno: ${studentName} (ID: ${studentId})`);
+                
+                // Mostrar loading en botón
+                const deleteBtn = document.querySelector('#editStudentModal .btn-danger');
+                if (deleteBtn) {
+                    deleteBtn.disabled = true;
+                    const originalText = deleteBtn.innerHTML;
+                    deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Eliminando...';
+                }
+                
+                // Llamada al backend
+                const response = await fetch(`/gastos/api/alumnos/${studentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    // Cerrar modal
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editStudentModal'));
+                    editModal.hide();
+                    
+                    // Mostrar confirmación
+                    showAlert('success', `Alumno "${studentName}" eliminado exitosamente`);
+                    
+                    // Recargar lista
+                    await loadStudentsList(currentStudentsPage);
+                    
+                    console.log(`✅ Alumno eliminado: ${studentName}`);
+                    
+                } else if (response.status === 403) {
+                    showAlert('warning', 'Solo administradores pueden eliminar alumnos');
+                } else if (response.status === 404) {
+                    showAlert('warning', 'Alumno no encontrado');
+                } else {
+                    throw new Error(result.message || 'Error eliminando alumno');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error eliminando alumno:', error);
+                showAlert('danger', `Error eliminando alumno: ${error.message}`);
+            } finally {
+                // Restaurar botón
+                const deleteBtn = document.querySelector('#editStudentModal .btn-danger');
+                if (deleteBtn) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = '<i class="fas fa-trash me-1"></i>Eliminar';
+                }
+            }
+        }
+
         // ✅ NUEVA: Mostrar modal de nuevo alumno
         function showAddStudentModal() {
             // Limpiar formulario
             document.getElementById('addStudentForm').reset();
+            // Limpiar campos específicos
+            document.getElementById('newStudentPhone').value = '';
+            document.getElementById('newStudentEmail').value = '';
             
             // Establecer valores por defecto
             const today = new Date().toISOString().split('T')[0];
@@ -4246,8 +4404,20 @@
         // ✅ NUEVA: Guardar nuevo alumno
         async function saveNewStudent() {
             try {
+                // ✅ NUEVA: Proteger contra múltiples envíos
+                const submitBtn = document.querySelector('#addStudentModal .btn-success');
+                if (submitBtn.disabled) {
+                    console.log('⚠️ Envío ya en progreso...');
+                    return; // Salir si ya está enviando
+                }
+        
+                // ✅ NUEVA: Deshabilitar botón y cambiar texto
+                submitBtn.disabled = true;
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Registrando...';
+        
                 const form = document.getElementById('addStudentForm');
-                
+
                 if (!form.checkValidity()) {
                     form.reportValidity();
                     return;
@@ -4256,6 +4426,8 @@
                 const studentData = {
                     nombre: document.getElementById('newStudentName').value,
                     edad: parseInt(document.getElementById('newStudentAge').value),
+                    telefono: document.getElementById('newStudentPhone').value || null,
+                    email: document.getElementById('newStudentEmail').value || null,
                     fecha_inscripcion: document.getElementById('newStudentEnrollmentDate').value,
                     clase: document.getElementById('newStudentInstrument').value,
                     maestro_id: document.getElementById('newStudentTeacher').value || null,
@@ -4298,6 +4470,13 @@
             } catch (error) {
                 console.error('❌ Error registrando alumno:', error);
                 showAlert('danger', 'Error registrando el alumno: ' + error.message);
+            } finally {
+                // ✅ NUEVA: Rehabilitar botón siempre
+                const submitBtn = document.querySelector('#addStudentModal .btn-success');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save me-1"></i>Registrar Alumno';
+                }
             }
         }
 

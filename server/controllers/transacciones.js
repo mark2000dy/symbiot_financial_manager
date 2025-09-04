@@ -645,6 +645,80 @@ export const transaccionesController = {
             });
         }
     },
+
+    // 🗑️ NUEVO: Eliminar alumno (solo administradores)
+    deleteAlumno: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const user = req.session.user;
+            
+            console.log(`🗑️ Solicitud eliminar alumno ID: ${id} por ${user.nombre} (${user.rol})`);
+            
+            // Verificar permisos de administrador
+            if (user.rol !== 'admin') {
+                console.log(`🚫 Acceso denegado: ${user.nombre} no es admin`);
+                return res.status(403).json({
+                    success: false,
+                    message: 'Solo administradores pueden eliminar alumnos'
+                });
+            }
+            
+            // Verificar que el alumno existe
+            const existeAlumno = await executeQuery(
+                'SELECT id, nombre, estatus FROM alumnos WHERE id = ?',
+                [id]
+            );
+            
+            if (existeAlumno.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Alumno no encontrado'
+                });
+            }
+            
+            const alumno = existeAlumno[0];
+            console.log(`🔍 Alumno encontrado: ${alumno.nombre} (${alumno.estatus})`);
+            
+            // Verificar si tiene transacciones asociadas
+            const transaccionesAsociadas = await executeQuery(
+                'SELECT COUNT(*) as total FROM transacciones WHERE concepto LIKE ?',
+                [`%${alumno.nombre}%`]
+            );
+            
+            const totalTransacciones = transaccionesAsociadas[0].total;
+            console.log(`💰 Transacciones asociadas encontradas: ${totalTransacciones}`);
+            
+            // ELIMINACIÓN SOFT: Cambiar a estatus "Eliminado" en lugar de borrar físicamente
+            // Esto preserva la integridad referencial con transacciones
+            await executeQuery(`
+                UPDATE alumnos SET 
+                    estatus = 'Baja',
+                    nombre = CONCAT('[ELIMINADO] ', nombre),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `, [id]);
+            
+            console.log(`✅ Alumno marcado como eliminado: ${alumno.nombre} (ID: ${id})`);
+            
+            res.json({
+                success: true,
+                message: `Alumno "${alumno.nombre}" eliminado exitosamente`,
+                data: {
+                    id: id,
+                    nombre: alumno.nombre,
+                    transacciones_asociadas: totalTransacciones,
+                    eliminacion_tipo: 'soft_delete'
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error eliminando alumno:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error interno del servidor'
+            });
+        }
+    },
     
     // Obtener solo gastos
     getGastos: async (req, res) => {
@@ -746,7 +820,7 @@ export const transaccionesController = {
                             SUM(CASE WHEN estatus = 'Activo' THEN 1 ELSE 0 END) as alumnos_activos,
                             SUM(CASE WHEN estatus = 'Baja' THEN 1 ELSE 0 END) as alumnos_bajas
                         FROM alumnos 
-                        WHERE empresa_id = 1
+                        WHERE empresa_id = 1 AND nombre NOT LIKE '[ELIMINADO]%'
                     `);
 
                     if (estadisticasQuery.length > 0) {
@@ -767,7 +841,7 @@ export const transaccionesController = {
                             SUM(CASE WHEN estatus = 'Activo' THEN 1 ELSE 0 END) as activos,
                             SUM(CASE WHEN estatus = 'Baja' THEN 1 ELSE 0 END) as inactivos
                         FROM alumnos 
-                        WHERE empresa_id = 1 AND clase IS NOT NULL AND clase != ''
+                        WHERE empresa_id = 1 AND clase IS NOT NULL AND clase != '' AND nombre NOT LIKE '[ELIMINADO]%'
                         GROUP BY clase
                         ORDER BY total_alumnos DESC
                     `);
@@ -788,13 +862,13 @@ export const transaccionesController = {
                                 m.nombre as maestro,
                                 m.especialidad,
                                 -- Alumnos y ingresos ACTIVOS
-                                COUNT(CASE WHEN a.estatus = 'Activo' THEN 1 END) as alumnos_activos,
-                                COALESCE(SUM(CASE WHEN a.estatus = 'Activo' THEN a.precio_mensual ELSE 0 END), 0) as ingresos_activos,
+                                COUNT(CASE WHEN a.estatus = 'Activo' AND a.nombre NOT LIKE '[ELIMINADO]%' THEN 1 END) as alumnos_activos,
+                                COALESCE(SUM(CASE WHEN a.estatus = 'Activo' AND a.nombre NOT LIKE '[ELIMINADO]%' THEN a.precio_mensual ELSE 0 END), 0) as ingresos_activos,
                                 -- Alumnos y ingresos de BAJAS
-                                COUNT(CASE WHEN a.estatus = 'Baja' THEN 1 END) as alumnos_bajas,
-                                COALESCE(SUM(CASE WHEN a.estatus = 'Baja' THEN a.precio_mensual ELSE 0 END), 0) as ingresos_bajas
+                                COUNT(CASE WHEN a.estatus = 'Baja' AND a.nombre NOT LIKE '[ELIMINADO]%' THEN 1 END) as alumnos_bajas,
+                                COALESCE(SUM(CASE WHEN a.estatus = 'Baja' AND a.nombre NOT LIKE '[ELIMINADO]%' THEN a.precio_mensual ELSE 0 END), 0) as ingresos_bajas
                             FROM maestros m
-                            LEFT JOIN alumnos a ON a.maestro_id = m.id
+                            LEFT JOIN alumnos a ON a.maestro_id = m.id AND a.nombre NOT LIKE '[ELIMINADO]%'
                             WHERE m.empresa_id = 1 AND m.activo = 1
                             GROUP BY m.id, m.nombre, m.especialidad
                             ORDER BY alumnos_activos DESC, ingresos_activos DESC
@@ -847,7 +921,7 @@ export const transaccionesController = {
                                 THEN 1 ELSE 0 
                             END) as alumnos_pendientes
                         FROM alumnos 
-                        WHERE empresa_id = 1
+                        WHERE empresa_id = 1 AND nombre NOT LIKE '[ELIMINADO]%'
                     `);
 
                     if (metricasQuery.length > 0) {
@@ -988,8 +1062,8 @@ export const transaccionesController = {
             const offset = (parseInt(page) - 1) * parseInt(limit);
             
             // Construir query con filtros
-            let whereClause = 'WHERE a.empresa_id = ?';
-            let params = [empresa_id];
+            let whereClause = 'WHERE a.empresa_id = ? AND a.nombre NOT LIKE ?';
+            let params = [empresa_id, '[ELIMINADO]%'];
             
             if (estatus) {
                 whereClause += ' AND a.estatus = ?';
@@ -1043,6 +1117,7 @@ export const transaccionesController = {
             const [countResult] = await executeQuery(`
                 SELECT COUNT(*) as total
                 FROM alumnos a
+                LEFT JOIN maestros m ON a.maestro_id = m.id
                 ${whereClause}
             `, params);
 
