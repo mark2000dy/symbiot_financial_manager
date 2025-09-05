@@ -2,6 +2,7 @@
 -- SCHEMA PARA GASTOS APP - SYMBIOT TECHNOLOGIES
 -- Base de datos: gastos_app_db
 -- Usuario: gastos_user
+-- Session_Secret: 44nt3b4j0c4b3c0nc0ntr4d3d3sd33n
 -- Contraseña: Gastos2025!
 -- ====================================================
 
